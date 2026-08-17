@@ -1,0 +1,194 @@
+<view class="safe-page detail" wx:if="{{order}}">
+  <view class="status-card">
+    <view class="status-top">
+      <view class="status-main">
+        <view class="status-icon-wrap">
+          <image class="status-icon" src="{{order.categoryIcon}}" mode="aspectFit" />
+        </view>
+        <view class="status-copy">
+          <text class="status-label">工单</text>
+          <text class="status-title">{{order.categoryText}}</text>
+        </view>
+      </view>
+      <text class="status-badge {{order.statusTone}}">{{order.statusText}}</text>
+    </view>
+    <view class="detail-workflow">
+      <view class="detail-workflow-icon-wrap">
+        <image class="detail-workflow-icon" src="/assets/ui/repairer.png" mode="aspectFit" />
+      </view>
+      <view class="detail-workflow-copy">
+        <text class="detail-workflow-title">{{detailHint.title}}</text>
+        <text class="detail-workflow-desc">{{detailHint.desc}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="info-card">
+    <view class="info-row column">
+      <view class="info-label-row">
+        <image class="info-icon" src="/assets/ui/bill-file.png" mode="aspectFit" />
+        <text class="info-label">故障描述</text>
+      </view>
+      <text class="info-value">{{order.description}}</text>
+      <view class="media-readiness">
+        <image class="media-readiness-icon" src="/assets/ui/image.png" mode="aspectFit" />
+        <text class="media-readiness-text">{{mediaSummaryText}}</text>
+      </view>
+      <view wx:if="{{mediaList.length > 0}}" class="media-list">
+        <view class="media-item tap-feedback" wx:for="{{mediaList}}" wx:key="url" data-index="{{index}}" bindtap="previewOrderMedia" hover-class="tap-feedback-active" hover-start-time="20" hover-stay-time="80">
+          <view class="media-icon-wrap">
+            <image class="media-icon" src="{{item.icon}}" mode="aspectFit" />
+          </view>
+          <view class="media-copy">
+            <text class="media-type">{{item.typeText}}</text>
+            <text class="media-name">{{item.name}}</text>
+          </view>
+          <text class="media-duration">{{item.durationText}}</text>
+        </view>
+      </view>
+      <view wx:else class="media-empty">
+        <image class="media-empty-icon" src="/assets/ui/image.png" mode="aspectFit" />
+        <text>无素材</text>
+      </view>
+    </view>
+    <view class="info-row column">
+      <view class="info-label-row">
+        <image class="info-icon" src="/assets/ui/address.png" mode="aspectFit" />
+        <text class="info-label">上门地址</text>
+      </view>
+      <text class="info-value">{{order.address}}</text>
+    </view>
+    <view class="info-row" wx:if="{{order.contact_phone}}">
+      <view class="info-label-row">
+        <image class="info-icon" src="/assets/ui/phone.png" mode="aspectFit" />
+        <text class="info-label">电话</text>
+      </view>
+      <text class="info-value">{{order.contact_phone}}</text>
+    </view>
+  </view>
+
+  <view class="bill-card" wx:if="{{canComplete}}">
+    <view class="bill-head">
+      <view class="bill-title-wrap">
+        <view class="bill-icon-wrap">
+          <image class="bill-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+        </view>
+        <text class="bill-title">服务明细</text>
+      </view>
+      <text class="bill-total">¥{{billTotal}}</text>
+    </view>
+
+    <view class="bill-readiness {{billReadiness.tone}}">
+      <view class="bill-readiness-head">
+        <image class="bill-readiness-icon" src="/assets/ui/bill-check.png" mode="aspectFit" />
+        <view class="bill-readiness-copy">
+          <text class="bill-readiness-title">{{billReadiness.title}}</text>
+          <text class="bill-readiness-desc">{{billReadiness.desc}}</text>
+        </view>
+      </view>
+      <view class="bill-readiness-tags">
+        <text class="bill-readiness-tag">明细 {{billReadiness.validCount}}/{{billReadiness.totalCount}}</text>
+        <text class="bill-readiness-tag">合计 ¥{{billReadiness.totalText}}</text>
+        <text class="bill-readiness-tag">保修 {{billReadiness.warrantyText}}</text>
+      </view>
+    </view>
+
+    <view class="bill-item {{activeBillItemIndex === index ? 'active' : ''}} {{item.errorText ? 'error' : ''}}" wx:for="{{serviceItems}}" wx:for-index="index" wx:key="index">
+      <view class="bill-item-head">
+        <text class="bill-item-title">明细 {{index + 1}}</text>
+        <button wx:if="{{serviceItems.length > 1}}" class="remove-btn small" data-index="{{index}}" bindtap="removeBillItem" hover-class="button-hover">
+          <image class="inline-btn-icon" src="/assets/ui/trash.png" mode="aspectFit" />
+          <text>删除</text>
+        </button>
+      </view>
+      <input class="item-name" placeholder-class="field-placeholder" placeholder="维修项目或材料" value="{{item.name}}" data-index="{{index}}" data-field="name" bindfocus="onBillItemFocus" bindblur="onBillItemBlur" bindinput="onBillItemInput" />
+      <view class="item-row">
+        <view class="item-field">
+          <text>数量</text>
+          <input type="digit" placeholder-class="field-placeholder" placeholder="1" value="{{item.qty}}" data-index="{{index}}" data-field="qty" bindfocus="onBillItemFocus" bindblur="onBillItemBlur" bindinput="onBillItemInput" />
+        </view>
+        <view class="item-field">
+          <text>单价</text>
+          <input type="digit" placeholder-class="field-placeholder" placeholder="0.00" value="{{item.price}}" data-index="{{index}}" data-field="price" bindfocus="onBillItemFocus" bindblur="onBillItemBlur" bindinput="onBillItemInput" />
+        </view>
+        <view class="item-amount">
+          <text>小计</text>
+          <text>¥{{item.amount}}</text>
+        </view>
+      </view>
+      <text wx:if="{{item.errorText}}" class="field-error-text">{{item.errorText}}</text>
+    </view>
+
+    <button class="add-btn" bindtap="addBillItem" hover-class="button-hover">
+      <image class="inline-btn-icon" src="/assets/ui/plus.png" mode="aspectFit" />
+      <text>新增明细</text>
+    </button>
+
+    <view class="warranty-row {{focusBillField === 'warranty' ? 'active' : ''}} {{warrantyErrorText ? 'error' : ''}}">
+      <view class="warranty-label">
+        <image class="inline-btn-icon" src="/assets/ui/bill-check.png" mode="aspectFit" />
+        <text>保修期</text>
+      </view>
+      <input type="number" placeholder-class="field-placeholder" placeholder="30" value="{{warrantyDays}}" data-field="warranty" bindfocus="onBillFieldFocus" bindblur="onBillFieldBlur" bindinput="onWarrantyInput" />
+      <text>天</text>
+    </view>
+    <text wx:if="{{warrantyErrorText}}" class="field-error-text">{{warrantyErrorText}}</text>
+    <textarea class="remark-input {{focusBillField === 'remark' ? 'active' : ''}}" placeholder-class="field-placeholder" placeholder="处理说明 / 材料型号 / 保修备注" value="{{serviceRemark}}" data-field="remark" bindfocus="onBillFieldFocus" bindblur="onBillFieldBlur" bindinput="onRemarkInput" />
+    <view class="warranty-row">
+      <view class="warranty-label"><image class="inline-btn-icon" src="/assets/ui/bill-check.png" mode="aspectFit" /><text>客户确认</text></view>
+      <picker range="{{confirmationMethods}}" range-key="label" value="{{confirmationMethodIndex}}" bindchange="onConfirmationMethodChange"><view>{{confirmationMethods[confirmationMethodIndex].label}}</view></picker>
+    </view>
+    <textarea class="remark-input" placeholder="记录确认时间、沟通对象或补充说明" value="{{confirmationNote}}" bindinput="onConfirmationNoteInput" />
+    <button class="action-btn secondary" data-draft="true" bindtap="completeService" hover-class="button-hover">
+      <image class="action-icon" src="/assets/ui/bill-file.png" mode="aspectFit" /><text>保存草稿</text>
+    </button>
+    <button class="action-btn primary" bindtap="completeService" hover-class="button-hover">
+      <image class="action-icon" src="/assets/ui/bill-check.png" mode="aspectFit" />
+      <text>提交服务单</text>
+    </button>
+  </view>
+
+  <view class="actions">
+    <button wx:if="{{canStart}}"
+            class="action-btn primary" bindtap="startService" hover-class="button-hover">
+      <image class="action-icon" src="/assets/ui/play.png" mode="aspectFit" />
+      <text>开始服务</text>
+    </button>
+    <button wx:if="{{canPay}}"
+            class="action-btn primary" bindtap="goPay" hover-class="button-hover">
+      <image class="action-icon" src="/assets/ui/pay.png" mode="aspectFit" />
+      <text>去支付</text>
+    </button>
+  </view>
+</view>
+
+<role-tabbar />
+
+<view wx:if="{{!order}}" class="safe-page">
+  <view class="empty">
+    <image class="empty-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+    <block wx:if="{{loading}}">
+      <text class="role-empty-title">加载中…</text>
+    </block>
+    <block wx:elif="{{loadFailed || errorText}}">
+      <text class="role-empty-title">加载失败</text>
+      <text class="role-empty-desc">{{errorText}}</text>
+    </block>
+    <block wx:else>
+      <text class="role-empty-title">订单不存在</text>
+      <text class="role-empty-desc">返回重试</text>
+    </block>
+    <button wx:if="{{loadFailed && orderId}}" class="empty-action" bindtap="retryLoad" hover-class="button-hover">
+      <view class="mini-action-content">
+        <image class="mini-action-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+        <text>重试</text>
+      </view>
+    </button>
+    <button wx:if="{{!loading}}" class="empty-action secondary" bindtap="goJobs" hover-class="button-hover">
+      <view class="mini-action-content">
+        <image class="mini-action-icon" src="/assets/ui/repairer.png" mode="aspectFit" />
+        <text>工单</text>
+      </view>
+    </button>
+  </view>
+</view>

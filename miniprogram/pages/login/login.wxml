@@ -1,0 +1,297 @@
+<view class="login-container {{isDarkMode ? 'is-dark' : ''}}">
+  <!-- 背景光晕 -->
+  <view class="login-bg" aria-hidden="true">
+    <view class="login-bg-blob login-bg-blob-1"></view>
+    <view class="login-bg-blob login-bg-blob-2"></view>
+    <view class="login-bg-blob login-bg-blob-3"></view>
+  </view>
+
+  <!-- ===== 顶部品牌区(绿色沉浸式) ===== -->
+  <view class="login-hero" style="padding-top: {{heroPaddingTop}}px; padding-right: {{capsuleRightReserve}}px;">
+    <view class="login-hero-top">
+      <view class="brand-row">
+        <view class="brand-mark">
+          <image class="brand-logo" src="/assets/logo-mark.png" mode="aspectFit" />
+        </view>
+        <view class="brand-copy">
+          <text class="brand-name">立即修</text>
+          <text class="brand-line">厦门 · 上门维修领导品牌</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="login-hero-body">
+      <text class="hero-title">厦门的家,<text class="hero-hl">一个电话</text></text>
+      <text class="hero-title hero-title-row2">30 分钟就有师傅上门</text>
+      <text class="hero-sub">家电 · 水电 · 门窗 · 家具 · 管道疏通 · 家电清洗</text>
+      <text class="hero-sub">明码标价 · 持证师傅 · 原厂配件 · 7 天质保</text>
+    </view>
+
+    <view class="login-stats">
+      <view class="login-stat">
+        <text class="stat-num">30<text class="stat-unit">分钟</text></text>
+        <text class="stat-cap">平均响应</text>
+      </view>
+      <view class="login-stat">
+        <text class="stat-num">168<text class="stat-unit">+位</text></text>
+        <text class="stat-cap">认证师傅</text>
+      </view>
+      <view class="login-stat">
+        <text class="stat-num">4.98<text class="stat-unit">/5</text></text>
+        <text class="stat-cap">客户好评</text>
+      </view>
+    </view>
+
+    <view class="hero-chip">
+      <text>已为 <text class="chip-em">2,800+</text> 厦门家庭解决维修难题</text>
+    </view>
+  </view>
+
+  <!-- ===== 主操作卡片 ===== -->
+  <view class="login-card">
+    <view class="login-tabs" role="tablist">
+      <view
+        class="login-tab {{loginMode === 'wechat' ? 'active' : ''}}"
+        data-mode="wechat"
+        bindtap="switchLoginMode"
+        hover-class="none"
+      >
+        <text class="login-tab-ico" aria-hidden="true">💬</text>
+        <text>微信登录</text>
+      </view>
+      <view
+        class="login-tab {{loginMode === 'phone' ? 'active' : ''}}"
+        data-mode="phone"
+        bindtap="switchLoginMode"
+        hover-class="none"
+      >
+        <text class="login-tab-ico" aria-hidden="true">📱</text>
+        <text>手机号登录</text>
+      </view>
+    </view>
+
+    <!-- ===== 微信登录面板 ===== -->
+    <view class="login-pane" hidden="{{loginMode !== 'wechat'}}">
+      <button
+        wx:if="{{phoneAuthReady}}"
+        class="wechat-primary {{loading ? 'is-disabled' : ''}}"
+        open-type="getPhoneNumber"
+        phone-number-no-quota-toast="{{false}}"
+        bindtap="handleWechatPhoneTap"
+        bindgetphonenumber="handleWechatPhoneLogin"
+        disabled="{{loading}}"
+        hover-class="button-hover"
+      >
+        <text class="wechat-primary-ico" aria-hidden="true">🟢</text>
+        <text>{{loading ? '登录中' : '微信手机号一键登录'}}</text>
+      </button>
+      <button
+        wx:else
+        class="wechat-primary {{loading || phoneAuthPreparing ? 'is-disabled' : ''}}"
+        bindtap="prepareWechatPhoneLogin"
+        disabled="{{loading || phoneAuthPreparing}}"
+        hover-class="button-hover"
+      >
+        <text class="wechat-primary-ico" aria-hidden="true">🔐</text>
+        <text>{{phoneAuthPreparing ? '准备中' : '授权并登录'}}</text>
+      </button>
+
+      <text wx:if="{{quickLoginTip}}" class="auth-tip {{quickLoginTipTone}}">{{quickLoginTip}}</text>
+
+      <view class="login-divider"><text class="login-divider-line"></text><text class="login-divider-text">遇到问题?</text><text class="login-divider-line"></text></view>
+
+      <view class="login-link-row">
+        <view class="login-link" bindtap="toggleManualLogin" hover-class="none">
+          <text>使用其他手机号</text>
+        </view>
+        <text class="login-link-dot">·</text>
+        <view class="login-link" bindtap="toggleAccountLogin" hover-class="none">
+          <text>账号密码登录</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- ===== 手机号登录面板 ===== -->
+    <view class="login-pane" hidden="{{loginMode !== 'phone'}}">
+      <view class="auth-field {{focusField === 'phone' ? 'active' : ''}} {{validationErrors.phone ? 'error' : ''}}">
+        <text class="auth-field-label">手机号</text>
+        <view class="auth-input-wrap">
+          <text class="auth-input-prefix">+86</text>
+          <input
+            class="auth-input"
+            type="number"
+            maxlength="11"
+            placeholder-class="field-placeholder"
+            placeholder="请输入手机号"
+            value="{{phone}}"
+            focus="{{phoneInputFocus}}"
+            data-field="phone"
+            bindfocus="onFieldFocus"
+            bindblur="onFieldBlur"
+            bindinput="onPhoneInput"
+          />
+        </view>
+        <text wx:if="{{validationErrors.phone}}" class="auth-error">{{validationErrors.phone}}</text>
+      </view>
+
+      <view class="auth-field {{focusField === 'smsCode' ? 'active' : ''}}">
+        <text class="auth-field-label">验证码</text>
+        <view class="auth-input-wrap">
+          <input
+            class="auth-input"
+            type="number"
+            maxlength="6"
+            placeholder-class="field-placeholder"
+            placeholder="请输入短信验证码"
+            value="{{smsCode}}"
+            data-field="smsCode"
+            bindfocus="onFieldFocus"
+            bindblur="onFieldBlur"
+            bindinput="onSmsCodeInput"
+          />
+          <view class="auth-input-action {{smsCountdown > 0 || smsSending ? 'is-disabled' : ''}}" bindtap="sendSmsCode" hover-class="none">
+            <text>{{smsCountdown > 0 ? (smsCountdown + '秒') : (smsSending ? '发送中' : '获取验证码')}}</text>
+          </view>
+        </view>
+        <text wx:if="{{debugSmsCode}}" class="auth-tip success">体验验证码:{{debugSmsCode}}</text>
+      </view>
+
+      <button class="login-primary {{loading ? 'is-disabled' : ''}}" bindtap="handleLogin" disabled="{{loading}}" hover-class="button-hover">
+        <text>{{loading ? '登录中' : '进入工作台'}}</text>
+      </button>
+
+      <view class="login-link-row">
+        <view class="login-link" bindtap="toggleAccountLogin" hover-class="none">
+          <text>账号密码登录</text>
+        </view>
+        <text class="login-link-dot">·</text>
+        <view class="login-link" bindtap="switchLoginMode" data-mode="wechat" hover-class="none">
+          <text>微信快捷登录</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- ===== 账号密码登录面板(审核用) ===== -->
+    <view class="login-pane" hidden="{{loginMode !== 'account'}}">
+      <view class="auth-field {{focusField === 'reviewAccount' ? 'active' : ''}}">
+        <text class="auth-field-label">账号</text>
+        <view class="auth-input-wrap">
+          <input class="auth-input" maxlength="64" placeholder-class="field-placeholder" placeholder="请输入账号" value="{{reviewAccount}}" data-field="reviewAccount" bindfocus="onFieldFocus" bindblur="onFieldBlur" bindinput="onReviewAccountInput" />
+        </view>
+      </view>
+      <view class="auth-field {{focusField === 'reviewPassword' ? 'active' : ''}}">
+        <text class="auth-field-label">密码</text>
+        <view class="auth-input-wrap">
+          <input class="auth-input" password maxlength="128" placeholder-class="field-placeholder" placeholder="请输入密码" value="{{reviewPassword}}" data-field="reviewPassword" bindfocus="onFieldFocus" bindblur="onFieldBlur" bindinput="onReviewPasswordInput" />
+        </view>
+      </view>
+      <text wx:if="{{accountLoginError}}" class="auth-error">{{accountLoginError}}</text>
+      <button class="login-primary {{loading ? 'is-disabled' : ''}}" bindtap="handleAccountLogin" disabled="{{loading}}" hover-class="button-hover">
+        <text>{{loading ? '登录中' : '进入功能体验'}}</text>
+      </button>
+
+      <view class="login-link-row">
+        <view class="login-link" bindtap="switchLoginMode" data-mode="wechat" hover-class="none">
+          <text>← 微信登录</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 演示角色快速登录 ===== -->
+  <view class="demo-card">
+    <view class="demo-card-head">
+      <text class="demo-card-title">没有账号?直接体验</text>
+      <view class="demo-card-toggle" bindtap="toggleDemoAccounts" hover-class="none">
+        <text>{{showDemoAccounts ? '收起' : '更多演示'}}</text>
+        <view class="demo-card-chevron {{showDemoAccounts ? 'expanded' : ''}}"></view>
+      </view>
+    </view>
+
+    <view class="demo-grid">
+      <view
+        class="demo-tile demo-tile-primary"
+        data-index="0"
+        bindtap="useDemo"
+        hover-class="button-hover"
+      >
+        <text class="demo-emoji" aria-hidden="true">👤</text>
+        <text class="demo-label">客户</text>
+        <text class="demo-meta">下单 · 评价</text>
+      </view>
+      <view
+        class="demo-tile demo-tile-primary"
+        data-index="1"
+        bindtap="useDemo"
+        hover-class="button-hover"
+      >
+        <text class="demo-emoji" aria-hidden="true">🛠️</text>
+        <text class="demo-label">师傅</text>
+        <text class="demo-meta">接单 · 提交</text>
+      </view>
+      <view
+        class="demo-tile demo-tile-primary"
+        data-index="8"
+        bindtap="useDemo"
+        hover-class="button-hover"
+      >
+        <text class="demo-emoji" aria-hidden="true">⚙️</text>
+        <text class="demo-label">管理</text>
+        <text class="demo-meta">运营 · 财务</text>
+      </view>
+    </view>
+
+    <view wx:if="{{showDemoAccounts}}" class="demo-extra">
+      <view
+        wx:for="{{demos}}"
+        wx:key="phone"
+        wx:for-index="idx"
+        class="demo-row {{idx >= 3 ? '' : 'is-hidden'}}"
+        data-index="{{idx}}"
+        bindtap="useDemo"
+        hover-class="button-hover"
+      >
+        <view class="demo-row-copy">
+          <text class="demo-row-name">{{item.name}}</text>
+          <text class="demo-row-meta">{{item.label}} · {{item.phone}}</text>
+        </view>
+        <text class="demo-row-arrow">›</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="login-foot">
+    <view class="login-foot-line">手机号仅用于账户识别和服务联系</view>
+    <view class="login-foot-line">登录即表示已阅读并同意 <text class="login-foot-link" bindtap="openPrivacyContract">《{{privacyContractName}}》</text></view>
+  </view>
+
+  <!-- ===== 隐私授权弹窗 ===== -->
+  <view wx:if="{{showPrivacyModal}}" class="privacy-mask">
+    <view class="privacy-dialog">
+      <view class="privacy-head">
+        <view class="privacy-head-icon">🔒</view>
+        <view class="privacy-head-copy">
+          <text class="privacy-title">隐私授权</text>
+          <text class="privacy-subtitle">用于提交维修问题素材</text>
+        </view>
+      </view>
+      <text class="privacy-desc">
+        添加语音、照片或视频时,需要使用麦克风、摄像头和相册。请阅读并同意
+        <text class="privacy-link" bindtap="openPrivacyContract">《{{privacyContractName}}》</text>
+      </text>
+      <view class="privacy-actions">
+        <button class="privacy-secondary" bindtap="handleRejectPrivacy" disabled="{{privacyLoading}}" hover-class="button-hover">取消</button>
+        <button
+          wx:if="{{privacyMode === 'wechat'}}"
+          id="login-agree-btn"
+          class="privacy-primary"
+          open-type="agreePrivacyAuthorization"
+          bindagreeprivacyauthorization="handleAgreePrivacyAuthorization"
+          disabled="{{privacyLoading}}"
+          hover-class="button-hover"
+        >同意并继续</button>
+        <button wx:else class="privacy-primary" bindtap="handleAgreeLocalPrivacy" disabled="{{privacyLoading}}" hover-class="button-hover">同意并继续</button>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,34 @@
+<view class="warranty-page">
+  <view class="page-head"><text class="page-title">保修凭证</text><text class="page-desc">仅显示保修期内凭证，到期后自动移出</text></view>
+  <view wx:if="{{loading}}" class="empty-state">加载中…</view>
+  <view wx:elif="{{loadFailed}}" class="empty-state">
+    <text>保修凭证加载失败</text>
+    <button class="retry-button" bindtap="load" hover-class="button-hover">重试</button>
+  </view>
+  <view wx:elif="{{list.length === 0}}" class="empty-state">暂时没有保修凭证</view>
+  <view wx:else class="warranty-list">
+    <view class="warranty-item" wx:for="{{list}}" wx:key="id" data-id="{{item.order_id}}" bindtap="openOrder">
+      <view class="warranty-top"><text>{{item.certificate_no}}</text><text class="status {{item.certificateActive ? '' : 'expired'}}">{{item.certificateStatusText}}</text></view>
+      <text class="amount">服务金额 ¥{{item.amount}}</text>
+      <view class="countdown-row">
+        <view class="countdown-copy"><text class="countdown-label">保修倒计时</text><text class="countdown-date">有效期至 {{item.expiresText}}</text></view>
+        <view class="countdown-value"><text>{{item.remainingDays}}</text><text>天</text></view>
+      </view>
+      <text class="warranty-days">原保修期 {{item.warranty_days}} 天 · 订单 #{{item.order_id}}</text>
+      <view class="warranty-actions">
+        <text wx:if="{{item.ticketStatusText}}" class="claim-status">申请状态：{{item.ticketStatusText}}</text>
+        <button
+          class="claim-button {{item.canClaim ? '' : 'disabled'}}"
+          data-id="{{item.order_id}}"
+          data-enabled="{{item.canClaim}}"
+          disabled="{{!item.canClaim}}"
+          catchtap="applyWarranty"
+          hover-class="button-hover"
+        >
+          <image src="/assets/ui/bill-check.png" mode="aspectFit" />
+          <text>{{item.claimText}}</text>
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

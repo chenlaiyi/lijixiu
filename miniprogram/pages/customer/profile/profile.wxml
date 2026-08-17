@@ -1,0 +1,159 @@
+<view class="safe-page profile" wx:if="{{ready && userInfo}}">
+  <view class="profile-panel">
+    <view class="user-card">
+      <view class="avatar">
+        <image class="avatar-image" src="/assets/ui/profile-user.png" mode="aspectFit" />
+      </view>
+      <view class="user-info">
+        <text class="user-name">{{userName}}</text>
+        <text class="user-phone">{{phoneText}}</text>
+      </view>
+      <text class="user-role">{{roleLabel}}</text>
+    </view>
+
+    <view class="profile-action-row">
+      <view class="account-hint-head">
+        <view class="account-hint-icon-wrap">
+          <image class="account-hint-icon" src="{{accountHint.icon}}" mode="aspectFit" />
+        </view>
+        <view class="account-hint-copy">
+          <text class="account-hint-title">{{accountHint.title}}</text>
+          <text class="account-hint-desc">{{accountHint.desc}}</text>
+        </view>
+      </view>
+      <button wx:if="{{showWorkbench}}" class="account-hint-btn profile-action-btn" bindtap="goWorkbench" hover-class="button-hover">
+        <view class="mini-action-content">
+          <image class="mini-action-icon" src="{{workbenchIcon}}" mode="aspectFit" />
+          <text>{{accountHint.actionText}}</text>
+        </view>
+      </button>
+      <button wx:else class="account-hint-btn profile-action-btn" bindtap="goOrders" hover-class="button-hover">
+        <view class="mini-action-content">
+          <image class="mini-action-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+          <text>{{accountHint.actionText}}</text>
+        </view>
+      </button>
+    </view>
+
+    <view wx:if="{{showWallet}}" class="wallet-summary-row">
+      <view class="wallet-head">
+        <view class="wallet-icon-wrap">
+          <image class="wallet-icon" src="/assets/ui/wallet.png" mode="aspectFit" />
+        </view>
+        <text class="wallet-label">余额</text>
+      </view>
+      <view class="wallet-summary-main">
+        <text class="wallet-amount">¥{{walletView.available_balance}}</text>
+        <view class="wallet-meta">
+          <text class="wallet-chip">收入 ¥{{walletView.total_income}}</text>
+          <text class="wallet-chip">冻结 ¥{{walletView.frozen_balance}}</text>
+        </view>
+      </view>
+      <text wx:if="{{walletLoading}}" class="wallet-tip">加载余额</text>
+      <view wx:if="{{walletError}}" class="wallet-retry-row">
+        <text class="wallet-tip wallet-error">余额加载失败</text>
+        <button class="wallet-retry-btn" bindtap="retryWallet" hover-class="button-hover">
+          <view class="mini-action-content">
+            <image class="mini-action-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+            <text>重试</text>
+          </view>
+        </button>
+      </view>
+    </view>
+
+    <view wx:elif="{{showCustomerServices}}" class="service-summary-row">
+      <view class="service-flow-head">
+        <view class="service-flow-icon-wrap">
+          <image class="service-flow-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+        </view>
+        <view class="service-flow-copy">
+          <text class="service-flow-title">订单和保修</text>
+          <text class="service-flow-desc">进度 支付 凭证</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="menu-list">
+    <view class="menu-item tap-feedback" bindtap="goPersonalInfo" hover-class="tap-feedback-active">
+      <view class="menu-main"><view class="menu-icon-wrap"><image class="menu-icon" src="/assets/ui/profile-user.png" mode="aspectFit" /></view><text>个人信息</text></view>
+      <image class="arrow-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+    </view>
+    <view class="menu-item tap-feedback" bindtap="goSettings" hover-class="tap-feedback-active">
+      <view class="menu-main"><view class="menu-icon-wrap"><image class="menu-icon" src="/assets/ui/admin.png" mode="aspectFit" /></view><text>设置</text></view>
+      <image class="arrow-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+    </view>
+    <view class="menu-item tap-feedback" bindtap="goAddresses" hover-class="tap-feedback-active">
+      <view class="menu-main"><view class="menu-icon-wrap"><image class="menu-icon" src="/assets/ui/address.png" mode="aspectFit" /></view><text>地址簿</text></view>
+      <image class="arrow-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+    </view>
+    <view class="menu-item tap-feedback" bindtap="goWarranties" hover-class="tap-feedback-active">
+      <view class="menu-main"><view class="menu-icon-wrap"><image class="menu-icon" src="/assets/ui/bill-check.png" mode="aspectFit" /></view><text>保修凭证</text></view>
+      <image class="arrow-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+    </view>
+    <view class="menu-item tap-feedback" bindtap="goOrders" hover-class="tap-feedback-active" hover-start-time="20" hover-stay-time="80">
+      <view class="menu-main">
+        <view class="menu-icon-wrap">
+          <image class="menu-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+        </view>
+        <text>订单</text>
+      </view>
+      <image class="arrow-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+    </view>
+    <view class="menu-item tap-feedback" bindtap="goHome" hover-class="tap-feedback-active" hover-start-time="20" hover-stay-time="80">
+      <view class="menu-main">
+        <view class="menu-icon-wrap">
+          <image class="menu-icon" src="/assets/ui/plus.png" mode="aspectFit" />
+        </view>
+        <text>报修</text>
+      </view>
+      <image class="arrow-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+    </view>
+    <view wx:if="{{showWallet}}" class="menu-item tap-feedback" bindtap="goWallet" hover-class="tap-feedback-active" hover-start-time="20" hover-stay-time="80">
+      <view class="menu-main">
+        <view class="menu-icon-wrap">
+          <image class="menu-icon" src="/assets/ui/wallet.png" mode="aspectFit" />
+        </view>
+        <text>余额</text>
+      </view>
+      <image class="arrow-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+    </view>
+    <view wx:if="{{showWorkbench}}" class="menu-item tap-feedback" bindtap="goWorkbench" hover-class="tap-feedback-active" hover-start-time="20" hover-stay-time="80">
+      <view class="menu-main">
+        <view class="menu-icon-wrap">
+          <image class="menu-icon" src="{{workbenchIcon}}" mode="aspectFit" />
+        </view>
+          <text>{{workbenchLabel}}</text>
+      </view>
+      <image class="arrow-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+    </view>
+  </view>
+
+  <button class="logout-btn" bindtap="handleLogout" hover-class="button-hover">
+    <image class="logout-icon" src="/assets/ui/logout.png" mode="aspectFit" />
+    <text>退出</text>
+  </button>
+</view>
+
+<view class="safe-page profile" wx:elif="{{!ready}}">
+  <view class="empty">
+    <image class="empty-icon" src="/assets/ui/profile-user.png" mode="aspectFit" />
+    <text class="role-empty-title">加载中…</text>
+  </view>
+</view>
+
+<view class="safe-page profile" wx:else>
+  <view class="empty">
+    <image class="empty-icon" src="/assets/ui/profile-user.png" mode="aspectFit" />
+    <text class="role-empty-title">请先登录</text>
+    <text class="role-empty-desc">登录后查看订单</text>
+    <button class="empty-action" bindtap="goLogin" hover-class="button-hover">
+      <view class="mini-action-content">
+        <image class="mini-action-icon" src="/assets/ui/profile-user.png" mode="aspectFit" />
+        <text>去登录</text>
+      </view>
+    </button>
+  </view>
+</view>
+
+<role-tabbar />

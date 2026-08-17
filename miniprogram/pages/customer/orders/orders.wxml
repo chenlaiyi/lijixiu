@@ -1,0 +1,135 @@
+<view class="safe-page orders-page">
+  <view class="page-head">
+    <text class="page-title">订单</text>
+    <button class="new-btn" bindtap="goHome" hover-class="button-hover">
+      <view class="mini-action-content">
+        <image class="mini-action-icon" src="/assets/ui/plus.png" mode="aspectFit" />
+        <text>报修</text>
+      </view>
+    </button>
+  </view>
+
+  <view wx:if="{{orders.length > 0}}" class="orders-summary">
+    <view class="summary-item active">
+      <text class="summary-value">{{summary.active}}</text>
+      <text class="summary-label">进行中</text>
+    </view>
+    <view class="summary-item pay">
+      <text class="summary-value">{{summary.waitPay}}</text>
+      <text class="summary-label">待支付</text>
+    </view>
+    <view class="summary-item done">
+      <text class="summary-value">{{summary.completed}}</text>
+      <text class="summary-label">已完成</text>
+    </view>
+  </view>
+
+  <view wx:if="{{orders.length > 0}}" class="next-action-card {{nextHint.tone}} tap-feedback"
+        data-id="{{nextHint.orderId}}" data-action="{{nextHint.action}}"
+        bindtap="handleNextHint"
+        hover-class="tap-feedback-active" hover-start-time="20" hover-stay-time="80">
+    <view class="next-action-main">
+      <view class="next-action-icon-wrap">
+        <image class="next-action-icon" src="{{nextHint.icon}}" mode="aspectFit" />
+      </view>
+      <view class="next-action-copy">
+        <text class="next-action-label">下一步</text>
+        <text class="next-action-title">{{nextHint.title}}</text>
+        <text class="next-action-desc">{{nextHint.desc}}</text>
+      </view>
+    </view>
+    <image class="next-action-arrow" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+  </view>
+
+  <view wx:if="{{loading && orders.length === 0}}" class="empty">
+    <image class="empty-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+    <text class="role-empty-title">加载中…</text>
+  </view>
+
+  <view wx:if="{{!loading && loadFailed}}" class="empty">
+    <image class="empty-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+    <text class="role-empty-title">加载失败</text>
+    <button class="go-btn" bindtap="loadOrders" hover-class="button-hover">
+      <view class="mini-action-content">
+        <image class="mini-action-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+        <text>重试</text>
+      </view>
+    </button>
+  </view>
+
+  <view wx:if="{{!loading && !loadFailed && orders.length === 0}}" class="empty">
+    <image class="empty-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+    <text class="role-empty-title">暂无订单</text>
+    <button class="go-btn" bindtap="goHome" hover-class="button-hover">
+      <view class="mini-action-content">
+        <image class="mini-action-icon" src="/assets/ui/plus.png" mode="aspectFit" />
+        <text>去报修</text>
+      </view>
+    </button>
+  </view>
+
+  <block wx:if="{{orders.length > 0}}">
+    <view class="order-card {{item.canPay ? 'need-pay' : ''}} tap-feedback" wx:for="{{orders}}" wx:key="id"
+          data-id="{{item.id}}" bindtap="goDetail"
+          hover-class="tap-feedback-active" hover-start-time="20" hover-stay-time="80">
+      <view class="card-header">
+        <view class="card-title-line">
+          <view class="card-icon-wrap">
+            <image class="card-icon" src="{{item.categoryIcon}}" mode="aspectFit" />
+          </view>
+          <view class="card-title-copy">
+            <text class="card-cat">{{item.categoryText}}</text>
+            <view class="order-subline">
+              <text>#{{item.id}}</text>
+              <text wx:if="{{item.createdText}}">{{item.createdText}}</text>
+            </view>
+          </view>
+        </view>
+        <text class="card-status {{item.statusTone}}">{{item.statusText}}</text>
+      </view>
+      <view class="order-next-step">
+        <view class="order-next-copy">
+          <text class="order-next-title">{{item.nextStepTitle}}</text>
+        </view>
+        <image class="order-next-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+      </view>
+      <text class="card-desc">{{item.description}}</text>
+      <view class="card-chip-row">
+        <view class="card-chip">
+          <image class="chip-icon" src="/assets/ui/address.png" mode="aspectFit" />
+          <text>{{item.address}}</text>
+        </view>
+        <view wx:if="{{item.mediaSummary}}" class="card-chip media">
+          <image class="chip-icon" src="/assets/ui/image.png" mode="aspectFit" />
+          <text>{{item.mediaSummary}}</text>
+        </view>
+      </view>
+      <view wx:if="{{item.hasBill}}" class="order-bill-summary">
+        <view class="order-bill-head">
+          <view class="order-bill-title">
+            <image class="order-bill-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+            <text>服务明细</text>
+          </view>
+          <text class="order-bill-total">合计 ¥{{item.billAmountText}}</text>
+        </view>
+        <text class="order-bill-warranty">保修 {{item.billWarrantyText}}</text>
+        <view class="order-bill-item" wx:for="{{item.billItems}}" wx:key="name">
+          <view class="order-bill-item-copy">
+            <text class="order-bill-item-name">{{item.name}}</text>
+            <text class="order-bill-item-meta">{{item.qtyText}} × ¥{{item.priceText}}</text>
+          </view>
+          <text class="order-bill-item-amount">¥{{item.amountText}}</text>
+        </view>
+      </view>
+      <view class="card-footer">
+        <text class="price {{item.priceTone}}">{{item.priceLabel}}</text>
+        <button wx:if="{{item.canPay}}" class="pay-btn" catchtap="goPay" data-id="{{item.id}}" data-status="{{item.status}}" hover-class="button-hover">
+          <image class="pay-icon" src="/assets/ui/pay.png" mode="aspectFit" />
+          <text>{{item.payActionText}}</text>
+        </button>
+      </view>
+    </view>
+  </block>
+</view>
+
+<role-tabbar />

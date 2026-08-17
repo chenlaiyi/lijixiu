@@ -1,0 +1,453 @@
+.store-workflow {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  margin: 14rpx 0;
+  padding: 14rpx;
+  color: #344054;
+  background: #f8fafc;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+}
+
+.store-workflow-icon-wrap {
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #eff4ff;
+  border: 1rpx solid #b2ccff;
+  border-radius: 12rpx;
+}
+
+.store-workflow-icon {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
+}
+
+.store-workflow-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.store-workflow-title {
+  display: block;
+  min-width: 0;
+  color: #101828;
+  font-size: 25rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.store-workflow-desc {
+  display: block;
+  min-width: 0;
+  margin-top: 4rpx;
+  color: #667085;
+  font-size: 21rpx;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.store-action-grid {
+  margin-top: 0;
+  gap: 12rpx;
+}
+
+.store-action-grid .role-stat-card {
+  width: calc((100% - 12rpx) / 2);
+  min-height: 88rpx;
+  padding: 14rpx;
+}
+
+.store-action-grid .role-stat-num {
+  font-size: 31rpx;
+}
+
+.store-action-grid .role-stat-label {
+  font-size: 22rpx;
+}
+
+.store-section-title-row {
+  align-items: flex-start;
+}
+
+.store-section-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.store-section-copy .role-section-title {
+  margin-bottom: 0;
+}
+
+.store-section-subtitle {
+  display: block;
+  margin-top: 3rpx;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.order-next-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+  margin-top: 12rpx;
+  padding: 10rpx 12rpx;
+  color: #344054;
+  background: #f8fafc;
+  border: 1rpx solid #edf1f5;
+  border-radius: 12rpx;
+}
+
+.order-next-icon {
+  width: 24rpx;
+  height: 24rpx;
+  flex-shrink: 0;
+  margin-top: 3rpx;
+}
+
+.order-next-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.order-next-title {
+  display: block;
+  min-width: 0;
+  color: #101828;
+  font-size: 23rpx;
+  font-weight: 900;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.order-next-desc {
+  display: block;
+  min-width: 0;
+  margin-top: 2rpx;
+  color: #667085;
+  font-size: 20rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.assign-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.assign-row picker {
+  flex: 1;
+  min-width: 240rpx;
+}
+
+.assign-picker,
+.wage-picker,
+.wage-input {
+  min-width: 0;
+  height: 68rpx;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 0 16rpx;
+  color: #344054;
+  background: #fff;
+  border: 1rpx solid #d0d5dd;
+  border-radius: 10rpx;
+  font-size: 23rpx;
+  line-height: 1.25;
+}
+
+.picker-text {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-icon {
+  width: 26rpx;
+  height: 26rpx;
+  flex-shrink: 0;
+}
+
+.assign-btn {
+  min-width: 150rpx;
+  max-width: 100%;
+  height: 68rpx;
+  padding: 0 16rpx;
+  flex-shrink: 0;
+  color: #fff;
+  background: #087443;
+  border-radius: 12rpx;
+  font-size: 23rpx;
+}
+
+.purple {
+  background: #175cd3;
+}
+
+.orange {
+  background: #b54708;
+}
+
+.review-box,
+.confirm-bill-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  min-width: 0;
+  padding: 14rpx 0 0;
+  background: transparent;
+  border-top: 1rpx solid #edf1f5;
+  border-radius: 0;
+}
+
+.confirm-bill-box {
+  flex: 1 0 100%;
+  width: 100%;
+  padding: 14rpx;
+  background: #f8fafc;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 12rpx;
+}
+
+.bill-box {
+  min-width: 0;
+  padding: 0 0 12rpx;
+  background: transparent;
+  border: none;
+  border-bottom: 1rpx solid #edf1f5;
+  border-radius: 0;
+}
+
+.order-bill-box {
+  margin-top: 14rpx;
+  padding: 16rpx;
+  background: #f8fafc;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 12rpx;
+}
+
+.bill-item-copy {
+  min-width: 0;
+  flex: 1 1 240rpx;
+}
+
+.bill-item-name,
+.bill-item-meta {
+  display: block;
+}
+
+.bill-item-meta {
+  margin-top: 4rpx;
+  color: #667085;
+  font-size: 21rpx;
+  line-height: 1.4;
+}
+
+.service-bill-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12rpx;
+}
+
+.service-bill-title {
+  min-width: 0;
+  flex: 1 1 240rpx;
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+}
+
+.service-bill-title text {
+  min-width: 0;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.service-bill-icon {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
+  flex-shrink: 0;
+  margin-top: 2rpx;
+}
+
+.bill-item,
+.wage-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 10rpx;
+  color: #667085;
+  font-size: 23rpx;
+}
+
+.wage-row {
+  align-items: flex-start;
+}
+
+.wage-row > text {
+  flex-shrink: 0;
+  max-width: 180rpx;
+  color: #344054;
+  font-weight: 800;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.bill-item-name {
+  min-width: 0;
+  flex: 1 1 220rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.bill-item-amount {
+  flex-shrink: 0;
+  max-width: 100%;
+  color: #087443;
+  font-weight: 900;
+  line-height: 1.45;
+  text-align: right;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.wage-row picker {
+  min-width: 240rpx;
+  flex: 1;
+}
+
+.wage-input {
+  min-width: 240rpx;
+  flex: 1;
+  width: 100%;
+  line-height: 72rpx;
+}
+
+.wage-note {
+  display: block;
+  min-width: 0;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.assign-btn .role-button-content {
+  min-width: 0;
+}
+
+.role-card {
+  padding: 18rpx;
+  border-radius: 14rpx;
+}
+
+.role-strong {
+  font-size: 27rpx;
+}
+
+.role-desc,
+.role-meta-row {
+  font-size: 23rpx;
+}
+
+.role-desc {
+  max-height: 72rpx;
+  overflow: hidden;
+}
+
+.role-money {
+  margin-top: 10rpx;
+  font-size: 27rpx;
+}
+
+.role-actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 14rpx;
+}
+
+.store-dashboard-page .role-actions > .role-primary-btn,
+.store-dashboard-page .role-actions > .role-secondary-btn {
+  width: auto;
+  flex: 1 1 230rpx;
+}
+
+.role-primary-btn,
+.role-secondary-btn {
+  min-height: 72rpx;
+  border-radius: 12rpx;
+  font-size: 22rpx;
+}
+
+.role-secondary-btn.compact {
+  flex: 0 1 164rpx !important;
+}
+
+.assign-row,
+.review-box,
+.confirm-bill-box {
+  flex: 1 0 100%;
+  width: 100%;
+}
+
+/* Mobile polish pass for store manager workflow. */
+.store-dashboard-page {
+  background: #f6f7f9;
+}
+
+.role-hero,
+.store-workflow,
+.role-stat-card,
+.role-card,
+.role-empty-inner,
+.role-inline-alert {
+  background: #fff;
+  border-color: #e5e7eb;
+  box-shadow: none;
+}
+
+.order-next-step,
+.role-meta-row,
+.assign-picker,
+.wage-picker,
+.wage-input {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+}
+
+.role-primary-btn,
+.role-secondary-btn,
+.assign-btn,
+.role-empty-action {
+  box-shadow: none;
+}
+
+.store-dashboard-page .role-button-content {
+  width: 100%;
+  min-height: 72rpx;
+}
+
+.store-dashboard-page .role-button-content text {
+  line-height: 1.08;
+}

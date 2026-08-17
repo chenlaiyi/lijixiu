@@ -1,0 +1,175 @@
+{
+  "base_url": "https://x.iddg.cn",
+  "timestamp": "2026-08-09T07:39:23.188Z",
+  "run_mode": "DRY_RUN",
+  "summary": {
+    "wallets_total": 13,
+    "wallets_ok": 9,
+    "wallets_mismatch": 4,
+    "alerts_unresolved": 12
+  },
+  "plans": [
+    {
+      "wallet_id": 2,
+      "user_id": 4,
+      "available_balance": 0,
+      "frozen_balance": 88,
+      "total": 88,
+      "expected_ledger": 0,
+      "actual_wallet": 88,
+      "difference": -88,
+      "adjust_action": "CREDIT",
+      "adjust_amount": 88,
+      "adjust_ledger_amount": -88
+    },
+    {
+      "wallet_id": 3,
+      "user_id": 5,
+      "available_balance": 0,
+      "frozen_balance": 200,
+      "total": 200,
+      "expected_ledger": 0,
+      "actual_wallet": 200,
+      "difference": -200,
+      "adjust_action": "CREDIT",
+      "adjust_amount": 200,
+      "adjust_ledger_amount": -200
+    },
+    {
+      "wallet_id": 5,
+      "user_id": 7,
+      "available_balance": 0,
+      "frozen_balance": 42007.700000000004,
+      "total": 42007.700000000004,
+      "expected_ledger": 0,
+      "actual_wallet": 42007.7,
+      "difference": -42007.7,
+      "adjust_action": "CREDIT",
+      "adjust_amount": 42007.7,
+      "adjust_ledger_amount": -42007.7
+    },
+    {
+      "wallet_id": 12,
+      "user_id": 15,
+      "available_balance": 100,
+      "frozen_balance": 0,
+      "total": 100,
+      "expected_ledger": 99,
+      "actual_wallet": 100,
+      "difference": -1,
+      "adjust_action": "CREDIT",
+      "adjust_amount": 1,
+      "adjust_ledger_amount": -1
+    }
+  ],
+  "alert_resolve_plan": [
+    {
+      "alert_id": 9,
+      "type": "reconcile_mismatch",
+      "severity": "critical",
+      "message": "钱包#2 对账差异: -88.0",
+      "amount": -88,
+      "created_at": "2026-08-09T07:39:21",
+      "rationale": "差异将由 ADJUST 流水补齐,标 resolved 留档"
+    },
+    {
+      "alert_id": 10,
+      "type": "reconcile_mismatch",
+      "severity": "critical",
+      "message": "钱包#3 对账差异: -200.0",
+      "amount": -200,
+      "created_at": "2026-08-09T07:39:21",
+      "rationale": "差异将由 ADJUST 流水补齐,标 resolved 留档"
+    },
+    {
+      "alert_id": 11,
+      "type": "reconcile_mismatch",
+      "severity": "critical",
+      "message": "钱包#5 对账差异: -42007.7",
+      "amount": -42007.7,
+      "created_at": "2026-08-09T07:39:21",
+      "rationale": "差异将由 ADJUST 流水补齐,标 resolved 留档"
+    },
+    {
+      "alert_id": 12,
+      "type": "reconcile_mismatch",
+      "severity": "critical",
+      "message": "钱包#12 对账差异: -1.0",
+      "amount": -1,
+      "created_at": "2026-08-09T07:39:21",
+      "rationale": "差异将由 ADJUST 流水补齐,标 resolved 留档"
+    },
+    {
+      "alert_id": 5,
+      "type": "reconcile_mismatch",
+      "severity": "critical",
+      "message": "钱包#2 对账差异: -88.0",
+      "amount": -88,
+      "created_at": "2026-08-09T07:34:49",
+      "rationale": "差异将由 ADJUST 流水补齐,标 resolved 留档"
+    },
+    {
+      "alert_id": 6,
+      "type": "reconcile_mismatch",
+      "severity": "critical",
+      "message": "钱包#3 对账差异: -200.0",
+      "amount": -200,
+      "created_at": "2026-08-09T07:34:49",
+      "rationale": "差异将由 ADJUST 流水补齐,标 resolved 留档"
+    },
+    {
+      "alert_id": 7,
+      "type": "reconcile_mismatch",
+      "severity": "critical",
+      "message": "钱包#5 对账差异: -42007.7",
+      "amount": -42007.7,
+      "created_at": "2026-08-09T07:34:49",
+      "rationale": "差异将由 ADJUST 流水补齐,标 resolved 留档"
+    },
+    {
+      "alert_id": 8,
+      "type": "reconcile_mismatch",
+      "severity": "critical",
+      "message": "钱包#12 对账差异: -1.0",
+      "amount": -1,
+      "created_at": "2026-08-09T07:34:49",
+      "rationale": "差异将由 ADJUST 流水补齐,标 resolved 留档"
+    },
+    {
+      "alert_id": 4,
+      "type": "reconcile_mismatch",
+      "severity": "critical",
+      "message": "钱包#3 对账差异: -1013.6",
+      "amount": -1013.6,
+      "created_at": "2026-07-04T02:27:21",
+      "rationale": "差异将由 ADJUST 流水补齐,标 resolved 留档"
+    },
+    {
+      "alert_id": 3,
+      "type": "reconcile_mismatch",
+      "severity": "critical",
+      "message": "钱包#3 对账差异: -120.0",
+      "amount": -120,
+      "created_at": "2026-07-03T12:29:16",
+      "rationale": "差异将由 ADJUST 流水补齐,标 resolved 留档"
+    },
+    {
+      "alert_id": 2,
+      "type": "reconcile_mismatch",
+      "severity": "critical",
+      "message": "钱包#3 对账差异: -120.0",
+      "amount": -120,
+      "created_at": "2026-06-29T14:48:52",
+      "rationale": "差异将由 ADJUST 流水补齐,标 resolved 留档"
+    },
+    {
+      "alert_id": 1,
+      "type": "reconcile_mismatch",
+      "severity": "warning",
+      "message": "[??] ?????????",
+      "amount": null,
+      "created_at": "2026-06-29T14:48:16",
+      "rationale": "差异将由 ADJUST 流水补齐,标 resolved 留档"
+    }
+  ]
+}

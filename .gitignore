@@ -1,0 +1,79 @@
+# 立即修平台 .gitignore — 2026-08-09 补
+
+# ===== Secrets & config =====
+.env
+.env.local
+.env.*.local
+*.pem
+*.p12
+*.key
+cert/
+deploy/certs/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+.tox/
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# ===== Node / H5 / Admin =====
+node_modules/
+.npm/
+.yarn/
+.pnp.*
+.next/
+.parcel-cache/
+
+# ===== 编辑器 / OS =====
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ===== 本地临时 / 调试 =====
+._trash/
+_inspect_*.py
+_test_*.txt
+*.tmp
+*.bak
+*.log
+!docs/**/*.log
+!deploy/**/*.log
+logs/
+
+# ===== 数据库 / 上传 =====
+*.db
+*.db-shm
+*.db-wal
+uploads/
+
+# ===== 跑测临时目录 =====
+/tmp/
+test-results/
+playwright-report/
+
+# ===== 本地临时脚本 / 截图 / 发布包(勿提交)=====
+__tmp_*
+preview-*.png
+release-*.tgz
+sqlite-*.tar.gz
+.agents/
+.codex/

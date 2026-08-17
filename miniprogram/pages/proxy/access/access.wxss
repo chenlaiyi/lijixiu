@@ -1,0 +1,22 @@
+.access-page { min-height: 100vh; padding: 34rpx 30rpx; background: #f7f8fa; color: #101828; }
+.access-state { min-height: 500rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18rpx; color: #667085; }
+.access-state image { width: 72rpx; height: 72rpx; opacity: .55; }
+.access-state.error { color: #b42318; }
+.access-head { display: flex; align-items: center; gap: 18rpx; padding: 28rpx; color: #fff; background: #175cd3; border-radius: 14rpx; }
+.access-head.payment { background: #087443; }
+.access-head image { width: 62rpx; height: 62rpx; padding: 12rpx; background: rgba(255,255,255,.16); border-radius: 12rpx; filter: brightness(0) invert(1); }
+.access-title { display: block; font-size: 32rpx; font-weight: 800; }
+.access-sub { display: block; margin-top: 8rpx; color: rgba(255,255,255,.8); font-size: 22rpx; }
+.access-detail { margin-top: 18rpx; padding: 24rpx; background: #fff; border: 1rpx solid #e4e7ec; border-radius: 14rpx; }
+.detail-row,.amount-row { display: flex; justify-content: space-between; gap: 24rpx; padding: 18rpx 0; border-bottom: 1rpx solid #eaecf0; font-size: 23rpx; }
+.detail-row > text:first-child { flex-shrink: 0; color: #667085; }
+.detail-row > text:last-child { min-width: 0; text-align: right; word-break: break-all; }
+.amount-row { border-bottom: 0; align-items: baseline; }
+.amount-row text:last-child { color: #b54708; font-size: 34rpx; font-weight: 800; }
+.result-message { margin-top: 16rpx; padding: 16rpx; color: #067647; background: #ecfdf3; border-radius: 10rpx; text-align: center; font-size: 22rpx; }
+.primary-button,.secondary-button,.share-button { width: 100%; height: 84rpx; margin-top: 18rpx; border-radius: 14rpx; font-size: 27rpx; }
+.primary-button { color: #fff; background: #175cd3; }
+.primary-button.pay { background: #087443; }
+.secondary-button { color: #175cd3; background: #eff4ff; }
+.share-button { color: #344054; background: #fff; border: 1rpx solid #d0d5dd; }
+.access-note { display: block; margin: 22rpx 10rpx; color: #667085; font-size: 21rpx; line-height: 1.55; text-align: center; }

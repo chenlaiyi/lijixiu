@@ -1,0 +1,97 @@
+name: Miniprogram CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'miniprogram/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'upload.js'
+      - '.github/workflows/miniprogram.yml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version label, e.g. 1.0.220'
+        required: true
+        type: string
+        default: '1.0.0'
+      desc:
+        description: 'Upload description'
+        required: false
+        type: string
+        default: 'CI build'
+      env_version:
+        description: 'WeChat env version'
+        required: true
+        type: choice
+        default: 'trial'
+        options:
+          - trial
+          - release
+          - develop
+
+# 必需 secret:
+#   - WX_PRIVATE_KEY: miniprogram-ci 私钥(完整 PEM 内容)
+
+jobs:
+  upload:
+    name: Upload to WeChat
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Write miniprogram-ci key
+        run: |
+          mkdir -p .ci
+          echo "${{ secrets.WX_PRIVATE_KEY }}" > .ci/private.key
+          chmod 600 .ci/private.key
+
+      - name: Compile and validate
+        env:
+          APPID: wx2273201e59e280bc
+        run: |
+          # 用 miniprogram-ci 编译 + 验证(不直接上传,只检查编译能成功)
+          node -e "
+            const ci = require('miniprogram-ci');
+            const project = new ci.Project({
+              appid: '$APPID',
+              type: 'miniProgram',
+              projectPath: './miniprogram',
+              privateKeyPath: './.ci/private.key',
+              ignores: ['node_modules/**/*'],
+            });
+            ci.preview({
+              project,
+              desc: 'compile-check',
+              setting: { es6: true, minify: true },
+              qrcodeFormat: 'terminal',
+            }).then(() => console.log('COMPILE OK')).catch(e => { console.error(e); process.exit(1); });
+          "
+          echo "✅ 编译验证通过"
+
+      - name: Upload to WeChat (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          APPID: wx2273201e59e280bc
+          VERSION: ${{ github.event.inputs.version }}
+          DESC: ${{ github.event.inputs.desc }}
+          ENV_VERSION: ${{ github.event.inputs.env_version }}
+        run: |
+          node upload.js
+          echo "✅ 上传完成: $APPID $VERSION ($ENV_VERSION)"
+          echo "📦 描述: $DESC"
+
+      - name: Cleanup key
+        if: always()
+        run: |
+          rm -rf .ci

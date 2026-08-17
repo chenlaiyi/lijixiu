@@ -1,0 +1,1397 @@
+page {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: 28rpx;
+  color: #1d2939;
+  background: #f6f7f9;
+  box-sizing: border-box;
+}
+
+view,
+text,
+button,
+input,
+textarea,
+picker {
+  box-sizing: border-box;
+}
+
+button {
+  font-family: inherit;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 14rpx;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: transparent;
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  vertical-align: middle;
+}
+
+button::after {
+  border: none;
+}
+
+button[disabled] {
+  opacity: 0.62;
+}
+
+.button-hover {
+  opacity: 0.82;
+  transform: scale(0.985);
+}
+
+.tap-feedback {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.tap-feedback-active {
+  opacity: 0.72;
+  transform: scale(0.985);
+}
+
+.safe-page {
+  min-height: 100vh;
+  padding: 24rpx;
+  padding-bottom: calc(168rpx + env(safe-area-inset-bottom));
+  background: #f6f7f9;
+}
+
+.glass-card {
+  background: #fff;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+  box-shadow: none;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40rpx;
+  padding: 0 14rpx;
+  border-radius: 10rpx;
+  color: #087443;
+  background: #e7f8ef;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.app-brand-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 16rpx;
+}
+
+.app-brand-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.app-logo-mark {
+  width: 68rpx;
+  height: 68rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 16rpx;
+}
+
+.app-logo-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.role-page {
+  padding-bottom: calc(168rpx + env(safe-area-inset-bottom));
+}
+
+.role-hero {
+  padding: 22rpx;
+  color: #1d2939;
+  background: #fff;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+  box-shadow: none;
+}
+
+.role-hero-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.role-title {
+  display: block;
+  min-width: 0;
+  color: #101828;
+  font-size: 32rpx;
+  font-weight: 900;
+  line-height: 1.18;
+  word-break: break-all;
+}
+
+.role-subtitle {
+  display: block;
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 24rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.role-ghost-btn {
+  min-width: 128rpx;
+  max-width: 100%;
+  height: 72rpx;
+  flex-shrink: 0;
+  padding: 0 18rpx;
+  color: #087443;
+  background: #fff;
+  border: 1rpx solid #bfe9d1;
+  border-radius: 14rpx;
+  font-size: 24rpx;
+}
+
+.role-stat-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin: 20rpx 0;
+}
+
+.role-stat-card {
+  width: calc((100% - 16rpx) / 2);
+  min-width: 0;
+  min-height: 104rpx;
+  padding: 18rpx;
+  background: #fff;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+}
+
+.role-stat-card-rich {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.role-stat-head,
+.role-section-head,
+.role-card-title-row,
+.role-meta-row,
+.role-button-content,
+.role-empty-inner {
+  display: flex;
+  align-items: center;
+}
+
+.role-stat-head {
+  align-items: flex-start;
+  gap: 10rpx;
+}
+
+.role-stat-head .role-stat-label {
+  margin-top: 0;
+}
+
+.role-stat-icon {
+  width: 36rpx;
+  height: 36rpx;
+  flex-shrink: 0;
+  margin-top: 1rpx;
+}
+
+.role-stat-num {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  color: #101828;
+  font-size: 34rpx;
+  font-weight: 900;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.role-stat-label {
+  display: block;
+  min-width: 0;
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.3;
+  word-break: break-all;
+}
+
+.role-next-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  margin-top: 16rpx;
+  padding: 18rpx;
+  background: #fff;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+  box-shadow: none;
+}
+
+.role-next-icon-wrap {
+  width: 52rpx;
+  height: 52rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #f2f4f7;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+}
+
+.role-next-icon {
+  width: 32rpx;
+  height: 32rpx;
+  display: block;
+}
+
+.role-next-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.role-next-title {
+  display: block;
+  color: #101828;
+  font-size: 27rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.role-next-desc {
+  display: block;
+  margin-top: 6rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.role-card-next {
+  margin-top: 12rpx;
+  padding: 14rpx;
+  background: #f8fafc;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+}
+
+.role-card-next-title {
+  display: block;
+  color: #344054;
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.role-card-next-desc {
+  display: block;
+  margin-top: 4rpx;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.role-section {
+  margin-top: 24rpx;
+}
+
+.role-section-head {
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12rpx;
+  margin-bottom: 14rpx;
+}
+
+.role-section-title-row {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+}
+
+.role-section-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.role-section-icon {
+  width: 38rpx;
+  height: 38rpx;
+  flex-shrink: 0;
+}
+
+.role-section-title {
+  display: block;
+  min-width: 0;
+  margin-bottom: 14rpx;
+  color: #101828;
+  font-size: 30rpx;
+  font-weight: 900;
+  line-height: 1.3;
+  word-break: break-all;
+}
+
+.role-section-head .role-section-title {
+  margin-bottom: 0;
+}
+
+.role-section-subtitle {
+  display: block;
+  margin-top: 6rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.role-card,
+.role-empty {
+  margin-bottom: 16rpx;
+  padding: 20rpx;
+  background: #fff;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+}
+
+.role-line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.role-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.role-card-icon {
+  width: 54rpx;
+  height: 54rpx;
+  padding: 10rpx;
+  flex-shrink: 0;
+  background: #f3f6f8;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+}
+
+.role-card-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.role-card-title-row {
+  min-width: 0;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.role-card-title-icon {
+  width: 34rpx;
+  height: 34rpx;
+  flex-shrink: 0;
+  margin-top: 2rpx;
+}
+
+.role-strong {
+  min-width: 0;
+  flex: 1;
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.role-pill {
+  flex-shrink: 0;
+  max-width: 100%;
+  padding: 7rpx 13rpx;
+  overflow: hidden;
+  color: #175cd3;
+  background: #eff4ff;
+  border: 1rpx solid transparent;
+  border-radius: 10rpx;
+  font-size: 21rpx;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-desc {
+  display: block;
+  margin-top: 10rpx;
+  color: #667085;
+  font-size: 24rpx;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.role-meta-row {
+  align-items: flex-start;
+  gap: 8rpx;
+  margin-top: 10rpx;
+  color: #667085;
+  font-size: 24rpx;
+  line-height: 1.45;
+}
+
+.role-meta-icon {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+  margin-top: 3rpx;
+}
+
+.role-meta-text {
+  min-width: 0;
+  flex: 1;
+  word-break: break-all;
+}
+
+.role-money {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 12rpx;
+  color: #087443;
+  font-size: 30rpx;
+  font-weight: 900;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.role-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-top: 16rpx;
+  min-width: 0;
+}
+
+.role-primary-btn,
+.role-secondary-btn {
+  width: 100%;
+  min-width: 0;
+  min-height: 72rpx;
+  padding: 0 18rpx;
+  color: #fff;
+  border-radius: 14rpx;
+  font-size: 25rpx;
+}
+
+.role-primary-btn {
+  background: #087443;
+}
+
+.role-secondary-btn {
+  color: #175cd3;
+  background: #eff4ff;
+}
+
+.role-button-content {
+  justify-content: center;
+  gap: 10rpx;
+  min-width: 0;
+}
+
+.mini-action-content {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  min-width: 0;
+  line-height: 1;
+}
+
+.role-button-content text,
+.mini-action-content text {
+  display: block;
+  min-width: 0;
+  height: auto;
+  overflow: hidden;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-action-icon {
+  width: 30rpx;
+  height: 30rpx;
+  flex-shrink: 0;
+}
+
+.mini-action-icon {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+}
+
+.role-empty {
+  color: #667085;
+  text-align: center;
+}
+
+.role-empty-inner {
+  min-height: 168rpx;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12rpx;
+}
+
+.role-empty-icon {
+  width: 72rpx;
+  height: 72rpx;
+  opacity: 0.66;
+}
+
+.role-empty-title {
+  display: block;
+  color: #344054;
+  font-size: 27rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.role-empty-desc {
+  display: block;
+  max-width: 540rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.role-empty-action {
+  min-width: 188rpx;
+  max-width: 100%;
+  height: 72rpx;
+  margin-top: 4rpx;
+  padding: 0 20rpx;
+  color: #087443;
+  background: #f3fbf7;
+  border: 1rpx solid #bfe9d1;
+  border-radius: 14rpx;
+  font-size: 24rpx;
+}
+
+.role-empty-action .mini-action-content {
+  min-width: 0;
+}
+
+.role-inline-alert-text {
+  word-break: break-all;
+}
+
+.role-inline-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+  margin-top: 16rpx;
+  padding: 18rpx;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1rpx solid #fde68a;
+  border-radius: 14rpx;
+}
+
+.role-inline-alert-icon {
+  width: 30rpx;
+  height: 30rpx;
+  flex-shrink: 0;
+  margin-top: 2rpx;
+}
+
+.role-inline-alert-text {
+  min-width: 0;
+  flex: 1;
+  font-size: 24rpx;
+  line-height: 1.45;
+}
+
+.tone-waiting {
+  color: #175cd3 !important;
+  background: #eff4ff !important;
+  border-color: #b2ccff !important;
+}
+
+.tone-progress {
+  color: #087443 !important;
+  background: #e7f8ef !important;
+  border-color: #bfe9d1 !important;
+}
+
+.tone-action {
+  color: #6941c6 !important;
+  background: #f4f3ff !important;
+  border-color: #d9d6fe !important;
+}
+
+.tone-warning {
+  color: #b54708 !important;
+  background: #fffaeb !important;
+  border-color: #fedf89 !important;
+}
+
+.tone-success {
+  color: #027a48 !important;
+  background: #ecfdf3 !important;
+  border-color: #abefc6 !important;
+}
+
+.tone-danger {
+  color: #b42318 !important;
+  background: #fef3f2 !important;
+  border-color: #fecdca !important;
+}
+
+.tone-neutral {
+  color: #344054 !important;
+  background: #f2f4f7 !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Unified mobile product system - service direct */
+page {
+  color: #151b20;
+  background: #f7f9f8;
+}
+
+page button {
+  border-radius: 14rpx;
+  font-weight: 700;
+}
+
+page .safe-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 28rpx 28rpx calc(146rpx + env(safe-area-inset-bottom));
+  color: #151b20;
+  background: #f7f9f8;
+}
+
+page .app-brand-row {
+  gap: 14rpx;
+}
+
+page .app-logo-mark {
+  width: 64rpx;
+  height: 64rpx;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+  border: 0;
+  border-radius: 14rpx;
+}
+
+page .role-page .role-hero,
+page .jobs-page .top-card,
+page .admin-page .admin-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin: 0;
+  padding: 8rpx 0 26rpx;
+  color: #151b20;
+  background: transparent;
+  border: 0;
+  border-bottom: 1rpx solid #e2e7e4;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+page .role-page .role-hero-head {
+  width: 100%;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+page .role-title,
+page .jobs-page .title,
+page .admin-page .hero-title {
+  color: #151b20;
+  font-size: 32rpx;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+page .role-subtitle,
+page .jobs-page .subtitle,
+page .admin-page .hero-desc {
+  margin-top: 6rpx;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.35;
+}
+
+page .role-ghost-btn,
+page .jobs-page .switch-btn,
+page .admin-page .client-btn {
+  min-width: 132rpx;
+  height: 64rpx;
+  padding: 0 16rpx;
+  color: #087443;
+  background: #edf8f2;
+  border: 0;
+  border-radius: 12rpx;
+  font-size: 22rpx;
+}
+
+page .role-focus-strip,
+page .store-workflow,
+page .work-prompt,
+page .admin-overview,
+page .role-next-card,
+page .detail-workflow,
+page .bill-readiness {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  margin: 20rpx 0 0;
+  padding: 20rpx;
+  color: #344054;
+  background: #ffffff;
+  border: 1rpx solid #e2e7e4;
+  border-radius: 14rpx;
+  box-shadow: none;
+}
+
+page .role-focus-chip,
+page .overview-tag,
+page .section-count,
+page .role-pill,
+page .pill,
+page .job-status,
+page .card-status,
+page .detail-status,
+page .status-badge {
+  min-height: 38rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12rpx;
+  border: 0;
+  border-radius: 10rpx;
+  font-size: 20rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+
+page .role-stat-grid,
+page .metric-grid,
+page .wallet-stat-grid,
+page .orders-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12rpx;
+  margin: 20rpx 0 0;
+}
+
+page .safe-page .role-stat-card,
+page .safe-page .metric-card,
+page .safe-page .wallet-stat-card,
+page .safe-page .summary-item {
+  width: auto;
+  min-width: 0;
+  min-height: 112rpx;
+  padding: 18rpx;
+  color: #151b20;
+  background: #ffffff;
+  border: 1rpx solid #e2e7e4;
+  border-radius: 14rpx;
+  box-shadow: none;
+}
+
+page .role-stat-card-rich {
+  gap: 12rpx;
+}
+
+page .role-stat-icon,
+page .metric-icon {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+page .role-stat-num,
+page .metric-num,
+page .summary-value,
+page .wallet-stat-value {
+  color: #151b20;
+  font-size: 34rpx;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+page .role-stat-label,
+page .metric-label,
+page .summary-label,
+page .wallet-stat-label {
+  color: #667085;
+  font-size: 21rpx;
+  line-height: 1.25;
+}
+
+page .role-section,
+page .jobs-page .section,
+page .admin-page .section,
+page .ledger-section,
+page .recent-section {
+  margin-top: 36rpx;
+}
+
+page .role-section-head,
+page .jobs-page .section-head,
+page .admin-page .section-head,
+page .ledger-section .section-title-row,
+page .page-head {
+  min-height: 54rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14rpx;
+  margin-bottom: 16rpx;
+}
+
+page .role-section-icon,
+page .section-icon {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+page .role-section-title,
+page .section-title,
+page .page-title {
+  margin: 0;
+  color: #151b20;
+  font-size: 30rpx;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+page .role-section-subtitle,
+page .section-subtitle {
+  margin-top: 4rpx;
+  color: #667085;
+  font-size: 21rpx;
+  line-height: 1.35;
+}
+
+page .safe-page .role-card,
+page .safe-page .job-card,
+page .safe-page .data-card,
+page .safe-page .order-card,
+page .safe-page .ledger-item,
+page .safe-page .info-card,
+page .safe-page .bill-card,
+page .safe-page .media-card,
+page .safe-page .status-card,
+page .safe-page .proxy-card,
+page .safe-page .form-card,
+page .safe-page .pay-card,
+page .safe-page .profile-panel,
+page .safe-page .menu-list,
+page .safe-page .empty,
+page .safe-page .empty-card,
+page .safe-page .role-empty,
+page .safe-page .next-card,
+page .safe-page .next-action-card,
+page .safe-page .balance-card {
+  min-width: 0;
+  margin-bottom: 14rpx;
+  padding: 22rpx;
+  color: #151b20;
+  background: #ffffff;
+  border: 1rpx solid #e2e7e4;
+  border-radius: 14rpx;
+  box-shadow: none;
+}
+
+page .role-card-head,
+page .job-card-head,
+page .admin-card-head,
+page .card-header,
+page .detail-hero-main,
+page .status-top,
+page .user-card {
+  align-items: flex-start;
+  gap: 14rpx;
+}
+
+page .role-card-icon,
+page .job-icon,
+page .admin-card-icon,
+page .card-icon-wrap,
+page .detail-icon-wrap,
+page .status-icon-wrap,
+page .menu-icon-wrap,
+page .media-icon-wrap,
+page .bill-icon-wrap,
+page .info-icon {
+  width: 58rpx;
+  height: 58rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 10rpx;
+  background: #f0f8f4;
+  border: 0;
+  border-radius: 14rpx;
+}
+
+page .role-card-icon,
+page .job-icon,
+page .admin-card-icon {
+  object-fit: contain;
+}
+
+page .role-strong,
+page .job-cat,
+page .strong,
+page .card-cat,
+page .detail-title,
+page .status-title,
+page .info-value,
+page .ledger-type,
+page .user-name {
+  color: #151b20;
+  font-size: 26rpx;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+page .role-desc,
+page .job-desc,
+page .desc,
+page .card-desc,
+page .description,
+page .detail-workflow-desc,
+page .next-desc,
+page .status-label,
+page .info-label,
+page .ledger-time,
+page .user-phone,
+page .user-role {
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
+page .role-meta-row,
+page .job-meta-row,
+page .admin-meta-row,
+page .meta-line,
+page .order-subline {
+  color: #667085;
+  font-size: 21rpx;
+  line-height: 1.45;
+}
+
+page .role-card-next,
+page .order-next-step,
+page .job-tip-row {
+  margin-top: 14rpx;
+  padding: 12rpx 14rpx;
+  color: #344054;
+  background: #f7f9f8;
+  border: 0;
+  border-left: 4rpx solid #0aaf70;
+  border-radius: 0 10rpx 10rpx 0;
+}
+
+page .role-card-next-title,
+page .order-next-title,
+page .job-tip-text {
+  color: #344054;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+page .role-card-next-desc,
+page .order-next-desc {
+  color: #667085;
+  font-size: 20rpx;
+}
+
+page .role-actions,
+page .order-actions,
+page .actions,
+page .action-row,
+page .privacy-actions,
+page .media-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 18rpx;
+}
+
+page .safe-page .role-primary-btn,
+page .safe-page .accept-btn,
+page .safe-page .assign-btn,
+page .safe-page .confirm-btn,
+page .safe-page .review-btn,
+page .safe-page .approve-btn,
+page .safe-page .action-btn.primary,
+page .safe-page .submit-btn,
+page .safe-page .pay-btn,
+page .safe-page .withdraw-btn,
+page .auth-primary {
+  min-height: 72rpx;
+  color: #ffffff;
+  background: #0aaf70;
+  border: 0;
+  border-radius: 14rpx;
+  box-shadow: none;
+}
+
+page .safe-page .role-secondary-btn,
+page .safe-page .self-btn,
+page .safe-page .detail-btn,
+page .safe-page .orders-btn,
+page .safe-page .new-btn,
+page .safe-page .go-btn,
+page .safe-page .empty-action,
+page .safe-page .role-empty-action,
+page .safe-page .retry-btn,
+page .safe-page .role-switch,
+page .safe-page .account-hint-btn,
+page .safe-page .wallet-retry-btn {
+  min-height: 68rpx;
+  color: #087443;
+  background: #edf8f2;
+  border: 0;
+  border-radius: 12rpx;
+  box-shadow: none;
+}
+
+page .role-action-icon,
+page .mini-action-icon,
+page .action-icon,
+page .job-action-icon,
+page .pay-icon,
+page .pay-btn-icon,
+page .submit-icon {
+  width: 28rpx;
+  height: 28rpx;
+}
+
+page .role-empty,
+page .empty,
+page .empty-card {
+  text-align: center;
+}
+
+page .role-empty-inner,
+page .empty,
+page .empty-card {
+  min-height: 180rpx;
+  align-items: center;
+  justify-content: center;
+}
+
+page .role-empty-icon,
+page .empty-icon {
+  width: 64rpx;
+  height: 64rpx;
+  opacity: 0.56;
+}
+
+page .role-empty-title,
+page .empty-title {
+  color: #344054;
+  font-size: 25rpx;
+  font-weight: 750;
+}
+
+page .role-empty-desc,
+page .empty-desc {
+  color: #667085;
+  font-size: 21rpx;
+}
+
+page .role-inline-alert,
+page .earnings-alert,
+page .pay-alert {
+  padding: 16rpx 18rpx;
+  color: #92400e;
+  background: #fffaeb;
+  border: 1rpx solid #fedf89;
+  border-radius: 12rpx;
+}
+
+page .safe-page .form-item,
+page .safe-page .field-item,
+page .safe-page .info-row,
+page .safe-page .bill-item,
+page .safe-page .media-item,
+page .safe-page .menu-item,
+page .safe-page .ledger-item {
+  min-width: 0;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #e8ecea;
+}
+
+page .form-item:last-child,
+page .field-item:last-child,
+page .info-row:last-child,
+page .bill-item:last-child,
+page .media-item:last-child,
+page .menu-item:last-child,
+page .ledger-item:last-child {
+  border-bottom: 0;
+}
+
+page .label,
+page .info-label,
+page .wage-label,
+page .warranty-label {
+  color: #344054;
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+page .safe-page .input,
+page .safe-page .textarea,
+page .safe-page .item-field,
+page .safe-page .wage-input,
+page .safe-page .remark-input,
+page .safe-page .picker-value,
+page .safe-page .picker-line,
+page .safe-page .assign-picker,
+page .safe-page .wage-picker,
+page .safe-page .wage-mode-picker,
+page .safe-page .warranty-row {
+  width: 100%;
+  min-width: 0;
+  color: #151b20;
+  background: #f7f9f8;
+  border: 1rpx solid #d9dfdc;
+  border-radius: 12rpx;
+  font-size: 24rpx;
+}
+
+page .input,
+page .item-field,
+page .wage-input,
+page .picker-value,
+page .picker-line,
+page .assign-picker,
+page .wage-picker,
+page .wage-mode-picker,
+page .warranty-row {
+  min-height: 76rpx;
+  padding: 0 16rpx;
+}
+
+page .textarea,
+page .remark-input {
+  min-height: 180rpx;
+  padding: 18rpx;
+  line-height: 1.55;
+}
+
+page .media-btn,
+page .rate-btn,
+page .add-btn,
+page .remove-btn,
+page .media-remove {
+  min-height: 64rpx;
+  padding: 0 16rpx;
+  color: #344054;
+  background: #f7f9f8;
+  border: 1rpx solid #e2e7e4;
+  border-radius: 12rpx;
+  font-size: 22rpx;
+}
+
+page .submit-bar,
+page .pay-submit-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 55;
+  min-height: 116rpx;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 14rpx 28rpx calc(14rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.98);
+  border-top: 1rpx solid #e2e7e4;
+  box-shadow: none;
+}
+
+page .order-header,
+page .detail-hero,
+page .pay-title-row,
+page .profile-panel .user-card,
+page .proxy-header {
+  margin: 0;
+  padding: 8rpx 0 24rpx;
+  background: transparent;
+  border: 0;
+  border-bottom: 1rpx solid #e2e7e4;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+page .order-title,
+page .detail-title,
+page .pay-title,
+page .proxy-title,
+page .balance-label {
+  color: #151b20;
+  font-size: 34rpx;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+page .order-subtitle,
+page .pay-desc,
+page .proxy-subtitle,
+page .balance-caption {
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.45;
+}
+
+page .amount-box {
+  padding: 30rpx 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1rpx solid #e8ecea;
+  border-radius: 0;
+}
+
+page .pay-amount,
+page .balance-amount,
+page .wallet-amount {
+  color: #087443;
+  font-size: 52rpx;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+page .menu-list {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+page .menu-item {
+  min-height: 92rpx;
+}
+
+page .logout-btn {
+  width: 100%;
+  min-height: 74rpx;
+  margin-top: 24rpx;
+  color: #b42318;
+  background: #fff1f0;
+  border: 0;
+  border-radius: 12rpx;
+}
+
+page .admin-page .admin-quick-nav {
+  margin: 20rpx 0 0;
+  white-space: nowrap;
+}
+
+page .admin-page .quick-nav-btn {
+  display: inline-flex;
+  width: auto;
+  min-width: 148rpx;
+  height: 64rpx;
+  margin-right: 10rpx;
+  padding: 0 16rpx;
+  color: #344054;
+  background: #ffffff;
+  border: 1rpx solid #e2e7e4;
+  border-radius: 12rpx;
+  font-size: 22rpx;
+}
+
+page .admin-page .data-card,
+page .store-dashboard-page .role-card {
+  padding: 20rpx;
+}
+
+page .bill-preview,
+page .bill-box,
+page .confirm-bill-box,
+page .review-box,
+page .wage-box {
+  min-width: 0;
+  padding: 16rpx;
+  background: #f7f9f8;
+  border: 1rpx solid #e2e7e4;
+  border-radius: 12rpx;
+}
+
+page .privacy-mask {
+  background: rgba(15, 23, 42, 0.46);
+}
+
+page .privacy-dialog {
+  padding: 30rpx;
+  background: #ffffff;
+  border-radius: 16rpx 16rpx 0 0;
+  box-shadow: none;
+}
+
+page .privacy-primary,
+page .privacy-secondary {
+  min-height: 80rpx;
+  border-radius: 14rpx;
+  font-size: 25rpx;
+}
+
+page .privacy-primary {
+  color: #ffffff;
+  background: #0aaf70;
+}
+
+page .privacy-secondary {
+  color: #344054;
+  background: #f2f4f7;
+}

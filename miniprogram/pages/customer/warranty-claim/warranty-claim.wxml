@@ -1,0 +1,59 @@
+<view class="safe-page claim-page">
+  <view wx:if="{{loading}}" class="claim-empty">
+    <image src="/assets/ui/bill-check.png" mode="aspectFit" />
+    <text>加载中…</text>
+  </view>
+
+  <view wx:elif="{{loadFailed}}" class="claim-empty error">
+    <image src="/assets/ui/bill-file.png" mode="aspectFit" />
+    <text>{{errorText}}</text>
+    <button bindtap="loadData" hover-class="button-hover">重试</button>
+  </view>
+
+  <block wx:else>
+    <view class="claim-summary">
+      <view class="summary-head">
+        <view class="summary-icon"><image src="/assets/ui/bill-check.png" mode="aspectFit" /></view>
+        <view class="summary-copy">
+          <text class="summary-title">{{certificate.certificate_no}}</text>
+          <text class="summary-desc">订单 #{{certificate.order_id}}</text>
+        </view>
+        <text class="summary-status">保修中</text>
+      </view>
+      <view class="summary-grid">
+        <view><text>服务金额</text><text>¥{{certificate.amount}}</text></view>
+        <view><text>保修期限</text><text>{{certificate.warranty_days}}天</text></view>
+      </view>
+    </view>
+
+    <view wx:if="{{existingTicket}}" class="existing-ticket">
+      <image src="/assets/ui/bill-check.png" mode="aspectFit" />
+      <view><text class="existing-title">保修申请已提交</text><text class="existing-desc">申请 #{{existingTicket.id}} 正在处理中，请勿重复提交</text></view>
+    </view>
+
+    <view wx:else class="claim-form">
+      <view class="form-heading"><text>问题说明</text><text>请描述需要返修的具体情况</text></view>
+      <view class="form-field">
+        <text class="field-label">问题类型</text>
+        <picker mode="selector" range="{{reasonOptions}}" value="{{reasonIndex}}" bindchange="onReasonChange">
+          <view class="picker-value"><text>{{reasonOptions[reasonIndex]}}</text><image src="/assets/ui/chevron-right.png" mode="aspectFit" /></view>
+        </picker>
+      </view>
+      <view class="form-field description-field">
+        <text class="field-label">问题描述</text>
+        <textarea maxlength="500" value="{{description}}" placeholder="例如：维修后三天再次出现漏水，请安排复查" bindinput="onDescriptionInput" />
+        <text class="input-count">{{description.length}}/500</text>
+      </view>
+    </view>
+
+    <view wx:if="{{errorText && !loadFailed}}" class="claim-alert">
+      <image src="/assets/ui/bill-file.png" mode="aspectFit" />
+      <text>{{errorText}}</text>
+    </view>
+
+    <button wx:if="{{!existingTicket}}" class="submit-claim" bindtap="submitClaim" loading="{{submitting}}" disabled="{{submitting}}" hover-class="button-hover">
+      <image src="/assets/ui/bill-check.png" mode="aspectFit" />
+      <text>{{submitting ? '提交中' : '提交保修申请'}}</text>
+    </button>
+  </block>
+</view>

@@ -1,0 +1,21 @@
+.address-page { min-height: 100vh; padding: 28rpx; color: #101828; background: #f7f8fa; }
+.address-head { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
+.page-title { display: block; font-size: 32rpx; font-weight: 800; }.page-desc { display: block; margin-top: 8rpx; color: #667085; font-size: 21rpx; }
+.address-head button { width: 118rpx; height: 62rpx; color: #fff; background: #087443; font-size: 23rpx; }
+.address-list { display: flex; flex-direction: column; gap: 14rpx; margin-top: 24rpx; }
+.address-item { position: relative; padding: 24rpx 62rpx 24rpx 24rpx; background: #fff; border: 1rpx solid #e4e7ec; border-radius: 14rpx; }
+.address-title-row { display: flex; align-items: center; gap: 12rpx; font-size: 25rpx; font-weight: 800; }
+.default-tag { padding: 5rpx 9rpx; color: #067647; background: #ecfdf3; border-radius: 7rpx; font-size: 18rpx; }
+.address-text { display: block; margin-top: 11rpx; color: #475467; font-size: 23rpx; line-height: 1.5; }
+.address-item > image { position: absolute; right: 20rpx; top: 50%; width: 26rpx; height: 26rpx; transform: translateY(-50%); opacity: .5; }
+.empty-state { min-height: 360rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24rpx; color: #667085; }
+.empty-state-error-desc { font-size: 22rpx; color: #667085; text-align: center; max-width: 540rpx; word-break: break-all; }
+.empty-state .empty-action { padding: 0 40rpx; height: 72rpx; line-height: 72rpx; color: #fff; background: #087443; border-radius: 36rpx; font-size: 26rpx; }
+.sheet-mask { position: fixed; inset: 0; z-index: 20; display: flex; align-items: flex-end; background: rgba(16,24,40,.45); }
+.address-sheet { width: 100%; padding: 30rpx 28rpx calc(34rpx + env(safe-area-inset-bottom)); background: #fff; border-radius: 18rpx 18rpx 0 0; }
+.sheet-title { display: block; margin-bottom: 12rpx; font-size: 30rpx; font-weight: 800; }
+.field { min-height: 84rpx; display: flex; align-items: center; justify-content: space-between; gap: 18rpx; border-bottom: 1rpx solid #eaecf0; font-size: 23rpx; }
+.field input { min-width: 0; flex: 1; text-align: right; }.field.vertical { display: block; padding: 18rpx 0; }.field textarea { width: 100%; min-height: 120rpx; margin-top: 12rpx; padding: 14rpx; background: #f8fafc; border-radius: 10rpx; }
+.address-picker { min-height: 76rpx; margin-top: 12rpx; padding: 16rpx; color: #101828; background: #f8fafc; border: 1rpx solid #d0d5dd; border-radius: 8rpx; line-height: 1.45; }
+.immutable-tip { display: block; margin-top: 10rpx; color: #667085; font-size: 20rpx; }
+.save-button { width: 100%; height: 82rpx; margin-top: 22rpx; color: #fff; background: #087443; }

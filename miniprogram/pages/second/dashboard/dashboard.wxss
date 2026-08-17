@@ -1,0 +1,131 @@
+.second-dashboard-page .role-hero {
+  background: #fff;
+  border-color: #b9d6fe;
+}
+
+.second-dashboard-page .role-title {
+  color: #123b73;
+}
+
+.role-focus-strip {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14rpx;
+  min-height: 84rpx;
+  margin-top: 14rpx;
+  padding: 16rpx;
+  background: #f8fafc;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+  box-shadow: none;
+}
+
+.role-focus-main {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.role-focus-icon {
+  width: 42rpx;
+  height: 42rpx;
+  flex-shrink: 0;
+  margin-top: 2rpx;
+}
+
+.role-focus-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.role-focus-label {
+  display: block;
+  color: #175cd3;
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 1.25;
+  word-break: break-all;
+}
+
+.role-focus-value {
+  display: block;
+  margin-top: 4rpx;
+  color: #475467;
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 1.38;
+  word-break: break-all;
+}
+
+.role-focus-chip {
+  flex-shrink: 0;
+  max-width: 210rpx;
+  min-height: 44rpx;
+  padding: 0 13rpx;
+  color: #175cd3;
+  background: #fff;
+  border: 1rpx solid #b9d6fe;
+  border-radius: 12rpx;
+  font-size: 21rpx;
+  font-weight: 900;
+  line-height: 44rpx;
+  text-align: right;
+  word-break: break-all;
+}
+
+.second-dashboard-page .role-stat-card {
+  border-color: #d7e8ff;
+}
+
+.second-action-grid .role-stat-card {
+  min-height: 100rpx;
+  padding: 16rpx;
+}
+
+.second-dashboard-page .stat-fallback {
+  background: #f8fbff;
+}
+
+.second-dashboard-page .stat-assigned {
+  background: #f7fffb;
+}
+
+.second-dashboard-page .stat-servicing {
+  background: #f6fef9;
+}
+
+.second-dashboard-page .stat-bill {
+  background: #fffaf0;
+}
+
+/* Mobile polish pass for second-response role. */
+.second-dashboard-page {
+  background: #f6f7f9;
+}
+
+.second-dashboard-page .role-hero,
+.second-dashboard-page .role-focus-strip,
+.second-dashboard-page .role-stat-card,
+.second-dashboard-page .role-card,
+.second-dashboard-page .role-empty-inner {
+  background: #fff;
+  border-color: #e5e7eb;
+  box-shadow: none;
+}
+
+.second-dashboard-page .role-card-next,
+.second-dashboard-page .role-meta-row,
+.second-dashboard-page .role-focus-chip {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+}
+
+.second-dashboard-page .role-primary-btn,
+.second-dashboard-page .role-secondary-btn,
+.second-dashboard-page .role-ghost-btn,
+.second-dashboard-page .role-empty-action {
+  box-shadow: none;
+}

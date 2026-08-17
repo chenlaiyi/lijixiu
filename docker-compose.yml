@@ -1,0 +1,199 @@
+services:
+  # MySQL 8(主数据库,2026-08-09 加)
+  mysql:
+    image: mysql:8.4
+    container_name: xiulijiu-mysql
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpass}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-xiulijiu}
+      - MYSQL_USER=${MYSQL_USER:-xiulijiu}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-xiulijuipass}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+      - --max-connections=200
+      - --innodb-buffer-pool-size=512M
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - xiulijiu-net
+    profiles: ["db-mysql", "production"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Adminer(数据库 GUI,可选)
+  adminer:
+    image: adminer:4.8.1
+    container_name: xiulijiu-adminer
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=mysql
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - xiulijiu-net
+    profiles: ["db-mysql"]
+
+  api:
+    build: .
+    image: xiulijiu-api:latest
+    container_name: xiulijiu-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    # 2026-08-10:生产/默认开 strict env 守门。FILL_* / 弱 secret / sqlite 会让进程直接 exit
+    # 运维要排查时先设 STRICT_ENV_ON_STARTUP=false 把容器起起来,再修 .env
+    environment:
+      - STRICT_ENV_ON_STARTUP=${STRICT_ENV_ON_STARTUP:-true}
+    volumes:
+      - uploads:/data/uploads
+      - ./cert:/app/cert:ro
+    # 启动时跑 alembic upgrade head,然后启 uvicorn
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo "==> 跑 alembic upgrade head"
+        alembic upgrade head || echo "alembic failed but continue"
+        echo "==> 启 uvicorn"
+        exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4 --proxy-headers --forwarded-allow-ips '*'
+    healthcheck:
+      # 用 /health(看 db 联通),不挂 /health/env strict — strict fail 会让容器进 restart 死循环
+      # env 完整性走 Prometheus alert(见 deploy/prometheus/alerts.yml xiulijiu_env_ok)
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - xiulijiu-net
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: xiulijiu-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/certs:/etc/nginx/certs:ro
+      - uploads:/data/uploads:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - xiulijiu-net
+
+  # 备份 cron:每天 03:00 跑一次数据库+上传目录备份
+  backup:
+    image: alpine:3.20
+    container_name: xiulijiu-backup
+    restart: unless-stopped
+    volumes:
+      - db:/data/db:ro
+      - uploads:/data/uploads:ro
+      - ./backups:/backups
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo "0 3 * * * /scripts/backup.sh" > /etc/crontabs/root
+        apk add --no-cache sqlite curl bash
+        chmod +x /scripts/backup.sh
+        crond -f
+    profiles: ["backup"]
+
+  # 告警 watcher:轮询 /admin/alerts,推钉钉/飞书
+  alert_watcher:
+    image: node:20-alpine
+    container_name: xiulijiu-alert-watcher
+    restart: unless-stopped
+    working_dir: /app
+    command: ["node", "scripts/alert_watcher.js"]
+    env_file:
+      - .env
+    environment:
+      - API_BASE=http://api:8000
+      - POLL_INTERVAL_SEC=${POLL_INTERVAL_SEC:-60}
+    volumes:
+      - ./scripts:/app/scripts:ro
+      - ./docs:/app/docs
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - xiulijiu-net
+
+  # Prometheus 抓取 /metrics/prom
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    container_name: xiulijiu-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./deploy/prometheus/alerts.yml:/etc/prometheus/alerts/alerts.yml:ro
+      - prom_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - xiulijiu-net
+    profiles: ["monitoring"]
+
+  # Alertmanager 接收 Prom 告警,转 alert_watcher
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: xiulijiu-alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./deploy/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    networks:
+      - xiulijiu-net
+    profiles: ["monitoring"]
+
+  # Grafana 看图(可选)
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: xiulijiu-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - xiulijiu-net
+    profiles: ["monitoring"]
+
+volumes:
+  uploads:
+  db:
+  mysql_data:
+  prom_data:
+  grafana_data:
+
+networks:
+  xiulijiu-net:
+    driver: bridge

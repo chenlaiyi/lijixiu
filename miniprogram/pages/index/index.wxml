@@ -1,0 +1,31 @@
+<view class="index-page">
+  <view class="brand-stack">
+    <view class="logo-mark">
+      <image class="logo-image" src="/assets/logo-mark.png" mode="aspectFit" />
+    </view>
+    <text class="brand-name">立即修</text>
+    <text class="brand-desc">上门维修</text>
+  </view>
+
+  <view class="loading-row">
+    <view wx:if="{{!showRetry}}" class="loading-ring"></view>
+    <image wx:else class="loading-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+    <text>{{statusText}}</text>
+  </view>
+
+  <view wx:if="{{showRetry}}" class="retry-panel">
+    <text wx:if="{{errorHint}}" class="retry-hint">{{errorHint}}</text>
+    <button class="retry-btn" hover-class="button-hover" bindtap="enter">
+      <view class="mini-action-content">
+        <image class="mini-action-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+        <text>重试</text>
+      </view>
+    </button>
+    <button class="contact-btn" open-type="contact" hover-class="button-hover" bindcontact="onContact">
+      <view class="mini-action-content">
+        <image class="mini-action-icon" src="/assets/ui/admin.png" mode="aspectFit" />
+        <text>联系客服</text>
+      </view>
+    </button>
+  </view>
+</view>

@@ -1,0 +1,97 @@
+<view class="safe-page pay-page" wx:if="{{order}}">
+  <view class="pay-card">
+    <view class="pay-title-row">
+      <view class="pay-title-icon-wrap">
+        <image class="pay-title-icon" src="/assets/ui/pay.png" mode="aspectFit" />
+      </view>
+      <text class="pay-title">服务单支付</text>
+    </view>
+    <text class="pay-desc">#{{order.id}} · {{order.description}}</text>
+    <text wx:if="{{isThirdPartyPayer}}" class="pay-desc">您正在替客户付款，订单和保修归属不会改变</text>
+    <view class="amount-box">
+      <text class="amount-label">应付金额</text>
+      <text class="pay-amount">¥{{amount}}</text>
+      <view class="amount-meta">
+        <view class="amount-meta-line">
+          <text>状态</text>
+          <text>{{orderStatusText}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{bill}}" class="bill-box">
+      <view class="bill-line">
+        <view class="bill-title-row">
+          <image class="bill-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+          <text class="bill-title">明细</text>
+        </view>
+        <text class="bill-warranty">保修 {{bill.warranty_days}} 天</text>
+      </view>
+      <view class="bill-item" wx:for="{{billItems}}" wx:key="name">
+        <view class="bill-item-main">
+          <text class="bill-item-name">{{item.name}}</text>
+          <text class="bill-item-meta">数量 {{item.qtyText}} · 单价 ¥{{item.priceText}}</text>
+        </view>
+        <text class="bill-item-amount">¥{{item.amountText}}</text>
+      </view>
+      <view wx:if="{{billItems.length === 0}}" class="bill-empty">
+        <text>暂无明细</text>
+      </view>
+      <view class="bill-total">
+        <text>合计</text>
+        <text>¥{{amount}}</text>
+      </view>
+    </view>
+    <view wx:if="{{payErrorText}}" class="pay-alert">
+      <image class="pay-alert-icon" src="/assets/ui/bill-file.png" mode="aspectFit" />
+      <text class="pay-alert-text">{{payErrorText}}</text>
+    </view>
+    <button class="orders-btn" bindtap="goOrders" hover-class="button-hover">
+      <view class="mini-action-content">
+        <image class="mini-action-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+        <text>订单</text>
+      </view>
+    </button>
+  </view>
+
+  <view class="payment-action-bar">
+    <view class="pay-submit-copy">
+      <text class="pay-submit-label">应付</text>
+      <text class="pay-submit-amount">¥{{amount}}</text>
+    </view>
+    <button class="pay-btn" bindtap="doPay" loading="{{paying}}" disabled="{{paying}}" hover-class="button-hover">
+      <image class="pay-btn-icon" src="/assets/ui/pay.png" mode="aspectFit" />
+      <text>{{paying ? '支付中' : '微信支付'}}</text>
+    </button>
+  </view>
+</view>
+
+<view class="safe-page pay-page" wx:else>
+  <view class="empty">
+    <image class="empty-icon" src="/assets/ui/pay.png" mode="aspectFit" />
+    <block wx:if="{{loading}}">
+      <text class="role-empty-title">加载中…</text>
+    </block>
+    <block wx:elif="{{errorText}}">
+      <text class="role-empty-title">加载失败</text>
+      <text class="role-empty-desc">{{errorText}}</text>
+    </block>
+    <block wx:else>
+      <text class="role-empty-title">订单不存在</text>
+      <text class="role-empty-desc">返回后重试</text>
+    </block>
+    <button wx:if="{{!loading && errorText}}" class="empty-action" bindtap="retryLoad" hover-class="button-hover">
+      <view class="mini-action-content">
+        <image class="mini-action-icon" src="/assets/ui/pay.png" mode="aspectFit" />
+        <text>重试</text>
+      </view>
+    </button>
+    <button wx:if="{{!loading && !errorText}}" class="empty-action" bindtap="goOrders" hover-class="button-hover">
+      <view class="mini-action-content">
+        <image class="mini-action-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+        <text>订单</text>
+      </view>
+    </button>
+  </view>
+</view>
+
+<role-tabbar />

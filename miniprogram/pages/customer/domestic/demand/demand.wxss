@@ -1,0 +1,37 @@
+.demand-page { min-height: 100vh; padding: 24rpx 28rpx 60rpx; color: #101828; background: #f7f8fa; }
+.demand-head { padding: 26rpx; color: #fff; border-radius: 14rpx; background: #b4235f; }
+.demand-head.nanny { background: #175cd3; }
+.demand-title { display: block; font-size: 32rpx; font-weight: 800; }
+.demand-desc { display: block; margin-top: 10rpx; color: rgba(255,255,255,.82); font-size: 22rpx; line-height: 1.45; }
+.form-section { margin-top: 18rpx; padding: 24rpx; background: #fff; border: 1rpx solid #e4e7ec; border-radius: 14rpx; }
+.section-title { display: block; margin-bottom: 10rpx; font-size: 27rpx; font-weight: 800; }
+.field { min-width: 0; min-height: 86rpx; display: flex; align-items: center; gap: 18rpx; border-bottom: 1rpx solid #eaecf0; }
+.field:last-child { border-bottom: 0; }
+.field > text { width: 150rpx; flex-shrink: 0; color: #344054; font-size: 23rpx; }
+.field input,.field picker { min-width: 0; flex: 1; font-size: 24rpx; text-align: right; }
+.field.vertical { display: block; padding: 20rpx 0; }
+.field.vertical > text { display: block; width: auto; margin-bottom: 12rpx; }
+.field textarea,.description { width: 100%; min-height: 130rpx; padding: 16rpx; color: #101828; background: #f8fafc; border-radius: 10rpx; font-size: 23rpx; line-height: 1.55; }
+.picker-value { color: #475467; font-size: 24rpx; text-align: right; }
+.budget-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20rpx; }
+.budget-row .field { display: block; padding: 18rpx 0; }
+.budget-row .field > text { display: block; width: auto; margin-bottom: 10rpx; }
+.budget-row .field input { width: 100%; text-align: left; }
+.description { margin-top: 14rpx; }
+.media-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12rpx; margin-top: 16rpx; }
+.media-button { height: 72rpx; gap: 10rpx; color: #344054; background: #f2f4f7; border-radius: 12rpx; font-size: 22rpx; }
+.media-button.recording { color: #b42318; background: #fef3f2; }
+.media-button image { width: 30rpx; height: 30rpx; }
+.media-list { display: flex; flex-wrap: wrap; gap: 12rpx; margin-top: 14rpx; }
+.media-item { position: relative; width: 108rpx; height: 108rpx; padding: 20rpx; background: #f2f4f7; border-radius: 10rpx; }
+.media-item image { width: 100%; height: 100%; }
+.media-item button { position: absolute; top: -10rpx; right: -10rpx; width: 36rpx; height: 36rpx; color: #fff; background: #b42318; border-radius: 50%; font-size: 24rpx; }
+.submit-button { width: 100%; height: 88rpx; margin-top: 22rpx; color: #fff; background: #087443; border-radius: 14rpx; font-size: 28rpx; }
+.privacy-mask { position: fixed; inset: 0; z-index: 99; display: flex; align-items: center; justify-content: center; padding: 40rpx; background: rgba(16,24,40,.52); }
+.privacy-dialog { width: 100%; padding: 30rpx; background: #fff; border-radius: 14rpx; }
+.privacy-title { display: block; font-size: 30rpx; font-weight: 800; }
+.privacy-desc { display: block; margin-top: 16rpx; color: #475467; font-size: 23rpx; line-height: 1.55; }
+.privacy-link { color: #175cd3; }
+.privacy-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12rpx; margin-top: 26rpx; }
+.privacy-actions button { height: 72rpx; color: #344054; background: #f2f4f7; }
+.privacy-actions .agree { color: #fff; background: #087443; }

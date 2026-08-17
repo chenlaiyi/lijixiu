@@ -1,0 +1,783 @@
+.status-card,
+.info-card,
+.bill-card,
+.empty {
+  margin-bottom: 14rpx;
+  padding: 16rpx;
+  background: #fff;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+}
+
+.status-card {
+  display: block;
+}
+
+.status-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14rpx;
+}
+
+.detail-workflow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  margin-top: 14rpx;
+  margin-bottom: 0;
+  padding: 12rpx;
+  color: #344054;
+  background: #f8fafc;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+}
+
+.detail-workflow-icon-wrap {
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #eff4ff;
+  border: 1rpx solid #b2ccff;
+  border-radius: 12rpx;
+}
+
+.detail-workflow-icon {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
+}
+
+.detail-workflow-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.detail-workflow-title {
+  display: block;
+  min-width: 0;
+  color: #101828;
+  font-size: 25rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.detail-workflow-desc {
+  display: block;
+  min-width: 0;
+  margin-top: 4rpx;
+  color: #667085;
+  font-size: 21rpx;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.status-main,
+.info-label-row {
+  display: flex;
+  align-items: center;
+}
+
+.status-main {
+  min-width: 0;
+  flex: 1 1 260rpx;
+  gap: 14rpx;
+}
+
+.status-icon-wrap {
+  width: 54rpx;
+  height: 54rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #f3fbf7;
+  border: 1rpx solid #d7f1e2;
+  border-radius: 12rpx;
+}
+
+.status-icon {
+  width: 36rpx;
+  height: 36rpx;
+  display: block;
+}
+
+.status-copy {
+  min-width: 0;
+}
+
+.status-label {
+  display: block;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.status-title {
+  display: block;
+  margin-top: 4rpx;
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 900;
+  line-height: 1.22;
+  word-break: break-all;
+}
+
+.status-badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  max-width: 260rpx;
+  padding: 7rpx 13rpx;
+  overflow: hidden;
+  color: #175cd3;
+  background: #eff4ff;
+  border: 1rpx solid transparent;
+  border-radius: 10rpx;
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.info-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #edf1f5;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row.column {
+  display: block;
+}
+
+.info-label-row {
+  min-width: 0;
+  align-items: flex-start;
+  gap: 8rpx;
+}
+
+.info-icon {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+  margin-top: 3rpx;
+}
+
+.info-label {
+  min-width: 0;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.info-value {
+  min-width: 0;
+  color: #101828;
+  font-size: 24rpx;
+  font-weight: 800;
+  line-height: 1.55;
+  word-break: break-all;
+}
+
+.column .info-value {
+  display: block;
+  margin-top: 8rpx;
+}
+
+.price {
+  color: #087443;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.media-readiness {
+  display: flex;
+  align-items: flex-start;
+  gap: 8rpx;
+  margin-top: 10rpx;
+  padding-top: 12rpx;
+  color: #344054;
+  border-top: 1rpx solid #edf1f5;
+}
+
+.media-readiness-icon {
+  width: 26rpx;
+  height: 26rpx;
+  flex-shrink: 0;
+  margin-top: 3rpx;
+}
+
+.media-readiness-text {
+  min-width: 0;
+  flex: 1;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.media-list {
+  margin-top: 12rpx;
+}
+
+.media-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12rpx;
+  margin-bottom: 10rpx;
+  padding: 14rpx;
+  background: #f6f8fa;
+  border: none;
+  border-radius: 12rpx;
+}
+
+.media-icon-wrap {
+  width: 42rpx;
+  height: 42rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #f3fbf7;
+  border: 1rpx solid #d7f1e2;
+  border-radius: 12rpx;
+}
+
+.media-icon {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
+}
+
+.media-copy {
+  flex: 1 1 220rpx;
+  min-width: 0;
+}
+
+.media-type {
+  display: block;
+  color: #087443;
+  font-size: 22rpx;
+  font-weight: 900;
+  line-height: 1.3;
+  word-break: break-all;
+}
+
+.media-name {
+  display: block;
+  margin-top: 4rpx;
+  color: #344054;
+  font-size: 23rpx;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.media-duration {
+  flex-shrink: 0;
+  max-width: 190rpx;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.35;
+  text-align: right;
+  word-break: break-all;
+}
+
+.media-empty {
+  min-height: 72rpx;
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  margin-top: 12rpx;
+  padding: 14rpx;
+  color: #667085;
+  background: #f6f8fa;
+  border: none;
+  border-radius: 12rpx;
+  font-size: 23rpx;
+  line-height: 1.45;
+}
+
+.media-empty text {
+  min-width: 0;
+  flex: 1;
+  word-break: break-all;
+}
+
+.media-empty-icon {
+  width: 30rpx;
+  height: 30rpx;
+  flex-shrink: 0;
+  opacity: 0.68;
+}
+
+.bill-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14rpx;
+  margin-bottom: 16rpx;
+}
+
+.bill-title-wrap {
+  min-width: 0;
+  flex: 1 1 260rpx;
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+}
+
+.bill-icon-wrap {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #e7f8ef;
+  border: 1rpx solid #bfe9d1;
+  border-radius: 12rpx;
+  margin-top: 1rpx;
+}
+
+.bill-icon {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
+}
+
+.bill-title {
+  min-width: 0;
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.bill-total {
+  flex-shrink: 0;
+  max-width: 220rpx;
+  color: #087443;
+  font-size: 32rpx;
+  font-weight: 900;
+  line-height: 1.25;
+  text-align: right;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.bill-readiness {
+  margin-bottom: 14rpx;
+  padding: 12rpx;
+  background: #f9fafb;
+  border: 1rpx solid #d0d5dd;
+  border-radius: 12rpx;
+}
+
+.bill-readiness-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+}
+
+.bill-readiness-icon {
+  width: 30rpx;
+  height: 30rpx;
+  flex-shrink: 0;
+  margin-top: 3rpx;
+}
+
+.bill-readiness-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.bill-readiness-title {
+  display: block;
+  min-width: 0;
+  color: #101828;
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.bill-readiness-desc {
+  display: block;
+  min-width: 0;
+  margin-top: 3rpx;
+  color: #475467;
+  font-size: 22rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.bill-readiness-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 10rpx;
+}
+
+.bill-readiness-tag {
+  max-width: 100%;
+  padding: 6rpx 10rpx;
+  color: #344054;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1rpx solid rgba(208, 213, 221, 0.82);
+  border-radius: 8rpx;
+  font-size: 21rpx;
+  font-weight: 800;
+  line-height: 1.3;
+  word-break: break-all;
+}
+
+.bill-item {
+  margin-bottom: 12rpx;
+  padding: 12rpx;
+  background: #f6f8fa;
+  border: none;
+  border-radius: 12rpx;
+}
+
+.bill-item.active {
+  background: #f3fbf7;
+  box-shadow: inset 0 0 0 1rpx #bfe9d1;
+}
+
+.bill-item.error {
+  background: #fffbfa;
+  box-shadow: inset 0 0 0 1rpx #fecdca;
+}
+
+.bill-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-bottom: 10rpx;
+}
+
+.bill-item-title {
+  color: #344054;
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.item-name {
+  width: 100%;
+  min-width: 0;
+  height: 68rpx;
+  padding: 0 16rpx;
+  color: #101828;
+  background: #fff;
+  border: 1rpx solid #d0d5dd;
+  border-radius: 10rpx;
+  font-size: 24rpx;
+}
+
+.bill-item.active .item-name,
+.bill-item.active .item-field input,
+.warranty-row.active input,
+.remark-input.active {
+  border-color: #087443;
+  box-shadow: 0 0 0 4rpx rgba(8, 116, 67, 0.08);
+}
+
+.bill-item.error .item-name,
+.bill-item.error .item-field input,
+.warranty-row.error input {
+  border-color: #f04438;
+  box-shadow: 0 0 0 4rpx rgba(240, 68, 56, 0.08);
+}
+
+.field-placeholder {
+  color: #98a2b3;
+}
+
+.item-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 10rpx;
+}
+
+.item-field,
+.item-amount {
+  flex: 1;
+  min-width: 180rpx;
+}
+
+.item-field text,
+.item-amount text:first-child,
+.warranty-row text {
+  display: block;
+  margin-bottom: 7rpx;
+  color: #667085;
+  font-size: 22rpx;
+}
+
+.item-field input {
+  width: 100%;
+  min-width: 0;
+  height: 68rpx;
+  padding: 0 12rpx;
+  color: #101828;
+  background: #fff;
+  border: 1rpx solid #d0d5dd;
+  border-radius: 10rpx;
+  font-size: 23rpx;
+}
+
+.item-amount text:last-child {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 68rpx;
+  padding: 0 12rpx;
+  color: #087443;
+  background: #fff;
+  border: 1rpx solid #d0d5dd;
+  border-radius: 10rpx;
+  font-size: 23rpx;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.field-error-text {
+  display: block;
+  margin-top: 10rpx;
+  color: #b42318;
+  font-size: 23rpx;
+  font-weight: 800;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.remove-btn,
+.add-btn {
+  min-width: 0;
+  min-height: 68rpx;
+  margin: 0;
+  padding: 0 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  border-radius: 10rpx;
+  font-size: 23rpx;
+}
+
+.remove-btn {
+  color: #b42318;
+  background: #fef3f2;
+  border: 1rpx solid #fecdca;
+}
+
+.remove-btn.small {
+  min-width: 128rpx;
+  max-width: 100%;
+  flex-shrink: 0;
+  margin-top: 0;
+  font-size: 22rpx;
+}
+
+.add-btn {
+  margin-top: 12rpx;
+  color: #175cd3;
+  background: #eff4ff;
+  border: 1rpx solid #b2ccff;
+}
+
+.inline-btn-icon {
+  width: 26rpx;
+  height: 26rpx;
+  display: block;
+  flex-shrink: 0;
+}
+
+.warranty-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12rpx;
+  margin-top: 14rpx;
+}
+
+.warranty-label {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-shrink: 0;
+  max-width: 220rpx;
+  color: #344054;
+  font-size: 23rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.warranty-row text {
+  margin-bottom: 0;
+}
+
+.warranty-row input {
+  flex: 1;
+  min-width: 0;
+  height: 68rpx;
+  padding: 0 16rpx;
+  color: #101828;
+  background: #fff;
+  border: 1rpx solid #d0d5dd;
+  border-radius: 10rpx;
+  font-size: 24rpx;
+}
+
+.remark-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 132rpx;
+  margin-top: 14rpx;
+  padding: 14rpx;
+  color: #101828;
+  background: #fff;
+  border: 1rpx solid #d0d5dd;
+  border-radius: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.bill-card .action-btn {
+  margin-top: 16rpx;
+}
+
+.action-btn {
+  width: 100%;
+  min-width: 0;
+  height: 72rpx;
+  margin: 0;
+  padding: 0 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  color: #fff;
+  background: #175cd3;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+}
+
+.action-btn text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action-icon {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
+  flex-shrink: 0;
+}
+
+.empty {
+  color: #667085;
+  text-align: center;
+}
+
+.empty {
+  min-height: 188rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+}
+
+.empty-icon {
+  width: 72rpx;
+  height: 72rpx;
+  opacity: 0.66;
+}
+
+.empty-action {
+  min-width: 188rpx;
+  max-width: 100%;
+  height: 72rpx;
+  margin-top: 4rpx;
+  padding: 0 20rpx;
+  color: #087443;
+  background: #f3fbf7;
+  border: 1rpx solid #bfe9d1;
+  border-radius: 14rpx;
+  font-size: 24rpx;
+}
+
+.empty-action.secondary {
+  color: #175cd3;
+  background: #eff4ff;
+  border-color: #b2ccff;
+}
+
+/* Mobile polish pass for repairer order detail. */
+.detail {
+  background: #f6f7f9;
+}
+
+.status-card,
+.info-card,
+.bill-card,
+.empty {
+  background: #fff;
+  border-color: #e5e7eb;
+  box-shadow: none;
+}
+
+.media-readiness,
+.media-item,
+.bill-readiness,
+.bill-item,
+.warranty-row,
+.remark-input,
+.item-field input,
+.item-amount text:last-child {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+}
+
+.action-btn,
+.add-btn,
+.remove-btn,
+.empty-action {
+  box-shadow: none;
+}

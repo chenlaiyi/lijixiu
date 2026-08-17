@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "订单详情",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "role-tabbar": "/components/role-tabbar/role-tabbar"
+  }
+}

@@ -1,0 +1,595 @@
+.user-card,
+.menu-list {
+  margin-bottom: 16rpx;
+  padding: 20rpx;
+  background: #fff;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+  box-shadow: none;
+}
+
+.user-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 18rpx;
+}
+
+.avatar {
+  width: 84rpx;
+  height: 84rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #e7f8ef;
+  border: 1rpx solid #bfe9d1;
+  border-radius: 16rpx;
+}
+
+.avatar-image {
+  width: 48rpx;
+  height: 48rpx;
+  display: block;
+}
+
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  display: block;
+  color: #101828;
+  font-size: 32rpx;
+  font-weight: 900;
+  line-height: 1.25;
+  word-break: break-all;
+}
+
+.user-phone {
+  display: block;
+  margin-top: 6rpx;
+  color: #667085;
+  font-size: 24rpx;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.user-role {
+  flex-shrink: 0;
+  max-width: 100%;
+  padding: 8rpx 14rpx;
+  color: #087443;
+  background: #e7f8ef;
+  border: 1rpx solid #bfe9d1;
+  border-radius: 10rpx;
+  font-size: 22rpx;
+  font-weight: 900;
+  line-height: 1.25;
+  word-break: break-all;
+}
+
+.account-hint-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+}
+
+.account-hint-icon-wrap {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #f3fbf7;
+  border: 1rpx solid #d7f1e2;
+  border-radius: 14rpx;
+}
+
+.account-hint-icon {
+  width: 32rpx;
+  height: 32rpx;
+  display: block;
+}
+
+.account-hint-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.account-hint-title {
+  display: block;
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.account-hint-desc {
+  display: block;
+  margin-top: 6rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.account-hint-btn {
+  width: 100%;
+  min-width: 0;
+  height: 78rpx;
+  margin-top: 18rpx;
+  padding: 0 18rpx;
+  color: #fff;
+  background: #087443;
+  border: 1rpx solid #087443;
+  border-radius: 14rpx;
+  font-size: 26rpx;
+}
+
+.account-hint-btn .mini-action-content {
+  min-width: 0;
+}
+
+.account-hint-btn text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wallet-head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.wallet-icon-wrap {
+  width: 52rpx;
+  height: 52rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #f3fbf7;
+  border: 1rpx solid #d7f1e2;
+  border-radius: 14rpx;
+}
+
+.wallet-icon {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
+}
+
+.wallet-label {
+  display: block;
+  min-width: 0;
+  color: #667085;
+  font-size: 24rpx;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.wallet-amount {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 8rpx;
+  color: #087443;
+  font-size: 38rpx;
+  font-weight: 900;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.wallet-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+
+.wallet-chip {
+  min-width: 0;
+  padding: 8rpx 12rpx;
+  color: #667085;
+  background: #f6f8fa;
+  border: none;
+  border-radius: 10rpx;
+  font-size: 23rpx;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.wallet-tip {
+  display: block;
+  margin-top: 12rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.wallet-error {
+  color: #b42318;
+}
+
+.wallet-retry-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14rpx;
+  margin-top: 12rpx;
+  padding: 14rpx;
+  background: #fef3f2;
+  border: 1rpx solid #fecdca;
+  border-radius: 14rpx;
+}
+
+.wallet-retry-row .wallet-tip {
+  min-width: 0;
+  flex: 1 1 220rpx;
+  margin-top: 0;
+}
+
+.wallet-retry-btn {
+  min-width: 132rpx;
+  max-width: 100%;
+  height: 72rpx;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0 16rpx;
+  color: #b42318;
+  background: #fff;
+  border: 1rpx solid #fecdca;
+  border-radius: 12rpx;
+  font-size: 23rpx;
+}
+
+.wallet-retry-btn .mini-action-content {
+  min-width: 0;
+}
+
+.service-flow-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+}
+
+.service-flow-icon-wrap {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #eff4ff;
+  border: 1rpx solid #b2ccff;
+  border-radius: 14rpx;
+}
+
+.service-flow-icon {
+  width: 32rpx;
+  height: 32rpx;
+  display: block;
+}
+
+.service-flow-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.service-flow-title {
+  display: block;
+  min-width: 0;
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.service-flow-desc {
+  display: block;
+  min-width: 0;
+  margin-top: 6rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.service-flow-btn {
+  width: 100%;
+  min-width: 0;
+  height: 78rpx;
+  margin-top: 18rpx;
+  padding: 0 18rpx;
+  color: #087443;
+  background: #f3fbf7;
+  border: 1rpx solid #bfe9d1;
+  border-radius: 14rpx;
+  font-size: 26rpx;
+}
+
+.service-flow-btn .mini-action-content {
+  min-width: 0;
+}
+
+.menu-list {
+  padding: 0 20rpx;
+  box-shadow: none;
+}
+
+.menu-item {
+  min-height: 78rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+  padding: 15rpx 0;
+  border-bottom: 1rpx solid #edf1f5;
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-main {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.menu-main text {
+  min-width: 0;
+  flex: 1;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.menu-icon-wrap {
+  width: 50rpx;
+  height: 50rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #f3fbf7;
+  border: 1rpx solid #d7f1e2;
+  border-radius: 12rpx;
+}
+
+.menu-icon {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
+}
+
+.arrow-icon {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
+  flex-shrink: 0;
+  margin-top: 11rpx;
+}
+
+.logout-btn {
+  width: 100%;
+  min-width: 0;
+  height: 78rpx;
+  margin: 0;
+  padding: 0 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  color: #b42318;
+  background: #fef3f2;
+  border: 1rpx solid #fecdca;
+  border-radius: 14rpx;
+  font-size: 26rpx;
+}
+
+.logout-icon {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
+  flex-shrink: 0;
+}
+
+.logout-btn text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  min-height: 260rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 22rpx;
+  color: #667085;
+  text-align: center;
+  background: #fff;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+  box-shadow: none;
+}
+
+.empty-icon {
+  width: 72rpx;
+  height: 72rpx;
+  opacity: 0.66;
+}
+
+.empty-action {
+  min-width: 188rpx;
+  max-width: 100%;
+  height: 72rpx;
+  margin-top: 4rpx;
+  padding: 0 20rpx;
+  color: #087443;
+  background: #f3fbf7;
+  border: 1rpx solid #bfe9d1;
+  border-radius: 14rpx;
+  font-size: 24rpx;
+}
+
+.empty-action .mini-action-content {
+  min-width: 0;
+}
+
+/* Profile polish pass. */
+.profile {
+  background: #f6f7f9;
+}
+
+.profile-panel {
+  margin-bottom: 16rpx;
+  padding: 20rpx;
+  background: #ffffff;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+  box-shadow: none;
+}
+
+.profile-panel .user-card {
+  margin-bottom: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.profile-action-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 22rpx;
+  padding-top: 22rpx;
+  border-top: 1rpx solid #edf1f5;
+}
+
+.profile-action-row .account-hint-head {
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+}
+
+.profile-action-row .account-hint-title {
+  font-size: 27rpx;
+}
+
+.profile-action-row .account-hint-desc {
+  margin-top: 3rpx;
+  font-size: 22rpx;
+  line-height: 1.4;
+}
+
+.profile-action-btn {
+  width: auto;
+  min-width: 164rpx;
+  max-width: 220rpx;
+  height: 68rpx;
+  margin-top: 0;
+  flex-shrink: 0;
+  padding: 0 16rpx;
+  border-radius: 12rpx;
+  font-size: 23rpx;
+}
+
+.wallet-summary-row,
+.service-summary-row {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #edf1f5;
+}
+
+.wallet-summary-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-top: 8rpx;
+}
+
+.wallet-summary-row .wallet-amount {
+  margin-top: 0;
+  font-size: 38rpx;
+}
+
+.wallet-summary-row .wallet-meta {
+  margin-top: 0;
+}
+
+.service-summary-row .service-flow-head {
+  align-items: center;
+}
+
+.user-card,
+.menu-list,
+.empty {
+  background: #ffffff;
+  border-color: #e5e7eb;
+  box-shadow: none;
+}
+
+.wallet-chip,
+.menu-icon-wrap,
+.service-flow-icon-wrap,
+.account-hint-icon-wrap {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+}
+
+.account-hint-btn,
+.service-flow-btn,
+.wallet-retry-btn,
+.logout-btn,
+.empty-action {
+  box-shadow: none;
+}
+
+/* Profile density polish. */
+.profile-panel,
+.menu-list,
+.logout-btn,
+.empty {
+  border-radius: 14rpx;
+}
+
+.profile-panel,
+.user-card,
+.menu-list,
+.empty,
+.wallet-retry-row,
+.logout-btn,
+.account-hint-btn,
+.wallet-retry-btn,
+.empty-action {
+  box-shadow: none;
+}
+
+.service-flow-desc,
+.account-hint-desc {
+  color: #667085;
+}

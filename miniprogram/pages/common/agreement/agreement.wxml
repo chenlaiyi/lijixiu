@@ -1,0 +1,107 @@
+<view class="safe-page agreement-page">
+  <view class="agreement-tabs">
+    <view class="agreement-tab {{activeTab === 'terms' ? 'active' : ''}}" data-tab="terms" bindtap="switchTab">用户协议</view>
+    <view class="agreement-tab {{activeTab === 'privacy' ? 'active' : ''}}" data-tab="privacy" bindtap="switchTab">隐私保护指引</view>
+  </view>
+
+  <scroll-view class="agreement-scroll" scroll-y="true" enhanced="true" show-scrollbar="false">
+    <block wx:if="{{activeTab === 'terms'}}">
+      <view class="agreement-block">
+        <text class="agreement-h1">立即修用户服务协议</text>
+        <text class="agreement-meta">最近更新：2026 年 8 月</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">一、服务说明</text>
+        <text class="agreement-p">立即修由立即修（厦门）科技有限公司运营，提供家电、家居、家政等上门维修与保养服务。本协议是您与立即修之间就使用本平台服务所订立的协议。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">二、账号与登录</text>
+        <text class="agreement-p">1. 您可使用微信手机号快捷登录或账号密码方式登录本平台。\n2. 您应妥善保管账号与登录凭证，因您主动泄露或未尽保管义务造成的损失，由您本人承担。\n3. 同一手机号在同一时间仅可登录一台设备。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">三、订单与上门</text>
+        <text class="agreement-p">1. 提交报修前请确认服务地址、联系电话与故障描述准确、完整。\n2. 师傅上门后将以现场判断为准，可能与您最初的描述存在差异。\n3. 服务完成前，请勿支付超出订单确认金额外的费用。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">四、费用与支付</text>
+        <text class="agreement-p">1. 服务费用由上门费、维修工时费、配件与材料费组成，师傅上门后将出具明细。\n2. 平台支持微信支付、亲友代付等多种方式，具体以结算页为准。\n3. 配件保修期与国家三包规定一致，详见保修凭证。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">五、取消与改约</text>
+        <text class="agreement-p">师傅未上门前，您可随时取消订单；师傅已上门但服务未开始，您可以与师傅协商改约或部分退款。具体规则以订单详情页说明为准。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">六、用户行为规范</text>
+        <text class="agreement-p">您理解并同意，不会利用本平台从事违反法律法规或公序良俗的活动，包括但不限于：发布虚假故障、恶意下单、骚扰师傅或客服、谋取不当利益等。一经发现，平台有权采取暂停账号、拒绝服务等措施。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">七、协议变更与终止</text>
+        <text class="agreement-p">平台可根据业务调整对本协议进行修订，重大变更将通过应用内通知等方式告知。如您不同意变更，可停止使用本服务；继续使用即视为接受。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">八、联系我们</text>
+        <text class="agreement-p">如您对本协议内容有任何疑问、意见或建议，可通过应用内"我的—设置—隐私与权限"页面查看联系方式，或拨打平台客服电话。</text>
+      </view>
+    </block>
+
+    <block wx:else>
+      <view class="agreement-block">
+        <text class="agreement-h1">立即修隐私保护指引</text>
+        <text class="agreement-meta">最近更新：2026 年 8 月</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">我们收集哪些信息</text>
+        <text class="agreement-p">为提供上门维修服务，平台会收集以下信息：\n1. 账号信息：手机号、姓名（可选）。\n2. 订单信息：服务地址、故障描述、现场照片或视频、语音留言。\n3. 位置信息：师傅上门导航所需的位置授权。\n4. 设备信息：用于保障账号与交易安全的必要设备标识。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">我们如何使用这些信息</text>
+        <text class="agreement-p">1. 派单与上门：用于匹配师傅、判断上门时间与服务范围。\n2. 服务记录：用于订单进度同步、保修凭证生成、售后跟进。\n3. 安全保障：用于识别异常登录、风险交易与争议处理。\n4. 服务优化：用于改进派单规则与服务质量（聚合统计，不涉及个人身份）。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">麦克风、相机与相册权限</text>
+        <text class="agreement-p">提交报修时，您可以选择录制语音、上传故障照片或视频。我们仅在您主动使用相关功能时申请对应权限，权限使用范围严格限于故障描述与现场素材存储，不会在您不知情时录音或拍摄。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">位置信息</text>
+        <text class="agreement-p">平台仅在师傅上门场景使用您的位置信息，用于规划路线与确认服务范围。如您拒绝位置授权，将无法使用师傅上门导航功能，但仍可使用非定位相关服务。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">信息共享</text>
+        <text class="agreement-p">我们不会出售您的个人信息。仅在以下情况下共享必要信息：\n1. 提供给承接您订单的师傅、所在门店与城市经理，用于服务交付。\n2. 提供给支付与短信服务商，用于完成支付与验证码下发。\n3. 应法律法规、监管或司法机关的合法要求。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">信息存储与安全</text>
+        <text class="agreement-p">您的个人信息存储于中华人民共和国境内的合规云服务商。平台采用传输加密、访问控制、权限分级等技术与管理措施保障信息安全。订单完成后，超出必要保存期限的信息将按法律法规要求进行删除或匿名化处理。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">您的权利</text>
+        <text class="agreement-p">您有权查看、更正、删除您的个人信息，撤回已授予的授权，或注销账号。可以通过应用内"我的—设置"或联系客服发起上述请求，我们将在 15 个工作日内响应。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">未成年人保护</text>
+        <text class="agreement-p">本平台面向具备完全民事行为能力的成年人。如您为未成年人，请在监护人陪同下使用本平台服务。</text>
+      </view>
+
+      <view class="agreement-block">
+        <text class="agreement-h2">联系我们</text>
+        <text class="agreement-p">如您对本指引内容有任何疑问、意见或建议，可通过应用内"我的—设置"页面查看联系方式，或拨打平台客服电话。</text>
+      </view>
+    </block>
+  </scroll-view>
+</view>

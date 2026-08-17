@@ -1,0 +1,115 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy environment'
+        required: true
+        type: choice
+        default: 'staging'
+        options:
+          - staging
+          - production
+      ref:
+        description: 'Git ref (branch/tag/sha) to deploy'
+        required: false
+        type: string
+        default: ''
+
+# 部署需要的环境:
+#   - SERVER_SSH_KEY: 私钥(secret)
+#   - SERVER_HOST: 目标主机 IP / 域名(secret)
+#   - SERVER_USER: SSH 用户(secret, 默认 root)
+#   - DEPLOY_PATH: 部署目录(secret, 默认 /opt/xiulijiu)
+#   - ENV_FILE: .env 完整内容(secret, JSON 格式)
+#   - SLACK_WEBHOOK_URL: 部署结果通知(secret, 可选)
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Pre-flight checks
+        run: |
+          # 确认有必要的 secrets
+          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+            echo "::error::SERVER_HOST secret not set"
+            exit 1
+          fi
+
+      - name: Sync code to server
+        env:
+          SERVER: ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/opt/xiulijiu' }}
+        run: |
+          rsync -avz --delete \
+            --exclude '.git' \
+            --exclude '__pycache__' \
+            --exclude '*.pyc' \
+            --exclude '.venv' \
+            --exclude 'node_modules' \
+            --exclude 'preview-*.png' \
+            --exclude '*.db' \
+            --exclude 'uploads/*' \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new" \
+            ./ "$SERVER:$DEPLOY_PATH/"
+
+      - name: Write .env
+        env:
+          SERVER: ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/opt/xiulijiu' }}
+        run: |
+          echo "${{ secrets.ENV_FILE }}" > /tmp/xiulijiu.env
+          scp -i ~/.ssh/deploy_key /tmp/xiulijiu.env "$SERVER:$DEPLOY_PATH/.env"
+          rm -f /tmp/xiulijiu.env
+
+      - name: Run deploy.sh
+        env:
+          SERVER: ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/opt/xiulijiu' }}
+          ENV_NAME: ${{ github.event.inputs.environment }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "$SERVER" "cd $DEPLOY_PATH && ENV=$ENV_NAME ./scripts/deploy.sh"
+
+      - name: Run security audit
+        env:
+          BASE_URL: ${{ secrets.SERVER_HOST }}
+        run: |
+          BASE_URL=https://$BASE_URL node scripts/security_audit.js
+
+      - name: Notify Slack (optional)
+        if: always()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_STATUS: ${{ job.status }}
+          SLACK_ENV: ${{ github.event.inputs.environment }}
+          SLACK_SHA: ${{ github.sha }}
+          SLACK_ACTOR: ${{ github.actor }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK" ]; then
+            color="good"
+            [ "$SLACK_STATUS" != "success" ] && color="danger"
+            # 用 jq 生成 payload(避免 heredoc/yaml 解析)
+            payload=$(jq -n \
+              --arg color "$color" \
+              --arg env "$SLACK_ENV" \
+              --arg status "$SLACK_STATUS" \
+              --arg sha "${SLACK_SHA:0:8}" \
+              --arg actor "$SLACK_ACTOR" \
+              '{attachments: [{color: $color, title: "立即修平台部署", text: ("环境: " + $env + "\n状态: " + $status + "\nCommit: " + $sha + "\nAuthor: " + $actor)}]}')
+            curl -fsS -X POST -H 'Content-Type: application/json' -d "$payload" "$SLACK_WEBHOOK" || true
+          fi

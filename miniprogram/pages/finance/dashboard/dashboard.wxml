@@ -1,0 +1,73 @@
+<view class="safe-page role-page finance-page">
+  <view class="role-hero">
+    <view class="role-hero-head">
+      <view>
+        <text class="role-title">财务工作台</text>
+        <text class="role-subtitle">支付、退款、工资和对账</text>
+      </view>
+      <button class="role-ghost-btn" bindtap="reconcile">运行对账</button>
+    </view>
+  </view>
+
+  <view class="role-stat-grid">
+    <view class="role-stat-card">
+      <text class="role-stat-num">¥{{totals.paid}}</text>
+      <text class="role-stat-label">支付到账</text>
+    </view>
+    <view class="role-stat-card">
+      <text class="role-stat-num">¥{{totals.refund}}</text>
+      <text class="role-stat-label">成功退款</text>
+    </view>
+    <view class="role-stat-card">
+      <text class="role-stat-num">¥{{totals.wage}}</text>
+      <text class="role-stat-label">已发工资</text>
+    </view>
+  </view>
+
+  <view wx:if="{{errorText}}" class="role-empty">
+    <view class="role-empty-inner">
+      <image class="role-empty-icon" src="/assets/ui/wallet.png" mode="aspectFit" />
+      <text class="role-empty-title">加载失败</text>
+      <text class="role-empty-desc">{{errorText}}</text>
+      <button class="role-empty-action" bindtap="load" hover-class="button-hover">
+        <view class="mini-action-content">
+          <image class="mini-action-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+          <text>重试</text>
+        </view>
+      </button>
+    </view>
+  </view>
+
+  <view wx:if="{{!errorText}}" class="role-section">
+    <view class="role-section-head">
+      <text class="role-section-title">最近支付</text>
+    </view>
+    <view wx:if="{{loading}}" class="role-empty">
+      <view class="role-empty-inner">
+        <image class="role-empty-icon" src="/assets/ui/wallet.png" mode="aspectFit" />
+        <text class="role-empty-title">加载中…</text>
+      </view>
+    </view>
+    <view wx:elif="{{payments.length === 0}}" class="role-empty">
+      <view class="role-empty-inner">
+        <image class="role-empty-icon" src="/assets/ui/wallet.png" mode="aspectFit" />
+        <text class="role-empty-title">暂无支付记录</text>
+        <text class="role-empty-desc">有支付时显示</text>
+      </view>
+    </view>
+    <view wx:for="{{payments}}" wx:key="id" class="role-card">
+      <view class="role-card-head">
+        <text class="role-strong">支付单 #{{item.id}}</text>
+        <text class="role-pill {{item.statusTone}}">{{item.statusText}}</text>
+      </view>
+      <view class="role-meta-row">
+        <text>订单 #{{item.order_id}}</text>
+        <text>¥{{item.amount}}</text>
+        <text>付款人 #{{item.user_id}}</text>
+      </view>
+    </view>
+  </view>
+
+  <button class="role-ghost-btn logout" bindtap="logout">退出登录</button>
+</view>
+<role-tabbar />

@@ -1,0 +1,45 @@
+<view class="detail-page">
+  <view wx:if="{{loading}}" class="detail-state">加载中…</view>
+  <block wx:elif="{{errorText}}">
+    <view class="detail-state detail-state-column">
+      <text class="detail-state-title">加载失败</text>
+      <text class="detail-state-desc">{{errorText}}</text>
+      <button class="detail-retry-btn" bindtap="loadWorker" hover-class="button-hover">重试</button>
+    </view>
+  </block>
+  <block wx:elif="{{!worker}}">
+    <view class="detail-state detail-state-column">
+      <text class="detail-state-title">暂无该人员档案</text>
+      <text class="detail-state-desc">返回列表重新选择</text>
+    </view>
+  </block>
+  <block wx:else>
+    <view class="profile-head">
+      <image wx:if="{{worker.avatar}}" class="profile-avatar" src="{{worker.avatar}}" mode="aspectFill" />
+      <view wx:else class="profile-avatar fallback">{{worker.name}}</view>
+      <view class="profile-copy">
+        <text class="profile-name">{{worker.name}}</text>
+        <text class="profile-meta">从业 {{worker.years_experience}} 年 · {{worker.rating}} 分</text>
+        <text class="profile-price">¥{{worker.price_min}} - ¥{{worker.price_max}}</text>
+      </view>
+    </view>
+
+    <view class="verify-band">
+      <view class="verify-item {{worker.id_verified ? 'ok' : ''}}"><text>实名认证</text><text>{{worker.id_verified ? '已核验' : '待核验'}}</text></view>
+      <view class="verify-item {{worker.health_verified ? 'ok' : ''}}"><text>健康资料</text><text>{{worker.health_verified ? '已核验' : '待核验'}}</text></view>
+      <view class="verify-item {{worker.training_verified ? 'ok' : ''}}"><text>技能培训</text><text>{{worker.training_verified ? '已核验' : '待核验'}}</text></view>
+    </view>
+
+    <view class="detail-section">
+      <text class="section-title">服务技能</text>
+      <view class="skill-list"><text wx:for="{{skills}}" wx:key="*this">{{item}}</text></view>
+    </view>
+    <view class="detail-section">
+      <text class="section-title">档期与介绍</text>
+      <text class="detail-text">{{worker.availability_text || '具体档期由门店确认'}}</text>
+      <text class="detail-text">{{worker.intro || '服务经历和面试资料由门店进一步提供。'}}</text>
+    </view>
+    <view class="privacy-note">为保护双方隐私，联系方式将在匹配确认后提供。</view>
+    <button class="primary-action" bindtap="publishDemand">申请匹配</button>
+  </block>
+</view>

@@ -1,0 +1,55 @@
+{
+  "base_url": "https://x.iddg.cn",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "generated_at": "2026-08-09T06:50:25.656Z",
+  "results": [
+    {
+      "role": "admin",
+      "ok": true,
+      "tabs": 9
+    },
+    {
+      "role": "customer",
+      "ok": true,
+      "tabs": 8
+    },
+    {
+      "role": "repairer",
+      "ok": true,
+      "tabs": 5
+    },
+    {
+      "role": "second",
+      "ok": true,
+      "tabs": 5
+    },
+    {
+      "role": "store_manager",
+      "ok": true,
+      "tabs": 8
+    },
+    {
+      "role": "city_manager",
+      "ok": true,
+      "tabs": 6
+    },
+    {
+      "role": "channel",
+      "ok": true,
+      "tabs": 3
+    },
+    {
+      "role": "tech_support",
+      "ok": true,
+      "tabs": 3
+    },
+    {
+      "role": "finance",
+      "ok": true,
+      "tabs": 4
+    }
+  ]
+}

@@ -1,0 +1,603 @@
+.balance-card,
+.ledger-section {
+  margin-bottom: 16rpx;
+  padding: 18rpx;
+  background: #fff;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+  box-shadow: none;
+}
+
+.balance-card {
+  background: #f8fafc;
+}
+
+.experience-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  margin-bottom: 18rpx;
+  padding: 14rpx 16rpx;
+  color: #175cd3;
+  background: #eff4ff;
+  border: 1rpx solid #b2ccff;
+  border-radius: 12rpx;
+}
+
+.experience-banner image {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+  margin-top: 2rpx;
+}
+
+.experience-banner > view {
+  min-width: 0;
+  flex: 1;
+}
+
+.experience-banner-title,
+.experience-banner-desc {
+  display: block;
+}
+
+.experience-banner-title {
+  font-size: 23rpx;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.experience-banner-desc {
+  margin-top: 3rpx;
+  font-size: 21rpx;
+  line-height: 1.4;
+}
+
+.balance-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+}
+
+.balance-icon-wrap {
+  width: 52rpx;
+  height: 52rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1rpx;
+  background: #eff4ff;
+  border: 1rpx solid #b2ccff;
+  border-radius: 14rpx;
+}
+
+.balance-icon {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
+}
+
+.balance-label {
+  min-width: 0;
+  color: #667085;
+  font-size: 24rpx;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.balance-amount {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 8rpx;
+  color: #175cd3;
+  font-size: 36rpx;
+  font-weight: 900;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.balance-caption {
+  display: block;
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.wallet-stat-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin: 16rpx 0;
+}
+
+.wallet-stat-card {
+  width: calc((100% - 10rpx) / 2);
+  min-width: 0;
+  padding: 16rpx 12rpx;
+  background: #f9fafb;
+  border: 1rpx solid #edf1f5;
+  border-radius: 14rpx;
+}
+
+.wallet-stat-card.primary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 18rpx;
+  background: #eff4ff;
+  border-color: #b2ccff;
+}
+
+.wallet-stat-card.primary .wallet-stat-label {
+  color: #175cd3;
+  font-weight: 800;
+}
+
+.wallet-stat-card.primary .wallet-stat-value {
+  margin-top: 0;
+  color: #175cd3;
+  font-size: 32rpx;
+}
+
+.wallet-stat-label {
+  display: block;
+  min-width: 0;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.wallet-stat-value {
+  display: block;
+  min-width: 0;
+  margin-top: 8rpx;
+  color: #101828;
+  font-size: 25rpx;
+  font-weight: 900;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.earnings-next-card {
+  margin: 0 0 16rpx;
+  box-shadow: none;
+}
+
+.earnings-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+  margin: 0 0 16rpx;
+  padding: 16rpx;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1rpx solid #fde68a;
+  border-radius: 14rpx;
+}
+
+.earnings-alert-icon {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+  margin-top: 2rpx;
+}
+
+.earnings-alert-text {
+  min-width: 0;
+  flex: 1;
+  font-size: 23rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.withdraw-form {
+  margin-bottom: 16rpx;
+}
+
+.withdraw-form-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 10rpx;
+}
+
+.withdraw-form-label,
+.withdraw-form-limit {
+  min-width: 0;
+  font-size: 23rpx;
+  line-height: 1.4;
+}
+
+.withdraw-form-label {
+  color: #344054;
+  font-weight: 800;
+}
+
+.withdraw-form-limit {
+  color: #667085;
+  text-align: right;
+}
+
+.withdraw-input-row {
+  height: 84rpx;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 0 14rpx 0 18rpx;
+  background: #fff;
+  border: 1rpx solid #d0d5dd;
+  border-radius: 12rpx;
+}
+
+.withdraw-input-row.error {
+  border-color: #f04438;
+}
+
+.withdraw-currency {
+  flex-shrink: 0;
+  color: #101828;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.withdraw-input {
+  min-width: 0;
+  height: 100%;
+  flex: 1;
+  color: #101828;
+  font-size: 30rpx;
+}
+
+.withdraw-all {
+  width: 92rpx;
+  height: 56rpx;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+  color: #175cd3;
+  background: #eff4ff;
+  border: 0;
+  border-radius: 10rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.withdraw-error {
+  display: block;
+  margin-top: 8rpx;
+  color: #b42318;
+  font-size: 21rpx;
+  line-height: 1.4;
+}
+
+.withdrawal-section {
+  margin-bottom: 16rpx;
+  padding: 18rpx;
+  background: #fff;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+}
+
+.withdrawal-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #edf1f5;
+}
+
+.withdrawal-item:last-child {
+  border-bottom: 0;
+}
+
+.withdrawal-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.withdrawal-amount,
+.withdrawal-time {
+  display: block;
+}
+
+.withdrawal-amount {
+  color: #101828;
+  font-size: 27rpx;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.withdrawal-time {
+  margin-top: 5rpx;
+  color: #98a2b3;
+  font-size: 21rpx;
+  line-height: 1.35;
+}
+
+.withdraw-status {
+  flex-shrink: 0;
+  padding: 7rpx 12rpx;
+  border-radius: 10rpx;
+  font-size: 21rpx;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.withdraw-status.waiting {
+  color: #b54708;
+  background: #fffaeb;
+}
+
+.withdraw-status.success {
+  color: #067647;
+  background: #ecfdf3;
+}
+
+.withdraw-status.rejected {
+  color: #b42318;
+  background: #fef3f2;
+}
+
+.withdraw-btn {
+  width: 100%;
+  min-width: 0;
+  height: 74rpx;
+  margin: 0;
+  padding: 0 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  color: #fff;
+  background: #175cd3;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+}
+
+.withdraw-btn[disabled] {
+  opacity: 0.68;
+}
+
+.withdraw-note {
+  display: block;
+  min-width: 0;
+  margin-top: 12rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.45;
+  text-align: center;
+  word-break: break-all;
+}
+
+.retry-btn {
+  width: 100%;
+  min-width: 0;
+  height: 72rpx;
+  margin-bottom: 12rpx;
+  color: #175cd3;
+  background: #eff4ff;
+  border: 1rpx solid #b2ccff;
+  border-radius: 14rpx;
+  font-size: 25rpx;
+}
+
+.withdraw-icon {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
+  flex-shrink: 0;
+}
+
+.withdraw-btn text,
+.retry-btn text,
+.role-switch text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+  margin-bottom: 14rpx;
+}
+
+.section-title-row > view {
+  min-width: 0;
+  flex: 1;
+}
+
+.section-icon {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
+  flex-shrink: 0;
+  margin-top: 4rpx;
+}
+
+.section-title {
+  display: block;
+  min-width: 0;
+  color: #101828;
+  font-size: 30rpx;
+  font-weight: 900;
+  line-height: 1.3;
+  word-break: break-all;
+}
+
+.section-subtitle {
+  display: block;
+  margin-top: 4rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.ledger-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18rpx;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #edf1f5;
+}
+
+.ledger-item:last-child {
+  border-bottom: none;
+}
+
+.ledger-left {
+  flex: 1;
+  min-width: 220rpx;
+}
+
+.ledger-icon-wrap {
+  width: 46rpx;
+  height: 46rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #f3fbf7;
+  border: 1rpx solid #d7f1e2;
+  border-radius: 12rpx;
+}
+
+.ledger-icon {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
+}
+
+.ledger-type {
+  display: block;
+  color: #101828;
+  font-size: 26rpx;
+  font-weight: 800;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.ledger-time {
+  display: block;
+  margin-top: 6rpx;
+  color: #98a2b3;
+  font-size: 22rpx;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.ledger-amount {
+  flex-shrink: 0;
+  max-width: 100%;
+  font-size: 28rpx;
+  font-weight: 900;
+  line-height: 1.3;
+  text-align: right;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.income {
+  color: #087443;
+}
+
+.outcome {
+  color: #b42318;
+}
+
+.empty {
+  min-height: 160rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 24rpx;
+  color: #667085;
+  text-align: center;
+}
+
+.empty-action {
+  min-width: 188rpx;
+  max-width: 100%;
+  height: 72rpx;
+  margin-top: 4rpx;
+  padding: 0 20rpx;
+  color: #087443;
+  background: #f3fbf7;
+  border: 1rpx solid #bfe9d1;
+  border-radius: 14rpx;
+  font-size: 24rpx;
+}
+
+.empty-action .mini-action-content {
+  min-width: 0;
+}
+
+.empty-icon {
+  width: 46rpx;
+  height: 46rpx;
+  display: block;
+  opacity: 0.66;
+}
+
+.role-switch {
+  width: 100%;
+  min-width: 0;
+  height: 84rpx;
+  margin: 0;
+  padding: 0 18rpx;
+  color: #087443;
+  background: #f3fbf7;
+  border: 1rpx solid #bfe9d1;
+  border-radius: 14rpx;
+  font-size: 28rpx;
+}
+
+.role-switch .mini-action-content,
+.retry-btn .mini-action-content {
+  min-width: 0;
+}
+
+/* Mobile polish pass for earnings. */
+.earnings {
+  background: #f6f7f9;
+}
+
+.balance-card,
+.ledger-section,
+.role-next-card,
+.wallet-stat-card,
+.empty {
+  background: #fff;
+  border-color: #e5e7eb;
+  box-shadow: none;
+}
+
+.ledger-icon-wrap {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+}
+
+.withdraw-btn,
+.retry-btn,
+.role-switch,
+.empty-action {
+  box-shadow: none;
+}

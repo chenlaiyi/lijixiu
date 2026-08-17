@@ -1,0 +1,22 @@
+<view class="result-page">
+  <view wx:if="{{loading}}" class="result-state">加载中…</view>
+  <view wx:elif="{{errorText}}" class="result-state error">
+    <text>{{errorText}}</text>
+    <button class="refresh-action" bindtap="refresh" hover-class="button-hover">重试</button>
+    <button class="back-action" bindtap="goWorkbench" hover-class="button-hover">返回工作台</button>
+  </view>
+  <block wx:elif="{{access}}">
+    <view class="result-head {{access.purpose}}">
+      <text>{{access.purpose === 'payment' ? '付款二维码' : '订单确认二维码'}}</text>
+      <text>订单 #{{order.id}}</text>
+    </view>
+    <view class="code-panel">
+      <image class="code-image" src="{{access.imageUrl}}" mode="aspectFit" show-menu-by-longpress="true" />
+      <text class="code-title">{{access.purpose === 'payment' ? '客户、家属或代付人微信扫码付款' : '请绑定订单电话的微信扫码确认'}}</text>
+      <text class="code-expire">二维码具有时效，刷新后旧二维码自动失效</text>
+    </view>
+    <button class="share-action" open-type="share">转发二维码入口</button>
+    <button class="refresh-action" bindtap="refresh">刷新订单状态</button>
+    <button class="back-action" bindtap="goWorkbench">返回工作台</button>
+  </block>
+</view>

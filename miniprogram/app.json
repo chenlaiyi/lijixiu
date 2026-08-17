@@ -1,0 +1,56 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/login/login",
+    "pages/customer/home/home",
+    "pages/customer/order/order",
+    "pages/customer/orders/orders",
+    "pages/customer/detail/detail",
+    "pages/customer/profile/profile",
+    "pages/account/personal-info/personal-info",
+    "pages/account/settings/settings",
+    "pages/customer/pay/pay",
+    "pages/customer/domestic/list/list",
+    "pages/customer/domestic/detail/detail",
+    "pages/customer/domestic/demand/demand",
+    "pages/customer/addresses/addresses",
+    "pages/customer/warranties/warranties",
+    "pages/customer/warranty-claim/warranty-claim",
+    "pages/common/agreement/agreement",
+    "pages/proxy/access/access",
+    "pages/store/dashboard/dashboard",
+    "pages/store/payroll/payroll",
+    "pages/city/dashboard/dashboard",
+    "pages/promotion/dashboard/dashboard",
+    "pages/second/dashboard/dashboard",
+    "pages/staff/proxy-order/proxy-order",
+    "pages/staff/proxy-result/proxy-result",
+    "pages/repairer/jobs/jobs",
+    "pages/repairer/detail/detail",
+    "pages/repairer/earnings/earnings",
+    "pages/admin/dashboard/dashboard",
+    "pages/support/dashboard/dashboard",
+    "pages/finance/dashboard/dashboard"
+  ],
+  "entryPagePath": "pages/login/login",
+  "__usePrivacyCheck__": true,
+  "window": {
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTitleText": "立即修",
+    "navigationBarTextStyle": "black"
+  },
+  "usingComponents": {
+    "role-tabbar": "/components/role-tabbar/role-tabbar"
+  },
+  "permission": {
+    "scope.record": {
+      "desc": "用于录制维修问题语音，方便师傅判断工具物料"
+    },
+    "scope.camera": {
+      "desc": "用于拍摄维修问题照片或视频，方便师傅判断工具物料"
+    },
+    "scope.userLocation": {
+      "desc": "用于师傅上门导航"
+    }
+  }
+}

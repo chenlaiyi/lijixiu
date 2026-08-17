@@ -1,0 +1,54 @@
+<view class="demand-page">
+  <view class="demand-head {{serviceType}}">
+    <text class="demand-title">{{title}}</text>
+    <text class="demand-desc">提交后由门店联系确认，并为您推荐候选人员</text>
+  </view>
+
+  <view class="form-section">
+    <text class="section-title">联系与服务信息</text>
+    <view class="field"><text>联系人</text><input value="{{form.contactName}}" data-field="contactName" bindinput="inputField" placeholder="怎么称呼您" /></view>
+    <view class="field"><text>联系电话</text><input type="number" value="{{form.contactPhone}}" data-field="contactPhone" bindinput="inputField" placeholder="用于沟通匹配" /></view>
+    <view class="field vertical"><text>服务地址</text><textarea value="{{form.address}}" data-field="address" bindinput="inputField" placeholder="填写详细地址" maxlength="300" /></view>
+    <view class="field"><text>开始日期</text><picker mode="date" value="{{form.startDate}}" data-field="startDate" bindchange="dateChange"><view class="picker-value">{{form.startDate || '请选择'}}</view></picker></view>
+    <view class="budget-row"><view class="field"><text>预算最低</text><input type="digit" value="{{form.budgetMin}}" data-field="budgetMin" bindinput="inputField" placeholder="元" /></view><view class="field"><text>预算最高</text><input type="digit" value="{{form.budgetMax}}" data-field="budgetMax" bindinput="inputField" placeholder="元" /></view></view>
+  </view>
+
+  <view class="form-section" wx:if="{{serviceType === 'maternity'}}">
+    <text class="section-title">月嫂需求</text>
+    <view class="field"><text>预产/出生日期</text><picker mode="date" value="{{form.expectedDate}}" data-field="expectedDate" bindchange="dateChange"><view class="picker-value">{{form.expectedDate || '请选择'}}</view></picker></view>
+    <view class="field"><text>服务周期</text><picker range="{{cycleOptions}}" bindchange="cycleChange"><view class="picker-value">{{form.cycleDays}} 天</view></picker></view>
+    <view class="field"><text>是否住家</text><switch color="#087443" checked="{{form.liveIn}}" data-field="liveIn" bindchange="switchField" /></view>
+  </view>
+
+  <view class="form-section" wx:else>
+    <text class="section-title">保姆需求</text>
+    <view class="field"><text>服务方式</text><picker range="{{modeOptions}}" bindchange="modeChange"><view class="picker-value">{{form.serviceMode}}</view></picker></view>
+    <view class="field"><text>家庭人数</text><input type="number" value="{{form.familySize}}" data-field="familySize" bindinput="inputField" /></view>
+    <view class="field"><text>家中有宠物</text><switch color="#175cd3" checked="{{form.pets}}" data-field="pets" bindchange="switchField" /></view>
+    <view class="field vertical"><text>时间安排</text><textarea value="{{form.schedule}}" data-field="schedule" bindinput="inputField" placeholder="每日时间和休息安排" /></view>
+    <view class="field vertical"><text>主要工作</text><textarea value="{{form.tasks}}" data-field="tasks" bindinput="inputField" placeholder="做饭、清洁、照顾老人儿童等" /></view>
+  </view>
+
+  <view class="form-section">
+    <text class="section-title">补充说明</text>
+    <textarea class="description" value="{{form.description}}" data-field="description" bindinput="inputField" placeholder="填写家庭情况、技能要求和需要特别注意的事项" maxlength="1000" />
+    <view class="media-actions">
+      <button class="media-button {{recording ? 'recording' : ''}}" bindtap="toggleRecord"><image src="/assets/ui/{{recording ? 'stop-record' : 'mic'}}.png" mode="aspectFit" /><text>{{recording ? recordSeconds + '秒 停止' : '添加语音'}}</text></button>
+      <button class="media-button" bindtap="chooseImages"><image src="/assets/ui/image.png" mode="aspectFit" /><text>添加照片</text></button>
+    </view>
+    <view class="media-list"><view class="media-item" wx:for="{{localMedia}}" wx:key="path"><image src="{{item.type === 'image' ? item.path : '/assets/ui/mic.png'}}" mode="{{item.type === 'image' ? 'aspectFill' : 'aspectFit'}}" /><button data-index="{{index}}" bindtap="removeMedia">×</button></view></view>
+  </view>
+
+  <button class="submit-button" bindtap="submit" loading="{{submitting}}" disabled="{{submitting}}">提交需求</button>
+
+  <view wx:if="{{showPrivacyModal}}" class="privacy-mask">
+    <view class="privacy-dialog">
+      <text class="privacy-title">素材授权</text>
+      <text class="privacy-desc">语音和照片仅用于人员匹配及服务准备，请阅读<text class="privacy-link" bindtap="openPrivacyContract">《用户隐私保护指引》</text></text>
+      <view class="privacy-actions">
+        <button bindtap="rejectPrivacy">取消</button>
+        <button id="domestic-agree" class="agree" open-type="agreePrivacyAuthorization" bindagreeprivacyauthorization="agreePrivacy">同意并继续</button>
+      </view>
+    </view>
+  </view>
+</view>

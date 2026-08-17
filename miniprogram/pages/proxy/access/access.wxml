@@ -1,0 +1,25 @@
+<view class="access-page">
+  <view wx:if="{{loading}}" class="access-state">加载中…</view>
+  <view wx:elif="{{!access}}" class="access-state error">
+    <image src="/assets/ui/receipt.png" mode="aspectFit" />
+    <text>{{resultMessage || '二维码不可用'}}</text>
+  </view>
+  <block wx:else>
+    <view class="access-head {{access.purpose}}">
+      <image src="/assets/ui/{{access.purpose === 'payment' ? 'pay' : 'bill-check'}}.png" mode="aspectFit" />
+      <view><text class="access-title">{{access.purpose === 'payment' ? '服务订单付款' : '确认服务订单'}}</text><text class="access-sub">订单 #{{access.order_id}}</text></view>
+    </view>
+    <view class="access-detail">
+      <view class="detail-row"><text>服务内容</text><text>{{access.description}}</text></view>
+      <view class="detail-row"><text>联系电话</text><text>{{access.contact_phone_masked}}</text></view>
+      <view class="detail-row"><text>订单状态</text><text>{{access.status}}</text></view>
+      <view wx:if="{{access.purpose === 'payment'}}" class="amount-row"><text>待付金额</text><text>¥{{access.amount - access.paid_amount}}</text></view>
+    </view>
+    <view wx:if="{{resultMessage}}" class="result-message">{{resultMessage}}</view>
+    <button wx:if="{{access.purpose === 'claim' && access.claim_status !== 'claimed'}}" class="primary-button" bindtap="claimOrder" loading="{{claiming}}">确认是我的订单</button>
+    <button wx:if="{{access.purpose === 'payment'}}" class="primary-button pay" bindtap="goPay">核对明细并付款</button>
+    <button wx:if="{{access.claim_status === 'claimed'}}" class="secondary-button" bindtap="openOrder">查看订单进度</button>
+    <button class="share-button" open-type="share">转发给家人</button>
+    <text class="access-note">付款人与服务客户可以不同，付款不会改变订单和保修权益归属。</text>
+  </block>
+</view>

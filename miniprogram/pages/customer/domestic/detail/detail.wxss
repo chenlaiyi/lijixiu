@@ -1,0 +1,23 @@
+.detail-page { min-height: 100vh; padding: 28rpx; background: #f7f8fa; color: #101828; }
+.detail-state { min-height: 300rpx; display: flex; align-items: center; justify-content: center; color: #667085; }
+.detail-state-column { flex-direction: column; gap: 14rpx; }
+.detail-state-title { color: #344054; font-size: 28rpx; font-weight: 700; }
+.detail-state-desc { color: #667085; font-size: 22rpx; text-align: center; max-width: 540rpx; }
+.detail-retry-btn { min-width: 180rpx; height: 64rpx; line-height: 64rpx; color: #fff; background: #087443; border-radius: 12rpx; font-size: 24rpx; margin-top: 14rpx; }
+.profile-head { display: flex; gap: 22rpx; padding: 26rpx; background: #fff; border: 1rpx solid #e4e7ec; border-radius: 14rpx; }
+.profile-avatar { width: 150rpx; height: 184rpx; flex-shrink: 0; border-radius: 12rpx; background: #f2f4f7; }
+.profile-avatar.fallback { display: flex; align-items: center; justify-content: center; color: #087443; background: #ecfdf3; font-size: 32rpx; font-weight: 800; }
+.profile-copy { min-width: 0; flex: 1; padding-top: 8rpx; }
+.profile-name { display: block; font-size: 36rpx; font-weight: 800; }
+.profile-meta { display: block; margin-top: 14rpx; color: #667085; font-size: 23rpx; }
+.profile-price { display: block; margin-top: 24rpx; color: #b54708; font-size: 28rpx; font-weight: 800; }
+.verify-band { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10rpx; margin-top: 16rpx; }
+.verify-item { min-width: 0; min-height: 92rpx; display: flex; flex-direction: column; justify-content: center; gap: 8rpx; padding: 12rpx; color: #667085; background: #fff; border: 1rpx solid #e4e7ec; border-radius: 12rpx; text-align: center; font-size: 19rpx; }
+.verify-item.ok { color: #067647; border-color: #abefc6; background: #f6fef9; }
+.detail-section { margin-top: 18rpx; padding: 24rpx; background: #fff; border: 1rpx solid #e4e7ec; border-radius: 14rpx; }
+.section-title { display: block; font-size: 27rpx; font-weight: 800; }
+.skill-list { display: flex; flex-wrap: wrap; gap: 10rpx; margin-top: 16rpx; }
+.skill-list text { padding: 9rpx 13rpx; color: #344054; background: #f2f4f7; border-radius: 8rpx; font-size: 21rpx; }
+.detail-text { display: block; margin-top: 14rpx; color: #475467; font-size: 23rpx; line-height: 1.6; }
+.privacy-note { margin: 20rpx 4rpx; color: #667085; font-size: 21rpx; line-height: 1.5; }
+.primary-action { width: 100%; height: 88rpx; color: #fff; background: #087443; border-radius: 14rpx; font-size: 28rpx; }

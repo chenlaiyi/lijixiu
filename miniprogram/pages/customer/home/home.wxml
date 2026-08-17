@@ -1,0 +1,135 @@
+<view class="safe-page home v2-home">
+  <view class="v2-home-header" style="padding-top: {{navPaddingTop}}px; padding-right: {{capsuleRightReserve}}px;">
+    <view class="v2-brand">
+      <image class="v2-brand-logo" src="/assets/logo-mark.png" mode="aspectFit" />
+      <view class="v2-brand-copy">
+        <text class="v2-brand-name">立即修</text>
+        <text class="v2-brand-greeting">{{greeting}}</text>
+      </view>
+    </view>
+    <button class="v2-profile-button" bindtap="goProfile" hover-class="button-hover" aria-label="我的">
+      <image src="/assets/ui/profile-user.png" mode="aspectFit" />
+    </button>
+  </view>
+
+  <view class="v2-repair-entry" bindtap="goOrder" hover-class="v2-repair-entry-active">
+    <view class="v2-repair-symbol">
+      <image src="/assets/ui/repairer.png" mode="aspectFit" />
+    </view>
+    <view class="v2-repair-copy">
+      <text class="v2-repair-title">预约上门维修</text>
+      <text class="v2-repair-subtitle">描述问题，师傅准备好工具再上门</text>
+    </view>
+    <image class="v2-repair-arrow" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+  </view>
+
+  <view class="v2-life-grid">
+    <view class="v2-life-entry maternity" data-type="maternity" bindtap="goDomestic" hover-class="v2-category-active">
+      <view class="v2-life-icon"><image src="/assets/ui/profile-user.png" mode="aspectFit" /></view>
+      <view class="v2-life-copy">
+        <text class="v2-life-title">月嫂服务</text>
+        <text class="v2-life-desc">档期匹配 · 预约面试</text>
+      </view>
+      <image class="v2-life-arrow" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+    </view>
+    <view class="v2-life-entry nanny" data-type="nanny" bindtap="goDomestic" hover-class="v2-category-active">
+      <view class="v2-life-icon"><image src="/assets/categories/cleaning.png" mode="aspectFit" /></view>
+      <view class="v2-life-copy">
+        <text class="v2-life-title">保姆服务</text>
+        <text class="v2-life-desc">住家白班 · 长期服务</text>
+      </view>
+      <image class="v2-life-arrow" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+    </view>
+  </view>
+
+  <view class="v2-section-head">
+    <text class="v2-section-title">请选择维修类型</text>
+    <button class="v2-section-link" bindtap="goOrder" hover-class="button-hover">全部</button>
+  </view>
+  <view class="v2-category-grid">
+    <view
+      class="v2-category-item"
+      wx:for="{{featuredCategories}}"
+      wx:key="id"
+      data-cat="{{item.id}}"
+      bindtap="selectCategory"
+      hover-class="v2-category-active"
+    >
+      <view class="v2-category-icon-wrap">
+        <image class="v2-category-icon" src="{{item.icon}}" mode="aspectFit" />
+      </view>
+      <text class="v2-category-name">{{item.name}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{showStatusDock}}" class="v2-current-service {{homeNotice.tone}}" bindtap="handleHomeNoticeAction" hover-class="tap-feedback-active">
+    <view class="v2-current-head">
+      <text class="v2-section-title">当前服务</text>
+      <text class="v2-current-sync">{{syncStatusText}}</text>
+    </view>
+    <view class="v2-current-row">
+      <view class="v2-current-icon-wrap">
+        <image src="{{homeNotice.icon}}" mode="aspectFit" />
+      </view>
+      <view class="v2-current-copy">
+        <text class="v2-current-title">{{homeNotice.title}}</text>
+        <text class="v2-current-desc">{{homeNotice.desc}}</text>
+      </view>
+      <view class="v2-current-action">
+        <text>{{homeNotice.actionText}}</text>
+        <image src="/assets/ui/chevron-right.png" mode="aspectFit" />
+      </view>
+    </view>
+  </view>
+
+  <view class="v2-recent-section">
+    <view class="v2-section-head">
+      <text class="v2-section-title">最近订单</text>
+      <button class="v2-section-link" bindtap="goOrders" hover-class="button-hover">查看全部</button>
+    </view>
+
+    <view wx:if="{{recentLoading && recentOrders.length === 0}}" class="v2-empty-row">
+      <image src="/assets/ui/receipt.png" mode="aspectFit" />
+      <text>加载中…</text>
+    </view>
+    <view wx:elif="{{recentLoadFailed && recentOrders.length === 0}}" class="v2-empty-row">
+      <image src="/assets/ui/receipt.png" mode="aspectFit" />
+      <text>订单加载失败</text>
+      <button bindtap="reloadRecentOrders" hover-class="button-hover">重试</button>
+    </view>
+    <view wx:elif="{{recentOrders.length === 0}}" class="v2-empty-row">
+      <image src="/assets/ui/bill-file.png" mode="aspectFit" />
+      <text>还没有维修订单</text>
+      <button bindtap="goOrder" hover-class="button-hover">立即报修</button>
+    </view>
+
+    <view wx:else class="v2-order-list">
+      <view
+        class="v2-order-row"
+        wx:for="{{recentOrders}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="goOrderDetail"
+        hover-class="tap-feedback-active"
+      >
+        <view class="v2-order-icon-wrap">
+          <image src="{{item.categoryIcon}}" mode="aspectFit" />
+        </view>
+        <view class="v2-order-copy">
+          <view class="v2-order-title-row">
+            <text class="v2-order-title">{{item.description || item.categoryText}}</text>
+            <text class="v2-order-status {{item.statusTone}}">{{item.statusText}}</text>
+          </view>
+          <text class="v2-order-meta">{{item.categoryText}} · {{item.createdText}}</text>
+        </view>
+        <image class="v2-order-arrow" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+        <button wx:if="{{item.canPay}}" class="v2-pay-button" catchtap="goPay" data-id="{{item.id}}" hover-class="button-hover">
+          <image src="/assets/ui/pay.png" mode="aspectFit" />
+          <text>{{item.payActionText}}</text>
+        </button>
+      </view>
+    </view>
+  </view>
+</view>
+
+<role-tabbar />

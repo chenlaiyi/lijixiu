@@ -1,0 +1,26 @@
+﻿==> 安全头 + 鉴权审计
+    target: https://x.iddg.cn
+
+  FAIL /  X-Frame-Options  X-Frame-Options 缺失 ✗                                        
+  FAIL /  X-Content-Type-Options  X-Content-Type-Options 缺失 ✗                          
+  FAIL /  Strict-Transport-Security  Strict-Transport-Security 缺失 ✗                    
+  FAIL /  Content-Security-Policy  Content-Security-Policy 缺失 ✗                        
+  FAIL /  Referrer-Policy  Referrer-Policy 缺失 ✗                                        
+  WARN /  Permissions-Policy  Permissions-Policy 缺失 ✗                                    # 建议加,部分老浏览器不识别
+  WARN /  Server  Server 不应出现(出现了)                                                       # 应隐藏 server 版本信息
+  OK   /  X-Powered-By  X-Powered-By 未出现 ✓                                               # 应隐藏框架信息
+  FAIL /docs  undefined  status=200 (期望 401)                                             # Swagger UI 必须带鉴权
+  FAIL /redoc  undefined  status=200 (期望 401)                                            # Redoc UI 必须带鉴权
+  FAIL /openapi.json  undefined  status=200 (期望 401)                                     # OpenAPI schema 必须带鉴权
+  FAIL /metrics  undefined  status=200 (期望 401)                                          # Prometheus 指标必须带鉴权
+  OK   /admin/  undefined  status=401 (期望 401)                                           # Admin 后台必须带鉴权
+  OK   /admin/index.html  undefined  status=401 (期望 401)                                 # Admin 静态文件必须带鉴权
+  OK   /.env  undefined  status=404 (期望 404/401)                                         # .env 不可外泄
+  FAIL /api/v1/wallet/balance/1  undefined  status=200 (期望 401)                          # 钱包余额必须鉴权
+  FAIL /api/v1/admin/alerts  undefined  status=200 (期望 401)                              # Admin API 必须鉴权
+  FAIL /api/v1/admin/reconcile/run  undefined  status=200 (期望 401)                     
+  OK   /health  undefined  status=200 (期望 200)                                           # 健康检查必须 200
+
+==> 5/19 通过
+    12 个 required 项未通过,需要修复后才能上线
+

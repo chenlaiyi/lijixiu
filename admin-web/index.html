@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>立即修管理后台</title>
+  <link rel="icon" type="image/png" href="./assets/logo-mark.png">
+  <link rel="stylesheet" href="./styles.css?v=20260712-areas">
+</head>
+<body>
+  <svg class="icon-sprite" aria-hidden="true">
+    <symbol id="icon-overview" viewBox="0 0 24 24">
+      <path d="M4 13a8 8 0 1 1 16 0"></path>
+      <path d="M12 13l4-4"></path>
+      <path d="M7 17h10"></path>
+    </symbol>
+    <symbol id="icon-orders" viewBox="0 0 24 24">
+      <path d="M8 6h11"></path>
+      <path d="M8 12h11"></path>
+      <path d="M8 18h11"></path>
+      <path d="M4 6h.01"></path>
+      <path d="M4 12h.01"></path>
+      <path d="M4 18h.01"></path>
+    </symbol>
+    <symbol id="icon-users" viewBox="0 0 24 24">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+      <circle cx="9" cy="7" r="4"></circle>
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    </symbol>
+    <symbol id="icon-repairers" viewBox="0 0 24 24">
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.5-3.5a6 6 0 0 1-7.9 7.9L5.4 21.6a2 2 0 0 1-3-3l7.9-7.9a6 6 0 0 1 7.9-7.9z"></path>
+    </symbol>
+    <symbol id="icon-stores" viewBox="0 0 24 24">
+      <path d="M3 10h18"></path>
+      <path d="M5 10l1.5-6h11L19 10"></path>
+      <path d="M5 10v10h14V10"></path>
+      <path d="M9 20v-6h6v6"></path>
+    </symbol>
+    <symbol id="icon-regions" viewBox="0 0 24 24">
+      <path d="M12 21s7-4.4 7-11a7 7 0 1 0-14 0c0 6.6 7 11 7 11z"></path>
+      <circle cx="12" cy="10" r="2.5"></circle>
+    </symbol>
+    <symbol id="icon-wallet" viewBox="0 0 24 24">
+      <path d="M3 7h17a1 1 0 0 1 1 1v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"></path>
+      <path d="M16 12h5v4h-5a2 2 0 0 1 0-4z"></path>
+      <path d="M3 7l3-4h12l2 4"></path>
+    </symbol>
+    <symbol id="icon-finance" viewBox="0 0 24 24">
+      <path d="M4 19V5"></path>
+      <path d="M4 19h16"></path>
+      <path d="M7 15l4-4 3 3 5-7"></path>
+      <path d="M17 7h2v2"></path>
+    </symbol>
+    <symbol id="icon-support" viewBox="0 0 24 24">
+      <path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-7a8 8 0 1 1 18-4z"></path>
+      <path d="M8 11h8"></path>
+      <path d="M8 15h5"></path>
+    </symbol>
+    <symbol id="icon-packages" viewBox="0 0 24 24">
+      <path d="M21 8l-9-5-9 5 9 5 9-5z"></path>
+      <path d="M3 8v8l9 5 9-5V8"></path>
+      <path d="M12 13v8"></path>
+    </symbol>
+    <symbol id="icon-ops" viewBox="0 0 24 24">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+      <path d="M9 12l2 2 4-5"></path>
+    </symbol>
+  </svg>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><img src="./assets/logo-mark.png" alt="立即修"></div>
+        <div>
+          <div class="brand-name">立即修</div>
+          <div class="brand-sub">管理后台</div>
+        </div>
+      </div>
+      <nav class="nav" aria-label="主导航">
+        <button class="nav-item active" data-view="overview">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-overview"></use></svg><span>概览</span>
+        </button>
+        <button class="nav-item" data-view="orders">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-orders"></use></svg><span>订单</span>
+        </button>
+        <button class="nav-item" data-view="users">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-users"></use></svg><span>用户</span>
+        </button>
+        <button class="nav-item" data-view="repairers">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-repairers"></use></svg><span>师傅</span>
+        </button>
+        <button class="nav-item" data-view="stores">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-stores"></use></svg><span>门店</span>
+        </button>
+        <button class="nav-item" data-view="regions">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-regions"></use></svg><span>区域</span>
+        </button>
+        <button class="nav-item" data-view="proxy">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-orders"></use></svg><span>代客订单</span>
+        </button>
+        <button class="nav-item" data-view="domestic">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-users"></use></svg><span>家政服务</span>
+        </button>
+        <button class="nav-item" data-view="payroll">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-finance"></use></svg><span>工资</span>
+        </button>
+        <button class="nav-item" data-view="warranties">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-ops"></use></svg><span>保修凭证</span>
+        </button>
+        <button class="nav-item" data-view="wallet">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-wallet"></use></svg><span>提现</span>
+        </button>
+        <button class="nav-item" data-view="finance">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-finance"></use></svg><span>财务</span>
+        </button>
+        <button class="nav-item" data-view="support">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-support"></use></svg><span>客服</span>
+        </button>
+        <button class="nav-item" data-view="packages">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-packages"></use></svg><span>服务包</span>
+        </button>
+        <button class="nav-item" data-view="ops">
+          <svg class="nav-icon" aria-hidden="true"><use href="#icon-ops"></use></svg><span>对账告警</span>
+        </button>
+      </nav>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <div>
+          <h1 id="view-title">概览</h1>
+          <p id="view-subtitle">平台运行和关键业务指标</p>
+        </div>
+        <div class="top-actions">
+          <span id="api-status" class="status-dot">检查中</span>
+          <button id="refresh-btn" class="icon-btn" title="刷新当前视图" aria-label="刷新当前视图">↻</button>
+        </div>
+      </header>
+
+      <main id="content" class="content" aria-live="polite"></main>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+  <div id="modal" class="modal" hidden>
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h2 id="modal-title">详情</h2>
+        <button id="modal-close" class="icon-btn" title="关闭" aria-label="关闭">×</button>
+      </div>
+      <div id="modal-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <footer style="text-align:center; padding:12px 8px; font-size:11px; color:#9ca3af; border-top:1px solid #e5e7eb; margin-top:16px;">
+    <a href="../h5/legal/user-agreement.html" target="_blank" rel="noopener" style="color:#9ca3af; margin:0 8px;">用户协议</a>
+    <a href="../h5/legal/privacy-policy.html" target="_blank" rel="noopener" style="color:#9ca3af; margin:0 8px;">隐私政策</a>
+    <div style="margin-top:6px;">
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#9ca3af;">京ICP备XXXXXXXX号</a>
+      · 增值电信业务许可证:京B2-XXXXXXXX
+    </div>
+    <div style="margin-top:4px;">© 2026 立即修平台</div>
+  </footer>
+
+  <script src="./app.js?v=20260712-areas"></script>
+</body>
+</html>

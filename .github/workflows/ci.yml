@@ -1,0 +1,192 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '20'
+
+jobs:
+  # 后端 Python 检查 + 测试
+  backend:
+    name: Backend (Python ${{ env.PYTHON_VERSION }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint (ruff)
+        run: |
+          pip install ruff
+          ruff check app/ tests/ scripts/
+
+      - name: Type check (mypy)
+        run: |
+          pip install mypy
+          mypy app/ --ignore-missing-imports || true  # 暂不强制
+
+      - name: Unit tests
+        env:
+          DATABASE_URL: 'sqlite+aiosqlite:///:memory:'
+          SMS_PROVIDER: debug
+          SMS_DEBUG_CODE: '246810'
+          PAYMENT_ALLOW_MOCK: 'true'
+        run: |
+          python tests/test_reconcile_balance.py
+          python tests/test_auth_admin.py
+          python -m pytest tests/test_validate_env.py tests/test_health_env.py -v
+
+      - name: Validate .env completeness
+        # 2026-08-09 新增:用 fake secret 验证 .env.example 结构 + validate_env.py
+        # 自身正确,任何缺漏或占位都会在 PR 阶段被拦下
+        run: |
+          # 1) 写一个"全填好 + 强 secret"的假 .env,严格模式必须通过
+          cat > .env <<'EOF'
+          DATABASE_URL=mysql+aiomysql://xiulijiu:ci-test-pwd@mysql:3306/xiulijiu
+          APP_NAME=xiulijiu
+          DEBUG=false
+          PUBLIC_BASE_URL=https://x.iddg.cn
+          AUTH_SECRET=ci-strong-secret-must-be-long-enough-and-varied-32+chars
+          WECHAT_MINIPROGRAM_ENV_VERSION=release
+          PAYMENT_ALLOW_MOCK=false
+          WECHAT_PAY_APPID=wx_ci_test_appid
+          WECHAT_PAY_MCH_ID=1481119632
+          WECHAT_PAY_API_V3_KEY=ci-32-byte-v3-key-not-a-real-secret-1234
+          WECHAT_PAY_CERT_PATH=cert/apiclient_cert.pem
+          WECHAT_PAY_KEY_PATH=cert/apiclient_key.pem
+          WECHAT_PAY_CERT_SERIAL_NO=CISERIAL12345
+          WECHAT_PAY_NOTIFY_URL=https://x.iddg.cn/api/v1/payment/wechat/notify
+          WECHAT_REFUND_NOTIFY_URL=https://x.iddg.cn/api/v1/payment/wechat/refund-notify
+          WECHAT_APP_SECRET=ci-app-secret-not-real-32-bytes-long-1234567890
+          WECHAT_TRANSFER_NOTIFY_URL=https://x.iddg.cn/api/v1/wallet/wechat/transfer-notify
+          EOF
+          python scripts/validate_env.py --strict
+          echo "OK: strict mode passed with all keys filled"
+          # 2) 把 MCH_ID 改回 FILL 占位,严格模式必须 fail
+          sed -i 's/WECHAT_PAY_MCH_ID=.*/WECHAT_PAY_MCH_ID=FILL_MCH_ID_TEST/' .env
+          if python scripts/validate_env.py --strict; then
+            echo "FAIL: validator should have rejected FILL_* placeholder"
+            exit 1
+          fi
+          echo "OK: validator correctly rejected FILL_* placeholder"
+          # 3) .env 不留痕(避免被 commit)
+          rm -f .env
+
+      - name: All-flow tests (TestClient, in-memory DB)
+        env:
+          DATABASE_URL: 'sqlite+aiosqlite:///:memory:'
+          SMS_PROVIDER: debug
+          SMS_DEBUG_CODE: '246810'
+          PAYMENT_ALLOW_MOCK: 'true'
+        run: |
+          python scripts/test_platform_flows.py 2>&1 | grep -E '=ok$|=fail$' > flow_results.txt
+          cat flow_results.txt
+          # 必须全 OK
+          if grep -q '=fail' flow_results.txt; then exit 1; fi
+          ok_count=$(grep -c '=ok' flow_results.txt || true)
+          echo "Suites passed: $ok_count"
+
+  # 前端 Node 检查(JS / WXSS / WXML / JSON)
+  miniprogram-lint:
+    name: Miniprogram Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Validate JSON / WXML / WXSS
+        run: |
+          cd miniprogram
+          # 所有 JSON 必须合法
+          find . -name '*.json' -not -path './node_modules/*' | while read f; do
+            node -e "JSON.parse(require('fs').readFileSync('$f', 'utf8'))" || (echo "INVALID JSON: $f" && exit 1)
+          done
+          # 所有 WXML / WXSS 必须是 utf-8
+          find . \( -name '*.wxml' -o -name '*.wxss' -o -name '*.js' \) -not -path './node_modules/*' | while read f; do
+            file -i "$f" | grep -v charset=utf-8 && (echo "NON-UTF8: $f" && exit 1) || true
+          done
+          echo "JSON / WXML / WXSS validated"
+
+      - name: Check appid consistency
+        run: |
+          cd miniprogram
+          appid=$(node -e "console.log(require('./project.config.json').appid)")
+          echo "Configured appid: $appid"
+          test -n "$appid" || (echo "appid missing" && exit 1)
+
+  # H5 端 lint
+  h5-lint:
+    name: H5 Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: |
+          cd h5
+          node -e "JSON.parse(require('fs').readFileSync('./app.js','utf8'))" 2>/dev/null || echo "h5/app.js not strict JSON (normal for JS)"
+          # 关键文件存在
+          for f in index.html app.js styles.css; do
+            test -f "$f" || (echo "MISSING: $f" && exit 1)
+          done
+          echo "H5 files present"
+
+  # Admin 端 lint
+  admin-lint:
+    name: Admin Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: |
+          cd admin-web
+          for f in index.html app.js styles.css; do
+            test -f "$f" || (echo "MISSING: $f" && exit 1)
+          done
+          echo "Admin files present"
+
+  # 综合状态
+  summary:
+    name: All Checks Summary
+    runs-on: ubuntu-latest
+    needs: [backend, miniprogram-lint, h5-lint, admin-lint]
+    if: always()
+    steps:
+      - name: Summary
+        run: |
+          echo "## CI Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          for job in backend miniprogram-lint h5-lint admin-lint; do
+            result="${{ needs.$job.result }}"
+            echo "| $job | $result |" >> $GITHUB_STEP_SUMMARY
+          done
+          if [ "${{ needs.backend.result }}" != "success" ] || \
+             [ "${{ needs.miniprogram-lint.result }}" != "success" ] || \
+             [ "${{ needs.h5-lint.result }}" != "success" ] || \
+             [ "${{ needs.admin-lint.result }}" != "success" ]; then
+            exit 1
+          fi

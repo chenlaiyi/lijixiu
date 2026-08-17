@@ -1,0 +1,18 @@
+<view wx:if="{{visible}}">
+  <view class="role-tabbar-spacer"></view>
+  <view class="role-tabbar">
+    <button
+      wx:for="{{items}}"
+      wx:key="key"
+      class="tab-item {{item.active ? 'active' : ''}}"
+      data-url="{{item.url}}"
+      bindtap="handleTap"
+      hover-class="button-hover"
+      aria-label="{{item.ariaLabel}}"
+    >
+      <image class="tab-icon" src="{{item.iconSrc}}" mode="aspectFit" />
+      <text class="tab-label">{{item.label}}</text>
+      <text wx:if="{{item.stateText}}" class="tab-state">{{item.stateText}}</text>
+    </button>
+  </view>
+</view>

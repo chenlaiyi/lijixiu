@@ -1,0 +1,48 @@
+{
+  "base_url": "https://x.iddg.cn",
+  "mode": "DRY_RUN",
+  "timestamp": "2026-08-14T15:44:26.481Z",
+  "initial": {
+    "total_wallets": 13,
+    "mismatch": 4
+  },
+  "after_fix": {
+    "total_wallets": 13,
+    "mismatch": 4
+  },
+  "adjust_results": [
+    {
+      "user_id": 4,
+      "wallet_id": 2,
+      "original_diff": -88,
+      "adjust_amount": 88,
+      "status": "DRY_RUN",
+      "body": null
+    },
+    {
+      "user_id": 5,
+      "wallet_id": 3,
+      "original_diff": -200,
+      "adjust_amount": 200,
+      "status": "DRY_RUN",
+      "body": null
+    },
+    {
+      "user_id": 7,
+      "wallet_id": 5,
+      "original_diff": -42007.7,
+      "adjust_amount": 42007.7,
+      "status": "DRY_RUN",
+      "body": null
+    },
+    {
+      "user_id": 15,
+      "wallet_id": 12,
+      "original_diff": -1,
+      "adjust_amount": 1,
+      "status": "DRY_RUN",
+      "body": null
+    }
+  ],
+  "resolve_results": []
+}

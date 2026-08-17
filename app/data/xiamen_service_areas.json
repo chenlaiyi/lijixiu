@@ -1,0 +1,3866 @@
+{
+  "city": "厦门市",
+  "province": "福建省",
+  "source_name": "厦门市人民政府行政区划",
+  "source_url": "https://xm.gov.cn/zjxm/qhhrk/202512/t20251223_2973162.htm",
+  "source_published_at": "2025-12-23",
+  "entries": [
+    {
+      "code": "XM-5202C7351F3C",
+      "district": "思明区",
+      "street": "厦港街道",
+      "name": "鸿山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-2FE694170F05",
+      "district": "思明区",
+      "street": "厦港街道",
+      "name": "蜂巢山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-DBFCC6219EA6",
+      "district": "思明区",
+      "street": "厦港街道",
+      "name": "福海社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-170F895B674B",
+      "district": "思明区",
+      "street": "厦港街道",
+      "name": "下沃社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-6D5C6F65E122",
+      "district": "思明区",
+      "street": "厦港街道",
+      "name": "巡司顶社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E52008F5B09E",
+      "district": "思明区",
+      "street": "厦港街道",
+      "name": "沙坡尾社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-124EEC232AC8",
+      "district": "思明区",
+      "street": "厦港街道",
+      "name": "南华社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-8B58C96DB176",
+      "district": "思明区",
+      "street": "中华街道",
+      "name": "仁安社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-80DBAF455183",
+      "district": "思明区",
+      "street": "中华街道",
+      "name": "镇海社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-67DDC2EFA4CB",
+      "district": "思明区",
+      "street": "中华街道",
+      "name": "霞溪社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E5CF12439613",
+      "district": "思明区",
+      "street": "中华街道",
+      "name": "思南社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-7DBB126F289F",
+      "district": "思明区",
+      "street": "中华街道",
+      "name": "文安社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-F47117BB286A",
+      "district": "思明区",
+      "street": "中华街道",
+      "name": "中山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-4EF3C164990A",
+      "district": "思明区",
+      "street": "滨海街道",
+      "name": "演武社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-359911B9AF96",
+      "district": "思明区",
+      "street": "滨海街道",
+      "name": "白城社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-879636CCF504",
+      "district": "思明区",
+      "street": "滨海街道",
+      "name": "上李社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-4BCEED06E340",
+      "district": "思明区",
+      "street": "滨海街道",
+      "name": "曾厝垵社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-3FFCCD6A5E1D",
+      "district": "思明区",
+      "street": "滨海街道",
+      "name": "黄厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-56116B123AA0",
+      "district": "思明区",
+      "street": "鹭江街道",
+      "name": "营平社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-11E292A9BA26",
+      "district": "思明区",
+      "street": "鹭江街道",
+      "name": "大同社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5384FA235310",
+      "district": "思明区",
+      "street": "鹭江街道",
+      "name": "鹭江道社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-80007C281161",
+      "district": "思明区",
+      "street": "鹭江街道",
+      "name": "厦禾社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-BA7B7E2A4446",
+      "district": "思明区",
+      "street": "鹭江街道",
+      "name": "双莲池社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-085B8CA61B88",
+      "district": "思明区",
+      "street": "鹭江街道",
+      "name": "小学社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-724ED9B36E46",
+      "district": "思明区",
+      "street": "鹭江街道",
+      "name": "禾祥西社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-CE75FF4D1571",
+      "district": "思明区",
+      "street": "开元街道",
+      "name": "深田社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-2C4C42349DA4",
+      "district": "思明区",
+      "street": "开元街道",
+      "name": "溪岸社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-79D6E9DBA50C",
+      "district": "思明区",
+      "street": "开元街道",
+      "name": "美仁社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-F85C9D0D8DAC",
+      "district": "思明区",
+      "street": "开元街道",
+      "name": "西边社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C24E0686DD94",
+      "district": "思明区",
+      "street": "开元街道",
+      "name": "后江社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-287F67A1C827",
+      "district": "思明区",
+      "street": "开元街道",
+      "name": "湖滨社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-AB01525DF823",
+      "district": "思明区",
+      "street": "开元街道",
+      "name": "阳台山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-7EF4B55C32DD",
+      "district": "思明区",
+      "street": "开元街道",
+      "name": "美湖社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-B45D906789B7",
+      "district": "思明区",
+      "street": "开元街道",
+      "name": "希望社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-590E94F283DA",
+      "district": "思明区",
+      "street": "开元街道",
+      "name": "虎溪社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-8A71F9D456D3",
+      "district": "思明区",
+      "street": "开元街道",
+      "name": "坑内社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-537FB1845893",
+      "district": "思明区",
+      "street": "开元街道",
+      "name": "天湖社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-3C15DCC17376",
+      "district": "思明区",
+      "street": "梧村街道",
+      "name": "梧村社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-190AA0DAC787",
+      "district": "思明区",
+      "street": "梧村街道",
+      "name": "文灶社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-AFF2669D64FE",
+      "district": "思明区",
+      "street": "梧村街道",
+      "name": "金榜山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-8C0681B6CB10",
+      "district": "思明区",
+      "street": "梧村街道",
+      "name": "滨中社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-71721B4D189B",
+      "district": "思明区",
+      "street": "梧村街道",
+      "name": "双涵社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-54E2CB073A32",
+      "district": "思明区",
+      "street": "梧村街道",
+      "name": "浦南社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-D0E7E403BC0B",
+      "district": "思明区",
+      "street": "梧村街道",
+      "name": "万寿北社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-A9A79D91A112",
+      "district": "思明区",
+      "street": "梧村街道",
+      "name": "金祥社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-6808EB164F97",
+      "district": "思明区",
+      "street": "梧村街道",
+      "name": "文屏社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-F4E244921D7F",
+      "district": "思明区",
+      "street": "梧村街道",
+      "name": "东坪社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-709E49C700B6",
+      "district": "思明区",
+      "street": "梧村街道",
+      "name": "溪东社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-195E211B14D8",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "西郭社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5B79ACB817FA",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "四里社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-CB08372B7313",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "槟榔社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-11504093CA48",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "湖光社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-4393E29D96DA",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "一里社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-358B841DFCF9",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "振兴社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-CBDC01AE929D",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "莲岳社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-8E7829C84EB6",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "岳阳社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-21585FB4199D",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "屿后西社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-79400BEE5ACC",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "育秀社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-A79E89675F2D",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "仙阁社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-A9644D9E6829",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "金桥社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-6186C9020585",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "屿后社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E9BB5643DCCC",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "官任社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-89D623EF79C1",
+      "district": "思明区",
+      "street": "筼筜街道",
+      "name": "仙岳社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-1D3FCEADFF20",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "龙山桥社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-ADC0080FD7B8",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "金鸡亭社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-518DDBBF4C88",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "莲怡社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C2FAEB223B06",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "莲顺社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-619E3BC63063",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "莲云社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C61196F53C1D",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "莲薇社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-6CEBFD1B304B",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "前埔北社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-11CE0ED80265",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "莲丰社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-99261AA6EF5D",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "侨福社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C9870596A3CC",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "瑞景社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-3DBD0D00B85A",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "莲翔社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C86544D20707",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "何厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-7B40B2520ACA",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "前埔社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-AF6613240EC8",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "洪文社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-1D3D7A56FFF2",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "西林社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-67DC42B251F5",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "塔埔社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-59492B467DDA",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "岭兜社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-CC97F41A2423",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "前埔南社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-B34D8DC23F97",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "莲成社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-30682546F663",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "万景社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-39F9ED5E4D45",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "前埔东社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E86841BD9611",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "前埔西社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-15B5F6F3A8CF",
+      "district": "思明区",
+      "street": "莲前街道",
+      "name": "观音山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-7203158A2141",
+      "district": "思明区",
+      "street": "嘉莲街道",
+      "name": "盈翠社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-4A46D5DC037C",
+      "district": "思明区",
+      "street": "嘉莲街道",
+      "name": "莲花北社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-F21EB287CF10",
+      "district": "思明区",
+      "street": "嘉莲街道",
+      "name": "莲西社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-362F5F650357",
+      "district": "思明区",
+      "street": "嘉莲街道",
+      "name": "莲兴社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-413B2514B085",
+      "district": "思明区",
+      "street": "嘉莲街道",
+      "name": "莲花五村社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-F48261973201",
+      "district": "思明区",
+      "street": "嘉莲街道",
+      "name": "长青社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C9972DF91E5E",
+      "district": "思明区",
+      "street": "嘉莲街道",
+      "name": "松柏社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-664D375BBFC1",
+      "district": "思明区",
+      "street": "嘉莲街道",
+      "name": "莲秀社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C956E579F0DD",
+      "district": "思明区",
+      "street": "嘉莲街道",
+      "name": "华福社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5BDCA8428D4E",
+      "district": "思明区",
+      "street": "嘉莲街道",
+      "name": "龙山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-79F9C21922ED",
+      "district": "思明区",
+      "street": "鼓浪屿街道",
+      "name": "龙头社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-DF66E941B201",
+      "district": "思明区",
+      "street": "鼓浪屿街道",
+      "name": "内厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-198A12CDD664",
+      "district": "海沧区",
+      "street": "海沧街道",
+      "name": "海沧社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-361207E333BD",
+      "district": "海沧区",
+      "street": "海沧街道",
+      "name": "温厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C39B08CAB95D",
+      "district": "海沧区",
+      "street": "海沧街道",
+      "name": "海兴社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-979C154926F6",
+      "district": "海沧区",
+      "street": "海沧街道",
+      "name": "海农社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-116C858C3BCE",
+      "district": "海沧区",
+      "street": "海沧街道",
+      "name": "临港社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C7EDEA3E5203",
+      "district": "海沧区",
+      "street": "海沧街道",
+      "name": "渐美村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-F2CCA4205520",
+      "district": "海沧区",
+      "street": "海沧街道",
+      "name": "囷瑶村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-1BA8C50568AE",
+      "district": "海沧区",
+      "street": "海沧街道",
+      "name": "青礁村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-AAD9918BB869",
+      "district": "海沧区",
+      "street": "海沧街道",
+      "name": "后井村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-4A2C8C485662",
+      "district": "海沧区",
+      "street": "海沧街道",
+      "name": "锦里村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-B0BCB62EB407",
+      "district": "海沧区",
+      "street": "海沧街道",
+      "name": "古楼农场委员会",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-A2A28D286099",
+      "district": "海沧区",
+      "street": "新阳街道",
+      "name": "霞阳社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-702E39DF27EC",
+      "district": "海沧区",
+      "street": "新阳街道",
+      "name": "祥露社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-742EECF9998A",
+      "district": "海沧区",
+      "street": "新阳街道",
+      "name": "兴旺社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-6206EBC55A1C",
+      "district": "海沧区",
+      "street": "新阳街道",
+      "name": "一农社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-9A9857CD3A17",
+      "district": "海沧区",
+      "street": "新阳街道",
+      "name": "兴祥社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-3866F50094AD",
+      "district": "海沧区",
+      "street": "新阳街道",
+      "name": "翁厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-D9C830CFB059",
+      "district": "海沧区",
+      "street": "新阳街道",
+      "name": "孚中央社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-DF02E63ECF9D",
+      "district": "海沧区",
+      "street": "新阳街道",
+      "name": "兴景社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5635EC43BA7B",
+      "district": "海沧区",
+      "street": "新阳街道",
+      "name": "新垵村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-0D82F5E2344C",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "海发社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-54C9139E1B3C",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "鳌冠社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-3D268987E2FA",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "钟山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-D0FE477C26F4",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "海达社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-417D23EAC831",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "未来海岸社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-8C56F8D1087E",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "海虹社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-4BCAF3BEFBB8",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "东屿社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E6FF181AF268",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "北附小社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-A3B5C2095C96",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "海翔社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5BF69DDDF5D0",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "海林社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-0228E1C99755",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "海盛社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-EC69C17B8794",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "海景社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-3C4A933D9C91",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "海湖社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-9B21CAD999D0",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "海湾社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-8F83FF9CA869",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "石塘村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-15BE3BDD3B18",
+      "district": "海沧区",
+      "street": "嵩屿街道",
+      "name": "贞庵村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-4847C83AE7CB",
+      "district": "海沧区",
+      "street": "东孚街道",
+      "name": "天竺社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-76CBB7B583F7",
+      "district": "海沧区",
+      "street": "东孚街道",
+      "name": "过坂社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E97F28CB456E",
+      "district": "海沧区",
+      "street": "东孚街道",
+      "name": "凤山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-CDC983717E76",
+      "district": "海沧区",
+      "street": "东孚街道",
+      "name": "莲花社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-AA766DB6D293",
+      "district": "海沧区",
+      "street": "东孚街道",
+      "name": "东埔社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-6564D7919874",
+      "district": "海沧区",
+      "street": "东孚街道",
+      "name": "山边社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-A0EB5530074F",
+      "district": "海沧区",
+      "street": "东孚街道",
+      "name": "寨后社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-0EBD7C1DDF79",
+      "district": "海沧区",
+      "street": "东孚街道",
+      "name": "孚美社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-2596DD5F191B",
+      "district": "海沧区",
+      "street": "东孚街道",
+      "name": "东瑶村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-72081199042D",
+      "district": "海沧区",
+      "street": "东孚街道",
+      "name": "鼎美村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-AB97CF6DBDAB",
+      "district": "海沧区",
+      "street": "东孚街道",
+      "name": "后柯村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-92AF17E0390B",
+      "district": "海沧区",
+      "street": "东孚街道",
+      "name": "芸美村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-27EB44B1EE74",
+      "district": "海沧区",
+      "street": "东孚街道",
+      "name": "贞岱村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-67FDC407CC18",
+      "district": "海沧区",
+      "street": "东孚街道",
+      "name": "洪塘村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-DE1D1048CDCF",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "湖里社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-7DFCA11C6BC2",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "村里社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-703CF06633BD",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "徐厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-47BB636B01EE",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "濠头社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-946BF0176701",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "东渡社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-03E2381ABDDB",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "塘边社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-ACD63C1486B0",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "后浦社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-02435387E4CE",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "金鼎社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-8FF24270E419",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "南山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-9FCEBC8FBEBF",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "东荣社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5D54C7756641",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "康乐社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-A7CF97ADB1D3",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "康晖社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-41AEB2C1AF64",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "康泰社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-BCD5F1DC4DA0",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "怡景社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-4433F8F0FBBA",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "和通社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-98C53E9F3369",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "新港社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-FD7E3D4C6D82",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "海天社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-F60AA440101A",
+      "district": "湖里区",
+      "street": "湖里街道",
+      "name": "兴华社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-ED00923AAF10",
+      "district": "湖里区",
+      "street": "殿前街道",
+      "name": "兴隆社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-1669DAFD86A9",
+      "district": "湖里区",
+      "street": "殿前街道",
+      "name": "长乐社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-B5D13CEA6B10",
+      "district": "湖里区",
+      "street": "殿前街道",
+      "name": "北站社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-782FEB2011E5",
+      "district": "湖里区",
+      "street": "殿前街道",
+      "name": "神山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E26E0C000F79",
+      "district": "湖里区",
+      "street": "殿前街道",
+      "name": "高殿社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-B70BBFCCC52B",
+      "district": "湖里区",
+      "street": "殿前街道",
+      "name": "马垅社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-2BC2903DD179",
+      "district": "湖里区",
+      "street": "殿前街道",
+      "name": "兴园社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-96F3764E1D48",
+      "district": "湖里区",
+      "street": "殿前街道",
+      "name": "嘉福社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-467A398CFF36",
+      "district": "湖里区",
+      "street": "殿前街道",
+      "name": "翔鹭社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5268245EF5D6",
+      "district": "湖里区",
+      "street": "禾山街道",
+      "name": "枋湖社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-30A549F5F58D",
+      "district": "湖里区",
+      "street": "禾山街道",
+      "name": "坂尚社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-729BE424D866",
+      "district": "湖里区",
+      "street": "禾山街道",
+      "name": "钟宅畲族社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-332F8D8C7946",
+      "district": "湖里区",
+      "street": "禾山街道",
+      "name": "岭下社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-91D12A9EF591",
+      "district": "湖里区",
+      "street": "禾山街道",
+      "name": "围里社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-202726544EBB",
+      "district": "湖里区",
+      "street": "禾山街道",
+      "name": "禾欣社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-2D8688B1577F",
+      "district": "湖里区",
+      "street": "禾山街道",
+      "name": "禾盛社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-AA945E84E03D",
+      "district": "湖里区",
+      "street": "禾山街道",
+      "name": "禾山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-9490F6AA5737",
+      "district": "湖里区",
+      "street": "禾山街道",
+      "name": "禾缘社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E36C68B502F0",
+      "district": "湖里区",
+      "street": "禾山街道",
+      "name": "五缘湾北社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-BCF098D887E1",
+      "district": "湖里区",
+      "street": "禾山街道",
+      "name": "禾美社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-BD8E4234B3D4",
+      "district": "湖里区",
+      "street": "禾山街道",
+      "name": "枋湖南社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-6123FF455100",
+      "district": "湖里区",
+      "street": "江头街道",
+      "name": "江头社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-EB4374194B20",
+      "district": "湖里区",
+      "street": "江头街道",
+      "name": "吕厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-740D1BF4CD65",
+      "district": "湖里区",
+      "street": "江头街道",
+      "name": "吕岭社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-7FD8C37F408B",
+      "district": "湖里区",
+      "street": "江头街道",
+      "name": "园山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-701AF935798A",
+      "district": "湖里区",
+      "street": "江头街道",
+      "name": "金尚社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-20AED0EB8CEE",
+      "district": "湖里区",
+      "street": "江头街道",
+      "name": "江村社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-7DDA879ADBBE",
+      "district": "湖里区",
+      "street": "江头街道",
+      "name": "蔡塘社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-B4C723039E6B",
+      "district": "湖里区",
+      "street": "江头街道",
+      "name": "后埔社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-30DF0F6CF5A2",
+      "district": "湖里区",
+      "street": "江头街道",
+      "name": "祥店社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-DD10CCBAC8C5",
+      "district": "湖里区",
+      "street": "江头街道",
+      "name": "江华社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E038AD70D13D",
+      "district": "湖里区",
+      "street": "江头街道",
+      "name": "忠仑社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-FBE6136DDD9A",
+      "district": "湖里区",
+      "street": "金山街道",
+      "name": "高林社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-AE990364131E",
+      "district": "湖里区",
+      "street": "金山街道",
+      "name": "五通社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-1C03160B82CF",
+      "district": "湖里区",
+      "street": "金山街道",
+      "name": "后坑社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-06E23CCAC845",
+      "district": "湖里区",
+      "street": "金山街道",
+      "name": "金山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-46B121578777",
+      "district": "湖里区",
+      "street": "金山街道",
+      "name": "金林社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-63EDF9F8C6F4",
+      "district": "湖里区",
+      "street": "金山街道",
+      "name": "金安社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5D718E052914",
+      "district": "湖里区",
+      "street": "金山街道",
+      "name": "湖边社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C7AA16512FF1",
+      "district": "湖里区",
+      "street": "金山街道",
+      "name": "金湖社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-A19C231DECBB",
+      "district": "湖里区",
+      "street": "金山街道",
+      "name": "金海社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-661BA96BEE01",
+      "district": "集美区",
+      "street": "集美街道",
+      "name": "岑东社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-4780B769B6D7",
+      "district": "集美区",
+      "street": "集美街道",
+      "name": "岑西社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-CC925252F7AF",
+      "district": "集美区",
+      "street": "集美街道",
+      "name": "浔江社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C0DD6D7851D4",
+      "district": "集美区",
+      "street": "集美街道",
+      "name": "盛光社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-CED16BF09BAB",
+      "district": "集美区",
+      "street": "集美街道",
+      "name": "银亭社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-848044364874",
+      "district": "集美区",
+      "street": "侨英街道",
+      "name": "浒井社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-9588500F4A64",
+      "district": "集美区",
+      "street": "侨英街道",
+      "name": "孙厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-063681B0528D",
+      "district": "集美区",
+      "street": "侨英街道",
+      "name": "凤林美社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-1CB7F066D515",
+      "district": "集美区",
+      "street": "侨英街道",
+      "name": "叶厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-064927A0EA11",
+      "district": "集美区",
+      "street": "侨英街道",
+      "name": "兑山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C60EEDE9DF9D",
+      "district": "集美区",
+      "street": "侨英街道",
+      "name": "东安社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C356FBF9953D",
+      "district": "集美区",
+      "street": "侨英街道",
+      "name": "乐海社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-45ADF62A7A5E",
+      "district": "集美区",
+      "street": "侨英街道",
+      "name": "滨水社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E326735A0DA2",
+      "district": "集美区",
+      "street": "侨英街道",
+      "name": "海凤社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-ED97A202CD85",
+      "district": "集美区",
+      "street": "侨英街道",
+      "name": "凤安社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-CB564263118F",
+      "district": "集美区",
+      "street": "侨英街道",
+      "name": "信毅社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-F0B6F9442DC7",
+      "district": "集美区",
+      "street": "侨英街道",
+      "name": "霞梧社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-D18C77DDE0CC",
+      "district": "集美区",
+      "street": "侨英街道",
+      "name": "磁窑社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E9B98958F329",
+      "district": "集美区",
+      "street": "杏林街道",
+      "name": "纺织社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-A2C0F3EDF65F",
+      "district": "集美区",
+      "street": "杏林街道",
+      "name": "曾营社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-D9D8864C1494",
+      "district": "集美区",
+      "street": "杏林街道",
+      "name": "宁宝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-B3C99C848CB5",
+      "district": "集美区",
+      "street": "杏林街道",
+      "name": "西亭社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-12ECB36D3D5C",
+      "district": "集美区",
+      "street": "杏林街道",
+      "name": "杏林社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-97046F85A687",
+      "district": "集美区",
+      "street": "杏林街道",
+      "name": "内林社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-80C82CA867D7",
+      "district": "集美区",
+      "street": "杏林街道",
+      "name": "高浦社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-191A15990F60",
+      "district": "集美区",
+      "street": "杏林街道",
+      "name": "杏北社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-9F362B0CB5C2",
+      "district": "集美区",
+      "street": "杏林街道",
+      "name": "宁海社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-8DEA272FAD0F",
+      "district": "集美区",
+      "street": "杏林街道",
+      "name": "园博社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-637CC6D5F945",
+      "district": "集美区",
+      "street": "杏林街道",
+      "name": "莲亭社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-ABC67B254583",
+      "district": "集美区",
+      "street": "杏滨街道",
+      "name": "锦鹤社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-74F46B3F0A52",
+      "district": "集美区",
+      "street": "杏滨街道",
+      "name": "日东社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-DEED8B2D2041",
+      "district": "集美区",
+      "street": "杏滨街道",
+      "name": "三秀社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5C2401F78970",
+      "district": "集美区",
+      "street": "杏滨街道",
+      "name": "马銮社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-FD215F983487",
+      "district": "集美区",
+      "street": "杏滨街道",
+      "name": "西滨社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-ECAB68002699",
+      "district": "集美区",
+      "street": "杏滨街道",
+      "name": "前场社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-B2419037EAE1",
+      "district": "集美区",
+      "street": "杏滨街道",
+      "name": "锦园社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E648190A434B",
+      "district": "集美区",
+      "street": "杏滨街道",
+      "name": "康城社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-28B9A9651148",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "灌口第二社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-116DC2F9C927",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "灌口第一社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-A324C3349F7C",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "上头亭社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-9499472D626A",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "铁山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-21CB0C7E030D",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "黄庄社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-1360A1D792BD",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "双乐社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-D587E172ABB4",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "安仁社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5B21443B31C8",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "坑内村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-28132A56E72E",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "深青村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-6459AECA3366",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "田头村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-80ED0D23FF48",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "上塘村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-DF0FDF3EA77B",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "双岭村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-0E81EF10E997",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "李林村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-2D387DE69A77",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "东辉村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-37340B682DC6",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "顶许村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-5F7BF6C69F3C",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "三社村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-94AF748F00A1",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "井城村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-2215C4DEE328",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "陈井村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-E9F4694AF876",
+      "district": "集美区",
+      "street": "灌口镇",
+      "name": "浦林村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-5822833F447F",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "新村社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-EA3DEE3F3607",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "英村社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E4AB934CABED",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "三兴社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-0ED90D8F458A",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "龙山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-0BD89DD5A3A1",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "二农社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-23BC25C6E0B4",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "港头社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-7E52738993A3",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "明珠社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-A6E724C00B27",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "前进村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-322BD8CFA0CA",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "溪西村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-1F48B7D25BE0",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "后溪村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-28DE55FE3E68",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "仑上村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-29997133B328",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "崎沟村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-1E176119E992",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "东宅村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-53C4CB0DB6ED",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "后垵村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-8A75D33ECE91",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "岩内村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-F92B4BF284AB",
+      "district": "集美区",
+      "street": "后溪镇",
+      "name": "黄地村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-9EEB25C38322",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "同新社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-219813FF339C",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "西安社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-027E58CCF892",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "三秀社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-1190829600F9",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "后炉社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-556F71DCAF99",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "溪边社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-93652BC91649",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "城西社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-583086AE8470",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "凤山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E1ADC84161C2",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "北门社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-687DD23BCE3F",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "西池社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-7D3B7946856E",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "东山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-EC7E09E8BBB4",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "碧岳社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-9E63EA97EE7A",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "朝元社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-3BC7A763117B",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "溪苑社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-4F8F45732D5E",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "新丰社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-0661A7878A73",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "田洋村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-91040EA623BA",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "古庄村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-706E1B3B75EA",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "顶溪头村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-7B7BD379758F",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "东宅村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-8F34D29238F6",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "下溪头村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-EF14104109E3",
+      "district": "同安区",
+      "street": "大同街道",
+      "name": "康浔村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-F60DE12693B3",
+      "district": "同安区",
+      "street": "祥平街道",
+      "name": "溪声社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-7D28A8C71941",
+      "district": "同安区",
+      "street": "祥平街道",
+      "name": "祥桥社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-7FBD06710C55",
+      "district": "同安区",
+      "street": "祥平街道",
+      "name": "凤岗社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-08336F5C40BB",
+      "district": "同安区",
+      "street": "祥平街道",
+      "name": "陆丰社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-CCEAC24B035C",
+      "district": "同安区",
+      "street": "祥平街道",
+      "name": "芸溪社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-437DC523D407",
+      "district": "同安区",
+      "street": "祥平街道",
+      "name": "凤祥社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-BA5B0B3A59BF",
+      "district": "同安区",
+      "street": "祥平街道",
+      "name": "西溪社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-259B5FFC505D",
+      "district": "同安区",
+      "street": "祥平街道",
+      "name": "杜桥社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-12A30318C800",
+      "district": "同安区",
+      "street": "祥平街道",
+      "name": "凤岭社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5206230267D4",
+      "district": "同安区",
+      "street": "祥平街道",
+      "name": "过溪村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-BC2BDBBF80BA",
+      "district": "同安区",
+      "street": "祥平街道",
+      "name": "溪林村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-E1E291C75272",
+      "district": "同安区",
+      "street": "祥和街道",
+      "name": "阳翟社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-CEDEE170AF63",
+      "district": "同安区",
+      "street": "祥和街道",
+      "name": "西湖社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-79AEC7E96C49",
+      "district": "同安区",
+      "street": "祥和街道",
+      "name": "西洪塘社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-FA9B4ADB6459",
+      "district": "同安区",
+      "street": "祥和街道",
+      "name": "祥文社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-2619DACC44B5",
+      "district": "同安区",
+      "street": "祥和街道",
+      "name": "祥晖社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-04D0CBE0836F",
+      "district": "同安区",
+      "street": "祥和街道",
+      "name": "祥丰社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-1FD0FF98F198",
+      "district": "同安区",
+      "street": "祥和街道",
+      "name": "卿朴村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-980FEC79D692",
+      "district": "同安区",
+      "street": "祥和街道",
+      "name": "瑶头村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-7549D3C18CE2",
+      "district": "同安区",
+      "street": "西柯街道",
+      "name": "浦头社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5F2443A752CA",
+      "district": "同安区",
+      "street": "西柯街道",
+      "name": "下山头社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-B5B943831C3D",
+      "district": "同安区",
+      "street": "西柯街道",
+      "name": "埭头社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5691FCBF45C4",
+      "district": "同安区",
+      "street": "西柯街道",
+      "name": "西柯社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C0B87DD9B5F9",
+      "district": "同安区",
+      "street": "西柯街道",
+      "name": "吕厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-6E205CF9A914",
+      "district": "同安区",
+      "street": "西柯街道",
+      "name": "丙洲社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-A39F536CA9EF",
+      "district": "同安区",
+      "street": "西柯街道",
+      "name": "官浔社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-8D6E3640E6DA",
+      "district": "同安区",
+      "street": "西柯街道",
+      "name": "滨海社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-CBF7AF6374E7",
+      "district": "同安区",
+      "street": "西柯街道",
+      "name": "东海社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-B8266C439B16",
+      "district": "同安区",
+      "street": "西柯街道",
+      "name": "西浦村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-7F2148BF1D0E",
+      "district": "同安区",
+      "street": "美林街道",
+      "name": "四口圳社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-955E9A658A44",
+      "district": "同安区",
+      "street": "美林街道",
+      "name": "湖安社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-8F544866739E",
+      "district": "同安区",
+      "street": "美林街道",
+      "name": "潘涂社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-68E4486EDAE5",
+      "district": "同安区",
+      "street": "美林街道",
+      "name": "洪塘头社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-605B4CC8D0BE",
+      "district": "同安区",
+      "street": "美林街道",
+      "name": "后田社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-6944555944EE",
+      "district": "同安区",
+      "street": "美林街道",
+      "name": "美人山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-53FFCA36B937",
+      "district": "同安区",
+      "street": "美林街道",
+      "name": "怡海社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-973B072014ED",
+      "district": "同安区",
+      "street": "美林街道",
+      "name": "金海社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-B09C6A272053",
+      "district": "同安区",
+      "street": "美林街道",
+      "name": "望海社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5AA51E98F590",
+      "district": "同安区",
+      "street": "美林街道",
+      "name": "美星村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-63A38C86B32F",
+      "district": "同安区",
+      "street": "新民街道",
+      "name": "西塘社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-77D2C6386CB9",
+      "district": "同安区",
+      "street": "新民街道",
+      "name": "乌涂社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-DB064CBFA418",
+      "district": "同安区",
+      "street": "新民街道",
+      "name": "洋厝埔村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-DB6474F03F7A",
+      "district": "同安区",
+      "street": "新民街道",
+      "name": "西山村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-2BC6C8C10547",
+      "district": "同安区",
+      "street": "新民街道",
+      "name": "蔡宅村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-A06FCE3DF4EB",
+      "district": "同安区",
+      "street": "新民街道",
+      "name": "湖柑村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-AE94C0922625",
+      "district": "同安区",
+      "street": "新民街道",
+      "name": "柑岭村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-8E2A217D4CF4",
+      "district": "同安区",
+      "street": "新美街道",
+      "name": "梧侣社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-7138D8E73599",
+      "district": "同安区",
+      "street": "新美街道",
+      "name": "禾山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-F07DE2082DC2",
+      "district": "同安区",
+      "street": "新美街道",
+      "name": "后宅社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E5CA905463A3",
+      "district": "同安区",
+      "street": "新美街道",
+      "name": "兴店社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-DCDD3DD36244",
+      "district": "同安区",
+      "street": "新美街道",
+      "name": "凤南社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-DA33C3A9810A",
+      "district": "同安区",
+      "street": "新美街道",
+      "name": "土楼村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-CE6AA8FDB2A0",
+      "district": "同安区",
+      "street": "新美街道",
+      "name": "后坂村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-40A280065F0F",
+      "district": "同安区",
+      "street": "新美街道",
+      "name": "新塘村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-404CDB4F341E",
+      "district": "同安区",
+      "street": "新美街道",
+      "name": "南山村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-299B2287650A",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "白沙仑社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-9B71920B58F3",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "莲花村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-AF0041395095",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "后埔村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-21C74AD50EE6",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "蔗内村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-2A85D4465F4C",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "内田村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-6676513B1F5E",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "上陵村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-23B6C7C89BC3",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "军营村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-C1200BAF8938",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "淡溪村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-1295C01FAA7E",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "白交祠村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-19DA920B5FEC",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "西坑村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-554A18E6A4D9",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "罗溪村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-8CAEA949AEE4",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "尾林村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-C1593B2883A1",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "水洋村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-789422170240",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "小坪村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-EF24926E8D91",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "澳溪村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-73D4051475C6",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "云浦村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-A97D5AAD91CD",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "云洋村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-012128C17228",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "窑市村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-4FAB4C6499FA",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "溪东村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-86DF7B6DD57E",
+      "district": "同安区",
+      "street": "莲花镇",
+      "name": "美埔村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-88782E178B71",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "石浔社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-93CF1A4AC873",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "龙东社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-0A5260D1487C",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "龙西社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-EA4D98737A2A",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "中洲社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-1049078C27D5",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "洪塘村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-9CBCF0363A0D",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "三忠村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-9993C140535E",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "苏店村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-0BC257EE7976",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "新霞村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-03379E6B2429",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "郭山村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-CA7A3CAFF208",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "龙泉村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-CB7A874A5B84",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "新厝村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-5AC293C926C4",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "新学村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-54A64FFBD051",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "苏厝村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-F1C2E5CA89AC",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "大乡村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-C8651888CC5A",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "下墩村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-CA35F31D36DB",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "塘边村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-613A1ED6D69C",
+      "district": "同安区",
+      "street": "洪塘镇",
+      "name": "埔后村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-A1EEA9E36572",
+      "district": "同安区",
+      "street": "汀溪镇",
+      "name": "汀溪社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-D1FA0456B9BD",
+      "district": "同安区",
+      "street": "汀溪镇",
+      "name": "隘头村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-25BC3C6E640F",
+      "district": "同安区",
+      "street": "汀溪镇",
+      "name": "路下村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-35D4901FFBBF",
+      "district": "同安区",
+      "street": "汀溪镇",
+      "name": "褒美村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-D7D6C909338E",
+      "district": "同安区",
+      "street": "汀溪镇",
+      "name": "古坑村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-CE37D66576AB",
+      "district": "同安区",
+      "street": "汀溪镇",
+      "name": "西源村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-04FCA6C496A8",
+      "district": "同安区",
+      "street": "汀溪镇",
+      "name": "荏畲村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-CFD42C351942",
+      "district": "同安区",
+      "street": "汀溪镇",
+      "name": "顶村村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-9091542DCA0D",
+      "district": "同安区",
+      "street": "汀溪镇",
+      "name": "堤内村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-147F0544E96B",
+      "district": "同安区",
+      "street": "汀溪镇",
+      "name": "半岭村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-679A35E9D69A",
+      "district": "同安区",
+      "street": "汀溪镇",
+      "name": "前格村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-788888F50AD8",
+      "district": "同安区",
+      "street": "汀溪镇",
+      "name": "五峰村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-32C505AED0AE",
+      "district": "同安区",
+      "street": "汀溪镇",
+      "name": "汪前村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-C3D62A3643E9",
+      "district": "同安区",
+      "street": "汀溪镇",
+      "name": "造水村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-C55DD6D6B54E",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "香溪社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-F9E43086CA27",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "侨安社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-B8C658CA23A3",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "竹坝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5F0C2277E5CD",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "垵炉村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-70F5E399A05C",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "下峰村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-EFFC175E1824",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "布塘村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-64FEB59394D2",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "店仔村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-D5CDE3066235",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "溪西村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-28D2D31899A9",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "竹山村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-B0A4EA4F22EE",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "后垄村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-C14565727F76",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "军村村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-658600B6B15D",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "后塘村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-F71AF62F6367",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "上厝村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-0E8DB4463638",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "明溪村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-0339499390EA",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "宋宅村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-ADD05A4697AB",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "四林村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-A4460B7580FB",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "西洋村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-9C895212C017",
+      "district": "同安区",
+      "street": "五显镇",
+      "name": "三秀山村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-B5FF963D22B8",
+      "district": "翔安区",
+      "street": "大嶝街道",
+      "name": "田墘社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-2A7138C11210",
+      "district": "翔安区",
+      "street": "大嶝街道",
+      "name": "山头社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-9A8B23A199D2",
+      "district": "翔安区",
+      "street": "大嶝街道",
+      "name": "窟社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-D1A2DF4F88B4",
+      "district": "翔安区",
+      "street": "大嶝街道",
+      "name": "嶝崎社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-3CF5CB5D13D8",
+      "district": "翔安区",
+      "street": "大嶝街道",
+      "name": "双沪社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C5D1F72FF7C0",
+      "district": "翔安区",
+      "street": "大嶝街道",
+      "name": "阳塘社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-3065D09B1655",
+      "district": "翔安区",
+      "street": "大嶝街道",
+      "name": "北门社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-A6E139DEF7A4",
+      "district": "翔安区",
+      "street": "大嶝街道",
+      "name": "东埕社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-FE4E6B38433F",
+      "district": "翔安区",
+      "street": "大嶝街道",
+      "name": "小嶝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-9E2BD5B74F33",
+      "district": "翔安区",
+      "street": "大嶝街道",
+      "name": "嶝湾社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-F239372DBFE3",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "五美社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-2357095292B6",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "友民社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-3BE04B891533",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "三乡社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-85F5A65FF00B",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "后亭社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-D232BA1F490C",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "滨安社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-BF97C1A177DF",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "舫星社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-582607B52F93",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "桐梓社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-243E5CC087A4",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "后滨社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-35E8172FD569",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "曾林社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-81ABF85E9431",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "后许社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-23EE74DDAEF1",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "沈井社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-8491FC916D36",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "黎安社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-848FBE268AB6",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "舫阳社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-1E09A6DEDA5D",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "郑坂社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-F51A8FE98F24",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "西坂社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-ED5A22D6FE46",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "市头社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-DBB1336D7EE6",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "朱坑社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-7DA4CA0D2681",
+      "district": "翔安区",
+      "street": "马巷街道",
+      "name": "五星社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E62DE885B1EE",
+      "district": "翔安区",
+      "street": "民安街道",
+      "name": "山亭社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-346B355A1E73",
+      "district": "翔安区",
+      "street": "民安街道",
+      "name": "亭洋社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-FECF292C05D3",
+      "district": "翔安区",
+      "street": "民安街道",
+      "name": "后莲社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E20ED4A08FEE",
+      "district": "翔安区",
+      "street": "民安街道",
+      "name": "内垵社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-3E1428058DD1",
+      "district": "翔安区",
+      "street": "民安街道",
+      "name": "垵边社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-412F8E66FECA",
+      "district": "翔安区",
+      "street": "民安街道",
+      "name": "前庵社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-2CD5B2EE912D",
+      "district": "翔安区",
+      "street": "民安街道",
+      "name": "内官社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E261341306CE",
+      "district": "翔安区",
+      "street": "民安街道",
+      "name": "何厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-6BDC52B2F53E",
+      "district": "翔安区",
+      "street": "民安街道",
+      "name": "洪溪社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-D9B6A73E8878",
+      "district": "翔安区",
+      "street": "民安街道",
+      "name": "同美社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E71BDFAEAA81",
+      "district": "翔安区",
+      "street": "民安街道",
+      "name": "西炉社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-61D0AC2FA8FA",
+      "district": "翔安区",
+      "street": "民安街道",
+      "name": "赵厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C6904FBA7C72",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "钟秀社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-79C9EDC74FD1",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "湖头社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-1490BA80E202",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "东坑社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-F6D1544484A1",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "洪厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-62506791AC0A",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "下许社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-3559E6D0D5B6",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "下后滨社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-56769B57E3DC",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "垵山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-283E4F89FC62",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "炉前社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-297B209D39C6",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "刘五店社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-773194378971",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "东界社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-CC8F3842A4C7",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "钟宅社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-9A6BC0063733",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "琼头社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-DDA4C115D641",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "陈新社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-AB96AE5E2049",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "井头社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5D80DA45D17F",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "城场社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-73A8E9691394",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "窗东社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-E56DC808EE04",
+      "district": "翔安区",
+      "street": "凤翔街道",
+      "name": "蔡浦社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C767648E4483",
+      "district": "翔安区",
+      "street": "新店街道",
+      "name": "曾坂社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-0421E5CD0C6C",
+      "district": "翔安区",
+      "street": "新店街道",
+      "name": "新兴社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C485FEFC2757",
+      "district": "翔安区",
+      "street": "新店街道",
+      "name": "洪琳湖社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-167AE15FD81B",
+      "district": "翔安区",
+      "street": "新店街道",
+      "name": "东兴社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-57D14AF94897",
+      "district": "翔安区",
+      "street": "新店街道",
+      "name": "祥美社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-B46EC43F5B8F",
+      "district": "翔安区",
+      "street": "新店街道",
+      "name": "祥吴社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-3EB47AF763CB",
+      "district": "翔安区",
+      "street": "新店街道",
+      "name": "新店社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-9B9AB3D0F1CA",
+      "district": "翔安区",
+      "street": "新店街道",
+      "name": "洪前社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-301274625DE2",
+      "district": "翔安区",
+      "street": "新店街道",
+      "name": "陈塘社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-BF8C7E3138B0",
+      "district": "翔安区",
+      "street": "新店街道",
+      "name": "溪尾社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-8494BC33C886",
+      "district": "翔安区",
+      "street": "新店街道",
+      "name": "蔡厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-BFE200FFBC73",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "鼓岩社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-A32550FC3541",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "浦西社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-EC5AC558C363",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "洪钟社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-979A4D92A80D",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "滨港社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-24BED1981B42",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "鼓翔社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5F5CCA479CA1",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "浦滨社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-4D2BE46213FD",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "澳头社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-0D7AE46D2E29",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "西滨社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-3C5A24E0441E",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "欧厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-19D3C9B1B51F",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "彭厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-ABF781C970B2",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "前浯社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-AF99FAD7A614",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "浦边社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-F93627E15C29",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "后村社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-B75F57DB5340",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "鼓锣社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-5479AEB28A69",
+      "district": "翔安区",
+      "street": "金海街道",
+      "name": "浦园社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-33227E404AAF",
+      "district": "翔安区",
+      "street": "香山街道",
+      "name": "大学社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-EC56B0DDBCAD",
+      "district": "翔安区",
+      "street": "香山街道",
+      "name": "吕塘社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-92A4A553DBF6",
+      "district": "翔安区",
+      "street": "香山街道",
+      "name": "茂林社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-217F23CF6DAC",
+      "district": "翔安区",
+      "street": "香山街道",
+      "name": "大宅社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-8E6452DD23CE",
+      "district": "翔安区",
+      "street": "香山街道",
+      "name": "沙美社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-7966DBC4BC01",
+      "district": "翔安区",
+      "street": "香山街道",
+      "name": "东园社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-B71F94C57664",
+      "district": "翔安区",
+      "street": "香山街道",
+      "name": "珩厝社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-4F68D9B9A455",
+      "district": "翔安区",
+      "street": "香山街道",
+      "name": "霞浯社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-781F8A706E40",
+      "district": "翔安区",
+      "street": "香山街道",
+      "name": "霄垄社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-AA5B058975A3",
+      "district": "翔安区",
+      "street": "香山街道",
+      "name": "莲河社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-4AEAAAB4B597",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "新圩社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-933BA4226437",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "东寮社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-EEBB0D012C32",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "大帽山社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-0F2058109BF9",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "同和社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-C17FAB5DD1C2",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "古宅村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-09D10678BF42",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "后埔村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-6CBC9EA6EDE4",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "金柄村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-B76E18A0F2A2",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "凤路村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-5B29B72F6AA9",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "村尾村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-9529F854DCEA",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "乌山村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-B6E815D14C7C",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "云头村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-64A6FD2D68D1",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "面前埔村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-7B52F54A9EE9",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "上宅村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-1D636E04F9DE",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "诗坂村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-95EC6BB34972",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "桂林村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-07D289372793",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "庄垵村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-70E40A12692E",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "后亭村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-19F64586DF07",
+      "district": "翔安区",
+      "street": "新圩镇",
+      "name": "马塘村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-3C6EF8916CC5",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "上塘社区",
+      "area_type": "community"
+    },
+    {
+      "code": "XM-EB317D5DFD74",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "前垵村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-2F995DC6784C",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "后垵村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-057FE5666103",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "黄厝村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-D2C8BF885A7B",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "许厝村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-B3FFDF217FAC",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "莲塘村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-3A9247A58B30",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "莲前村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-04974456CCB8",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "霞美村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-2D2CA3AB4021",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "赵岗村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-0FDBCE65D3E7",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "曾厝村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-C922DC2470CE",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "官路村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-AAC90D679A73",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "美山村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-BCAAFFBA9E41",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "新垵村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-982D34FC35FD",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "锄山村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-701B91CB875E",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "琼坑村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-49BB350825E3",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "鸿山村",
+      "area_type": "village"
+    },
+    {
+      "code": "XM-9E19265AB6C8",
+      "district": "翔安区",
+      "street": "内厝镇",
+      "name": "后田村",
+      "area_type": "village"
+    }
+  ]
+}

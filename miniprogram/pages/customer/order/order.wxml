@@ -1,0 +1,151 @@
+<view class="safe-page order-page">
+  <view class="order-header">
+    <view class="order-header-copy">
+      <text class="order-kicker">{{categoryName}}</text>
+      <text class="order-title">提交报修</text>
+      <text class="order-subtitle">描述故障，补充现场素材</text>
+    </view>
+  </view>
+
+  <view class="form-card">
+    <view class="form-item fault-card {{focusField === 'description' ? 'active' : ''}} {{validationErrors.description ? 'error' : ''}}">
+      <view class="label-row">
+        <image class="label-icon" src="/assets/ui/image.png" mode="aspectFit" />
+        <text class="label">故障描述</text>
+        <text class="label-note">{{mediaStats.title}}</text>
+      </view>
+      <textarea class="textarea" placeholder-class="field-placeholder" placeholder="哪里坏了？例如空调不制冷、外机异响"
+                value="{{description}}" data-field="description" bindfocus="onFieldFocus" bindblur="onFieldBlur" bindinput="onDescInput" maxlength="500" />
+      <view class="desc-tools-row">
+        <text class="media-hint">{{mediaStats.desc}}</text>
+        <text class="count">{{description.length}}/500</text>
+      </view>
+      <text wx:if="{{validationErrors.description}}" class="field-tip error">{{validationErrors.description}}</text>
+      <view class="media-actions">
+        <button wx:if="{{!recording}}" class="media-btn audio" bindtap="startVoice" hover-class="button-hover">
+          <image class="media-btn-icon" src="/assets/ui/mic.png" mode="aspectFit" />
+          <text>语音</text>
+        </button>
+        <button wx:if="{{recording}}" class="media-btn recording" bindtap="stopVoice" hover-class="button-hover">
+          <image class="media-btn-icon" src="/assets/ui/stop-record.png" mode="aspectFit" />
+          <text>停止 {{recordSeconds}}s</text>
+        </button>
+        <button class="media-btn image" bindtap="chooseImage" hover-class="button-hover">
+          <image class="media-btn-icon" src="/assets/ui/image.png" mode="aspectFit" />
+          <text>照片</text>
+        </button>
+        <button class="media-btn video" bindtap="chooseVideo" hover-class="button-hover">
+          <image class="media-btn-icon" src="/assets/ui/video.png" mode="aspectFit" />
+          <text>视频</text>
+        </button>
+      </view>
+      <view wx:if="{{mediaList.length > 0}}" class="media-count-row">
+        <text wx:if="{{mediaStats.audioCount}}">语音 {{mediaStats.audioCount}}</text>
+        <text wx:if="{{mediaStats.imageCount}}">照片 {{mediaStats.imageCount}}</text>
+        <text wx:if="{{mediaStats.videoCount}}">视频 {{mediaStats.videoCount}}</text>
+      </view>
+      <view wx:if="{{mediaList.length > 0}}" class="media-list">
+        <view class="media-item" wx:for="{{mediaList}}" wx:key="tempFilePath">
+          <view class="media-icon-wrap">
+            <image class="media-icon" src="{{item.icon}}" mode="aspectFit" />
+          </view>
+          <view class="media-info tap-feedback" data-index="{{index}}" bindtap="previewMedia" hover-class="tap-feedback-active" hover-start-time="20" hover-stay-time="80">
+            <text class="media-type">{{item.typeText || (item.type === 'audio' ? '语音' : (item.type === 'image' ? '照片' : '视频'))}}</text>
+            <text class="media-name">{{item.name}}</text>
+            <text wx:if="{{item.durationText}}" class="media-duration">{{item.durationText}}</text>
+          </view>
+          <button class="media-remove" data-index="{{index}}" bindtap="removeMedia" hover-class="button-hover">
+            <view class="mini-action-content">
+              <image class="mini-action-icon" src="/assets/ui/trash.png" mode="aspectFit" />
+              <text>删除</text>
+            </view>
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-item {{validationErrors.address ? 'error' : ''}}">
+      <view class="label-row">
+        <image class="label-icon" src="/assets/ui/address.png" mode="aspectFit" />
+        <text class="label">标准上门地址</text>
+        <text class="label-note">唯一归属</text>
+      </view>
+      <picker mode="selector" range="{{serviceAddresses}}" range-key="full_address" value="{{serviceAddressIndex}}" bindchange="onServiceAddressChange">
+        <view class="picker-value address-picker-value tap-feedback" hover-class="tap-feedback-active">
+          <view class="address-picker-copy">
+            <text class="address-picker-main">{{address || '请选择平台已开通地址'}}</text>
+            <text wx:if="{{addressCode}}" class="address-picker-code">{{addressCode}}</text>
+          </view>
+          <image class="picker-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+        </view>
+      </picker>
+      <text wx:if="{{validationErrors.address}}" class="field-tip error">{{validationErrors.address}}</text>
+    </view>
+
+    <view class="form-item {{focusField === 'phone' ? 'active' : ''}}">
+      <view class="label-row">
+        <image class="label-icon" src="/assets/ui/phone.png" mode="aspectFit" />
+        <text class="label">联系电话</text>
+      </view>
+      <input class="input" type="number" maxlength="11" placeholder-class="field-placeholder" placeholder="默认注册手机号"
+             value="{{contactPhone}}" data-field="phone" bindfocus="onFieldFocus" bindblur="onFieldBlur" bindinput="onPhoneInput" />
+    </view>
+
+    <view class="address-routing">
+      <view><text class="routing-label">服务区域</text><text class="routing-value">{{currentRegionName}}</text></view>
+      <view><text class="routing-label">接单门店</text><text class="routing-value">{{currentStoreName}}</text></view>
+    </view>
+    <text wx:if="{{optionsLoading}}" class="field-tip">匹配中</text>
+    <view wx:if="{{optionsFailed}}" class="field-tip warning options-failed">
+      <text>暂无已开通标准地址，请联系平台补充地址库</text>
+      <button class="options-retry" bindtap="loadOptions" hover-class="button-hover">重试</button>
+    </view>
+  </view>
+
+  <view class="submit-bar">
+    <view class="submit-copy">
+      <text class="submit-label">报修类型</text>
+      <text class="submit-category">{{categoryName}}</text>
+    </view>
+    <button class="submit-btn" bindtap="submitOrder" loading="{{submitting}}" disabled="{{submitting}}" hover-class="button-hover">
+      <view class="mini-action-content">
+        <image class="submit-icon" src="/assets/ui/bill-check.png" mode="aspectFit" />
+        <text>提交</text>
+      </view>
+    </button>
+  </view>
+
+  <view wx:if="{{showPrivacyModal}}" class="privacy-mask">
+    <view class="privacy-dialog">
+      <text class="privacy-title">素材授权</text>
+      <text class="privacy-desc">
+        素材仅用于维修判断。请阅读并同意
+        <text class="privacy-link" bindtap="openPrivacyContract">《{{privacyContractName}}》</text>
+      </text>
+      <view class="privacy-actions">
+        <button class="privacy-secondary" bindtap="handleRejectPrivacy" hover-class="button-hover">
+          <view class="mini-action-content">
+            <image class="mini-action-icon" src="/assets/ui/logout.png" mode="aspectFit" />
+            <text>取消</text>
+          </view>
+        </button>
+        <button
+          id="agree-btn"
+          class="privacy-primary"
+          open-type="agreePrivacyAuthorization"
+          bindagreeprivacyauthorization="handleAgreePrivacyAuthorization"
+          loading="{{privacyLoading}}"
+          disabled="{{privacyLoading}}"
+          hover-class="button-hover"
+        >
+          <view class="mini-action-content">
+            <image class="mini-action-icon" src="/assets/ui/bill-check.png" mode="aspectFit" />
+            <text>同意并继续</text>
+          </view>
+        </button>
+      </view>
+    </view>
+  </view>
+</view>
+
+<role-tabbar />

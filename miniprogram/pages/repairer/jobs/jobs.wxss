@@ -1,0 +1,415 @@
+.top-card {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+  padding: 18rpx;
+  color: #101828;
+  background: #fff;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+  box-shadow: none;
+}
+
+.title {
+  display: block;
+  min-width: 0;
+  color: #101828;
+  font-size: 30rpx;
+  font-weight: 900;
+  line-height: 1.2;
+  word-break: break-all;
+}
+
+.subtitle {
+  display: block;
+  margin-top: 6rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.switch-btn {
+  min-width: 142rpx;
+  max-width: 190rpx;
+  height: 68rpx;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0 16rpx;
+  color: #175cd3;
+  background: #fff;
+  border: 1rpx solid #b2ccff;
+  border-radius: 12rpx;
+  font-size: 23rpx;
+}
+
+.section {
+  margin-top: 20rpx;
+}
+
+.job-stat-grid {
+  margin: 16rpx 0 0;
+}
+
+.work-prompt {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  margin-top: 14rpx;
+  padding: 14rpx;
+  color: #344054;
+  background: #f8fafc;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+}
+
+.work-prompt-icon-wrap {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #f3fbf7;
+  border: 1rpx solid #bfe9d1;
+  border-radius: 12rpx;
+}
+
+.work-prompt-icon {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
+}
+
+.work-prompt-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.work-prompt-title {
+  display: block;
+  min-width: 0;
+  color: #101828;
+  font-size: 26rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.work-prompt-desc {
+  display: block;
+  min-width: 0;
+  margin-top: 4rpx;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.section-head,
+.job-card-head,
+.job-meta-row,
+.job-button-content,
+.job-tip-row {
+  display: flex;
+  align-items: center;
+}
+
+.section-head {
+  justify-content: space-between;
+  align-items: center;
+  gap: 14rpx;
+  margin-bottom: 12rpx;
+}
+
+.section-title-row {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+}
+
+.section-icon {
+  width: 38rpx;
+  height: 38rpx;
+  flex-shrink: 0;
+  margin-top: 1rpx;
+}
+
+.section-title {
+  display: block;
+  min-width: 0;
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 900;
+  line-height: 1.3;
+  word-break: break-all;
+}
+
+.section-count {
+  min-width: 48rpx;
+  height: 44rpx;
+  padding: 0 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #087443;
+  background: #e7f8ef;
+  border: 1rpx solid #bfe9d1;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.job-card,
+.empty {
+  margin-bottom: 14rpx;
+  padding: 18rpx;
+  background: #fff;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 14rpx;
+}
+
+.empty {
+  color: #667085;
+  text-align: center;
+}
+
+.empty {
+  min-height: 168rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12rpx;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 72rpx;
+  height: 72rpx;
+  opacity: 0.66;
+}
+
+.empty-title {
+  display: block;
+  color: #344054;
+  font-size: 26rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.empty-desc {
+  display: block;
+  max-width: 540rpx;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.empty-action {
+  min-width: 188rpx;
+  max-width: 100%;
+  height: 68rpx;
+  margin-top: 4rpx;
+  padding: 0 20rpx;
+  color: #087443;
+  background: #f3fbf7;
+  border: 1rpx solid #bfe9d1;
+  border-radius: 12rpx;
+  font-size: 23rpx;
+}
+
+.switch-btn .mini-action-content,
+.empty-action .mini-action-content {
+  min-width: 0;
+}
+
+.job-card-head {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.job-icon {
+  width: 54rpx;
+  height: 54rpx;
+  padding: 10rpx;
+  flex-shrink: 0;
+  background: #f3f6f8;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 12rpx;
+}
+
+.job-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.card-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.job-cat {
+  min-width: 0;
+  flex: 1;
+  color: #101828;
+  font-size: 27rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.job-status {
+  flex-shrink: 0;
+  max-width: 220rpx;
+  padding: 6rpx 12rpx;
+  overflow: hidden;
+  color: #175cd3;
+  background: #eff4ff;
+  border: 1rpx solid transparent;
+  border-radius: 10rpx;
+  font-size: 21rpx;
+  font-weight: 800;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.job-desc {
+  display: block;
+  margin-top: 10rpx;
+  color: #344054;
+  font-size: 24rpx;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.job-meta-row {
+  align-items: flex-start;
+  gap: 8rpx;
+  margin-top: 10rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.45;
+}
+
+.job-meta-icon {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+  margin-top: 3rpx;
+}
+
+.job-meta-text {
+  min-width: 0;
+  flex: 1;
+  word-break: break-all;
+}
+
+.job-tip-row {
+  align-items: flex-start;
+  gap: 8rpx;
+  margin-top: 12rpx;
+  padding: 12rpx;
+  color: #344054;
+  background: #f8fafc;
+  border: 1rpx solid #edf1f5;
+  border-radius: 12rpx;
+}
+
+.job-tip-icon {
+  width: 24rpx;
+  height: 24rpx;
+  flex-shrink: 0;
+  margin-top: 4rpx;
+}
+
+.job-tip-text {
+  min-width: 0;
+  flex: 1;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.accept-btn,
+.detail-btn {
+  width: 100%;
+  min-width: 0;
+  height: 70rpx;
+  margin-top: 12rpx;
+  padding: 0 18rpx;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+}
+
+.accept-btn {
+  color: #fff;
+  background: #175cd3;
+}
+
+.detail-btn {
+  color: #087443;
+  background: #f3fbf7;
+  border: 1rpx solid #bfe9d1;
+}
+
+.job-button-content {
+  justify-content: center;
+  gap: 10rpx;
+  min-width: 0;
+}
+
+.job-button-content text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.job-action-icon {
+  width: 32rpx;
+  height: 32rpx;
+  flex-shrink: 0;
+}
+
+/* Mobile polish pass for repairer task lists. */
+.jobs-page {
+  background: #f6f7f9;
+}
+
+.top-card,
+.work-prompt,
+.role-stat-card,
+.job-card,
+.empty {
+  background: #fff;
+  border-color: #e5e7eb;
+  box-shadow: none;
+}
+
+.job-tip-row,
+.job-icon {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+}
+
+.accept-btn,
+.detail-btn,
+.empty-action,
+.switch-btn {
+  box-shadow: none;
+}

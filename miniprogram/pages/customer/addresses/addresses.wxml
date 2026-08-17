@@ -1,0 +1,35 @@
+<view class="address-page">
+  <view class="address-head"><view><text class="page-title">服务地址</text><text class="page-desc">下单时可快速选择联系人和上门地址</text></view><button bindtap="openAdd">新增</button></view>
+  <view wx:if="{{loading}}" class="empty-state">加载中…</view>
+  <view wx:elif="{{errorText}}" class="empty-state">
+    <text>地址加载失败</text>
+    <text class="empty-state-error-desc">{{errorText}}</text>
+    <button class="empty-action" bindtap="load" hover-class="button-hover">重试</button>
+  </view>
+  <view wx:elif="{{list.length === 0}}" class="empty-state">
+    <text>还没有保存标准服务地址</text>
+    <button class="empty-action" bindtap="openAdd" hover-class="button-hover">新增地址</button>
+  </view>
+  <view wx:else class="address-list">
+    <view class="address-item" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="openEdit">
+      <view class="address-title-row"><text>{{item.contact_name}} {{item.contact_phone}}</text><text wx:if="{{item.is_default}}" class="default-tag">默认</text></view>
+      <text class="address-text">{{item.address}}</text><image src="/assets/ui/chevron-right.png" mode="aspectFit" />
+    </view>
+  </view>
+  <view wx:if="{{showForm}}" class="sheet-mask" bindtap="closeForm">
+    <view class="address-sheet" catchtap="noop">
+      <text class="sheet-title">{{editingId ? '编辑地址' : '新增地址'}}</text>
+      <view class="field"><text>联系人</text><input value="{{form.contactName}}" data-field="contactName" bindinput="input" /></view>
+      <view class="field"><text>手机号</text><input type="number" value="{{form.contactPhone}}" data-field="contactPhone" bindinput="input" /></view>
+      <view class="field vertical">
+        <text>标准服务地址</text>
+        <picker disabled="{{editingId > 0}}" mode="selector" range="{{serviceAddresses}}" range-key="full_address" value="{{form.serviceAddressIndex}}" bindchange="selectServiceAddress">
+          <view class="address-picker">{{form.address || '请选择平台已开通地址'}}</view>
+        </picker>
+        <text class="immutable-tip">地址正文和唯一编号不可修改，联系人电话可以更新</text>
+      </view>
+      <view class="field"><text>设为默认</text><switch color="#087443" checked="{{form.isDefault}}" bindchange="switchDefault" /></view>
+      <button class="save-button" bindtap="save" loading="{{saving}}">保存地址</button>
+    </view>
+  </view>
+</view>

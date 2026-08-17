@@ -1,0 +1,222 @@
+<view class="safe-page role-page store-dashboard-page">
+  <view class="role-hero">
+    <view class="role-hero-head">
+      <view class="app-brand-row">
+        <view class="app-logo-mark">
+          <image class="app-logo-image" src="/assets/logo-mark.png" mode="aspectFit" />
+        </view>
+        <view class="app-brand-copy">
+          <text class="role-title">门店工作台</text>
+          <text class="role-subtitle">{{storeName}}</text>
+        </view>
+      </view>
+      <button class="role-ghost-btn" bindtap="goCustomer" hover-class="button-hover">
+        <view class="mini-action-content">
+          <image class="mini-action-icon" src="/assets/ui/receipt.png" mode="aspectFit" /><text>代下单</text>
+        </view>
+      </button>
+      <button class="role-ghost-btn" bindtap="goPayroll" hover-class="button-hover">
+        <view class="mini-action-content"><image class="mini-action-icon" src="/assets/ui/wallet.png" mode="aspectFit" /><text>工资</text></view>
+      </button>
+    </view>
+  </view>
+
+  <view wx:if="{{!loadFailed}}" class="store-workflow">
+    <view class="store-workflow-icon-wrap">
+      <image class="store-workflow-icon" src="/assets/tabbar/store.png" mode="aspectFit" />
+    </view>
+    <view class="store-workflow-main">
+      <text class="store-workflow-title">{{workflowHint.title}}</text>
+      <text class="store-workflow-desc">{{workflowHint.desc}}</text>
+    </view>
+  </view>
+
+  <view class="role-stat-grid store-action-grid">
+    <view class="role-stat-card role-stat-card-rich">
+      <view class="role-stat-head">
+        <image class="role-stat-icon" src="/assets/ui/bill-file.png" mode="aspectFit" />
+        <text class="role-stat-label">待受理</text>
+      </view>
+      <text class="role-stat-num">{{stats.pending}}</text>
+    </view>
+    <view class="role-stat-card role-stat-card-rich">
+      <view class="role-stat-head">
+        <image class="role-stat-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+          <text class="role-stat-label">服务单</text>
+      </view>
+      <text class="role-stat-num">{{stats.billConfirm}}</text>
+    </view>
+    <view class="role-stat-card role-stat-card-rich">
+      <view class="role-stat-head">
+        <image class="role-stat-icon" src="/assets/ui/pay.png" mode="aspectFit" />
+        <text class="role-stat-label">待支付</text>
+      </view>
+      <text class="role-stat-num">{{stats.waitPay}}</text>
+    </view>
+    <view class="role-stat-card role-stat-card-rich">
+      <view class="role-stat-head">
+        <image class="role-stat-icon" src="/assets/ui/bill-check.png" mode="aspectFit" />
+        <text class="role-stat-label">计薪</text>
+      </view>
+      <text class="role-stat-num">{{stats.review}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{loadFailed}}" class="role-empty">
+    <view class="role-empty-inner">
+      <image class="role-empty-icon" src="/assets/ui/bill-file.png" mode="aspectFit" />
+      <text class="role-empty-title">加载失败</text>
+      <text class="role-empty-desc">点击重试</text>
+      <button class="role-empty-action" bindtap="loadData" hover-class="button-hover">
+        <view class="mini-action-content">
+          <image class="mini-action-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+          <text>重试</text>
+        </view>
+      </button>
+    </view>
+  </view>
+
+  <view wx:elif="{{loadWarningText}}" class="role-inline-alert">
+    <image class="role-inline-alert-icon" src="/assets/ui/bill-file.png" mode="aspectFit" />
+    <text class="role-inline-alert-text">{{loadWarningText}}</text>
+  </view>
+
+  <view wx:if="{{!loadFailed}}" class="role-section">
+    <view class="role-section-head">
+      <view class="role-section-title-row store-section-title-row">
+        <image class="role-section-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+        <view class="store-section-copy">
+          <text class="role-section-title">工单</text>
+          <text class="store-section-subtitle">受理、派单、审核</text>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{loading}}" class="role-empty">
+      <view class="role-empty-inner">
+        <image class="role-empty-icon" src="/assets/ui/bill-file.png" mode="aspectFit" />
+        <text class="role-empty-title">加载中…</text>
+      </view>
+    </view>
+    <view wx:if="{{orders.length === 0 && !loading}}" class="role-empty">
+      <view class="role-empty-inner">
+        <image class="role-empty-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+        <text class="role-empty-title">暂无订单</text>
+        <text class="role-empty-desc">下单后显示</text>
+      </view>
+    </view>
+    <view class="role-card" wx:for="{{orders}}" wx:key="id">
+      <view class="role-card-head">
+        <image class="role-card-icon" src="{{item.categoryIcon}}" mode="aspectFit" />
+        <view class="role-card-main">
+          <view class="role-line">
+            <text class="role-strong">#{{item.id}} {{item.categoryText}}</text>
+            <text class="role-pill {{item.statusTone}}">{{item.statusText}}</text>
+          </view>
+          <text class="role-desc">{{item.description}}</text>
+          <view wx:if="{{item.mediaSummary}}" class="role-meta-row">
+            <image class="role-meta-icon" src="/assets/ui/image.png" mode="aspectFit" />
+            <text class="role-meta-text">素材 {{item.mediaSummary}}</text>
+          </view>
+          <view wx:if="{{item.address}}" class="role-meta-row">
+            <image class="role-meta-icon" src="/assets/ui/address.png" mode="aspectFit" />
+            <text class="role-meta-text">{{item.address}}</text>
+          </view>
+          <text wx:if="{{item.hasPrice}}" class="role-money">¥{{item.priceText}}</text>
+          <view class="order-next-step">
+            <image class="order-next-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+            <view class="order-next-copy">
+              <text class="order-next-title">{{item.nextStepTitle}}</text>
+              <text class="order-next-desc">{{item.nextStepDesc}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{item.hasBill}}" class="bill-box order-bill-box">
+        <view class="service-bill-head">
+          <view class="service-bill-title">
+            <image class="service-bill-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+            <text class="role-strong">服务单明细</text>
+          </view>
+          <text class="role-pill tone-action">合计 ¥{{item.billAmountText}}</text>
+        </view>
+        <text class="role-desc">保修 {{item.billWarrantyText}}</text>
+        <view class="bill-item" wx:for="{{item.billItems}}" wx:key="name">
+          <view class="bill-item-copy">
+            <text class="bill-item-name">{{item.name}}</text>
+            <text class="bill-item-meta">数量 {{item.qtyText}} · 单价 ¥{{item.priceText}}</text>
+          </view>
+          <text class="bill-item-amount">¥{{item.amountText}}</text>
+        </view>
+      </view>
+
+      <view class="role-actions" wx:if="{{item.hasActions || item.hasMedia}}">
+        <button wx:if="{{item.hasMedia}}" class="role-secondary-btn compact" data-id="{{item.id}}" bindtap="openOrderDetail" hover-class="button-hover">
+          <view class="role-button-content">
+            <image class="role-action-icon" src="/assets/ui/image.png" mode="aspectFit" />
+            <text>看素材</text>
+          </view>
+        </button>
+        <button wx:if="{{item.canStoreAccept}}" class="role-primary-btn" data-id="{{item.id}}" bindtap="storeAccept" hover-class="button-hover">
+          <view class="role-button-content">
+            <image class="role-action-icon" src="/assets/ui/bill-check.png" mode="aspectFit" />
+            <text>受理工单</text>
+          </view>
+        </button>
+        <button wx:if="{{item.canSelfServe}}" class="role-secondary-btn" data-id="{{item.id}}" bindtap="selfServe" hover-class="button-hover">
+          <view class="role-button-content">
+            <image class="role-action-icon" src="/assets/ui/repairer.png" mode="aspectFit" />
+            <text>我来服务</text>
+          </view>
+        </button>
+        <button wx:if="{{item.canOpenService}}" class="role-secondary-btn" data-id="{{item.id}}" bindtap="goServiceDetail" hover-class="button-hover">
+          <view class="role-button-content">
+            <image class="role-action-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+            <text>服务单</text>
+          </view>
+        </button>
+        <view wx:if="{{item.canAssign}}" class="assign-row">
+          <picker mode="selector" range="{{repairerOptions}}" range-key="label" value="{{item.assignIndex}}" data-id="{{item.id}}" bindchange="onRepairerChange">
+            <view class="assign-picker">
+              <text class="picker-text">{{item.selectedRepairerText}}</text>
+              <image class="picker-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+            </view>
+          </picker>
+          <button class="assign-btn" data-id="{{item.id}}" bindtap="assignRepairer" hover-class="button-hover">
+            <view class="role-button-content">
+              <image class="role-action-icon" src="/assets/ui/repairer.png" mode="aspectFit" />
+              <text>指派师傅</text>
+            </view>
+          </button>
+        </view>
+        <button wx:if="{{item.canConfirmBill}}" class="role-primary-btn purple" data-id="{{item.id}}" bindtap="confirmServiceBill" hover-class="button-hover">
+          <view class="role-button-content">
+            <image class="role-action-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+              <text>确认服务单</text>
+          </view>
+        </button>
+        <view wx:if="{{item.canStoreReview}}" class="review-box">
+          <view class="wage-row">
+            <text>计薪方式</text>
+            <picker mode="selector" range="{{wageModes}}" range-key="label" value="{{item.wageModeIndex}}" data-id="{{item.id}}" bindchange="onWageModeChange">
+              <view class="wage-picker">
+                <text class="picker-text">{{item.wageModeText}}</text>
+                <image class="picker-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+              </view>
+            </picker>
+          </view>
+          <input wx:if="{{item.wageMode !== 'monthly'}}" class="wage-input" type="digit" placeholder="本单工资" value="{{item.wageAmount}}" data-id="{{item.id}}" bindinput="onWageInput" />
+            <text class="wage-note">{{item.wageMode === 'monthly' ? '月薪人员，本单不计提成' : '按本单计入师傅收益'}}</text>
+            <button class="role-primary-btn orange" data-id="{{item.id}}" bindtap="storeReview" hover-class="button-hover">
+              <view class="role-button-content">
+                <image class="role-action-icon" src="/assets/ui/bill-check.png" mode="aspectFit" />
+                <text>完成审核</text>
+              </view>
+            </button>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<role-tabbar />

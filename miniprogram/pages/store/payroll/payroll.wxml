@@ -1,0 +1,47 @@
+<view class="payroll-page">
+  <view class="payroll-head">
+    <view>
+      <text class="page-title">月薪工资单</text>
+      <text class="page-desc">月薪人员按订单记录工作量，不重复计入按单工资</text>
+    </view>
+    <picker mode="date" fields="month" value="{{month}}" bindchange="monthChange">
+      <view class="month-picker">{{month}}</view>
+    </picker>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty-state">加载中…</view>
+  <view wx:elif="{{errorText}}" class="empty-state column">
+    <text class="empty-state-title">加载失败</text>
+    <text class="empty-state-desc">{{errorText}}</text>
+    <button class="empty-state-retry" bindtap="load" hover-class="button-hover">重试</button>
+  </view>
+  <block wx:else>
+    <view class="employee-list">
+      <view class="employee-row" wx:for="{{employees}}" wx:key="userId">
+        <view class="employee-copy">
+          <text class="employee-name">{{item.name}}</text>
+          <text class="employee-work">本月记录工作量 {{item.workUnits}}</text>
+        </view>
+        <view class="salary-field">
+          <text>¥</text>
+          <input type="digit" placeholder="月薪" value="{{item.salary}}" data-id="{{item.userId}}" bindinput="salaryInput" />
+        </view>
+      </view>
+      <view wx:if="{{employees.length === 0}}" class="empty-state small">本月还没有月薪人员工作记录</view>
+    </view>
+    <button class="generate-button" bindtap="generatePayroll" loading="{{saving}}" disabled="{{saving}}">生成工资单</button>
+
+    <view class="section-head">工资周期</view>
+    <view class="period-list">
+      <view class="period-row" wx:for="{{payroll.periods}}" wx:key="id">
+        <view>
+          <text class="period-month">{{item.month}}</text>
+          <text class="role-pill period-pill {{item.statusTone}}">{{item.statusText}}</text>
+        </view>
+        <button wx:if="{{item.status !== 'paid'}}" data-id="{{item.id}}" bindtap="payPayroll">发放工资</button>
+        <text wx:else class="paid-mark">已发放</text>
+      </view>
+      <view wx:if="{{payroll.periods.length === 0}}" class="empty-state small">还没有工资周期</view>
+    </view>
+  </block>
+</view>

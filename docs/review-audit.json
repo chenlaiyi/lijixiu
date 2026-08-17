@@ -1,0 +1,74 @@
+{
+  "base_url": "https://x.iddg.cn",
+  "timestamp": "2026-08-09T07:01:13.262Z",
+  "passed": 13,
+  "failed": 0,
+  "total": 13,
+  "results": [
+    {
+      "name": "wrong-password-401",
+      "ok": true,
+      "detail": "status=401"
+    },
+    {
+      "name": "review-phone",
+      "ok": true,
+      "detail": "18800000999"
+    },
+    {
+      "name": "review-role",
+      "ok": true,
+      "detail": "repairer"
+    },
+    {
+      "name": "review-balance",
+      "ok": true,
+      "detail": "available=100"
+    },
+    {
+      "name": "review-withdraw",
+      "ok": true,
+      "detail": "id=25 amount=1 status=pending"
+    },
+    {
+      "name": "withdrawal-listed",
+      "ok": true,
+      "detail": "status=pending"
+    },
+    {
+      "name": "review-reset",
+      "ok": true,
+      "detail": "available=100 frozen=0"
+    },
+    {
+      "name": "withdrawal-rejected-after-reset",
+      "ok": true,
+      "detail": "id=25"
+    },
+    {
+      "name": "wxml:手机号快捷登录",
+      "ok": true,
+      "detail": "present"
+    },
+    {
+      "name": "wxml:进入功能体验",
+      "ok": true,
+      "detail": "present"
+    },
+    {
+      "name": "wxml:微信快捷登录",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "wxml:微信登录",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "icon-phone",
+      "ok": true,
+      "detail": "phone.png present"
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+.role-tabbar-spacer {
+  height: 0;
+}
+
+.role-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  min-height: 104rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+  padding: 8rpx 22rpx calc(7rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.98);
+  border-top: 1rpx solid #e2e7e4;
+}
+
+.tab-item {
+  position: relative;
+  min-width: 0;
+  height: 88rpx;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  margin: 0;
+  padding: 8rpx 4rpx 4rpx;
+  color: #7d8782;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  font-size: 20rpx;
+  line-height: 1;
+  overflow: visible;
+}
+
+.tab-item::after {
+  border: 0;
+}
+
+.tab-item.active {
+  color: #0aaf70;
+  background: transparent;
+}
+
+.tab-icon {
+  width: 44rpx;
+  height: 44rpx;
+  display: block;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.tab-item.active .tab-icon {
+  transform: translateY(-1rpx);
+}
+
+.tab-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: inherit;
+  font-size: 21rpx;
+  font-weight: 700;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab-state {
+  position: absolute;
+  width: 1rpx;
+  height: 1rpx;
+  overflow: hidden;
+  opacity: 0;
+}

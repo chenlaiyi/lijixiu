@@ -1,0 +1,162 @@
+<view class="safe-page detail-page" wx:if="{{order}}">
+  <view class="detail-hero">
+    <view class="detail-hero-main">
+      <view class="detail-icon-wrap">
+        <image class="detail-icon" src="{{order.categoryIcon}}" mode="aspectFit" />
+      </view>
+      <view class="detail-title-copy">
+        <text class="detail-kicker">#{{order.id}}</text>
+        <text class="detail-title">{{order.categoryText}}</text>
+      </view>
+    </view>
+    <text class="detail-status {{order.statusTone}}">{{order.statusText}}</text>
+  </view>
+
+  <view class="next-card {{detailHint.tone}}">
+    <view class="next-icon-wrap">
+      <image class="next-icon" src="{{detailHint.icon}}" mode="aspectFit" />
+    </view>
+    <view class="next-copy">
+      <text class="next-title">{{detailHint.title}}</text>
+      <text class="next-desc">{{detailHint.desc}}</text>
+    </view>
+  </view>
+
+  <view class="info-card">
+    <view class="section-title-row">
+      <image class="section-icon" src="/assets/ui/bill-file.png" mode="aspectFit" />
+      <text class="section-title">需求</text>
+    </view>
+    <text class="description">{{order.description}}</text>
+    <view class="meta-line">
+      <image class="meta-icon" src="/assets/ui/image.png" mode="aspectFit" />
+      <text class="meta-text">{{mediaSummaryText}}</text>
+    </view>
+    <view class="meta-line">
+      <image class="meta-icon" src="/assets/ui/address.png" mode="aspectFit" />
+      <text class="meta-text">{{order.address || '未填写地址'}}</text>
+    </view>
+    <view wx:if="{{order.contact_phone}}" class="meta-line">
+      <image class="meta-icon" src="/assets/ui/phone.png" mode="aspectFit" />
+      <text class="meta-text">{{order.contact_phone}}</text>
+    </view>
+  </view>
+
+  <view class="bill-card" wx:if="{{bill}}">
+    <view class="bill-head">
+      <view class="section-title-row">
+        <image class="section-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+        <text class="section-title">服务单</text>
+      </view>
+      <text class="bill-amount">¥{{bill.amountText}}</text>
+    </view>
+    <view class="bill-summary">
+      <view class="bill-summary-item">
+        <text class="bill-summary-label">保修期</text>
+        <text class="bill-summary-value">{{bill.warrantyText}}</text>
+      </view>
+      <view class="bill-summary-item">
+        <text class="bill-summary-label">状态</text>
+        <text class="bill-summary-value">{{order.statusText}}</text>
+      </view>
+    </view>
+    <view wx:if="{{billItems.length > 0}}" class="bill-items">
+      <view class="bill-item" wx:for="{{billItems}}" wx:key="name">
+        <view class="bill-item-copy">
+          <text class="bill-item-name">{{item.name}}</text>
+          <text class="bill-item-meta">数量 {{item.qtyText}} · 单价 ¥{{item.priceText}}</text>
+        </view>
+        <text class="bill-item-amount">¥{{item.amountText}}</text>
+      </view>
+    </view>
+    <view wx:else class="bill-empty">
+      <image class="bill-empty-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+      <text>暂无明细</text>
+    </view>
+  </view>
+
+  <view class="bill-card pending" wx:else>
+    <view class="section-title-row">
+      <image class="section-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+      <text class="section-title">服务单</text>
+    </view>
+    <text class="pending-text">完成后显示</text>
+  </view>
+
+  <view class="media-card" wx:if="{{mediaList.length > 0}}">
+    <view class="section-title-row">
+      <image class="section-icon" src="/assets/ui/image.png" mode="aspectFit" />
+      <text class="section-title">现场素材</text>
+    </view>
+    <view class="media-list">
+      <view
+        class="media-item tap-feedback"
+        wx:for="{{mediaList}}"
+        wx:key="url"
+        data-index="{{index}}"
+        bindtap="previewOrderMedia"
+        hover-class="tap-feedback-active"
+        hover-start-time="20"
+        hover-stay-time="80"
+      >
+        <view class="media-icon-wrap">
+          <image class="media-icon" src="{{item.icon}}" mode="aspectFit" />
+        </view>
+        <view class="media-copy">
+          <text class="media-type">{{item.typeText}}</text>
+          <text class="media-name">{{item.name}}</text>
+        </view>
+        <text class="media-duration">{{item.durationText}}</text>
+      </view>
+    </view>
+  </view>
+
+  <button class="orders-btn" bindtap="goOrders" hover-class="button-hover">
+    <view class="mini-action-content">
+      <image class="mini-action-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+      <text>返回订单</text>
+    </view>
+  </button>
+
+  <view wx:if="{{canPay}}" class="detail-pay-bar">
+    <view class="pay-submit-copy">
+      <text class="pay-submit-label">待支付</text>
+      <text class="pay-submit-amount">¥{{bill ? bill.amountText : order.priceText}}</text>
+    </view>
+    <button class="pay-btn" bindtap="goPay" hover-class="button-hover">
+      <image class="pay-btn-icon" src="/assets/ui/pay.png" mode="aspectFit" />
+      <text>确认并支付</text>
+    </button>
+  </view>
+</view>
+
+<view class="safe-page detail-page" wx:else>
+  <view class="empty-card">
+    <image class="empty-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+    <block wx:if="{{loading}}">
+      <text class="role-empty-title">加载中…</text>
+    </block>
+    <block wx:elif="{{loadFailed || errorText}}">
+      <text class="role-empty-title">加载失败</text>
+      <text class="role-empty-desc">{{errorText}}</text>
+    </block>
+    <block wx:else>
+      <text class="role-empty-title">订单不存在</text>
+      <text class="role-empty-desc">返回后重试</text>
+    </block>
+    <button wx:if="{{loadFailed && orderId}}" class="empty-action" bindtap="retryLoad" hover-class="button-hover">
+      <view class="mini-action-content">
+        <image class="mini-action-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+        <text>重试</text>
+      </view>
+    </button>
+    <button wx:if="{{!loading}}" class="empty-action secondary" bindtap="goOrders" hover-class="button-hover">
+      <view class="mini-action-content">
+        <image class="mini-action-icon" src="/assets/ui/receipt.png" mode="aspectFit" />
+        <text>订单</text>
+      </view>
+    </button>
+  </view>
+</view>
+
+<role-tabbar />

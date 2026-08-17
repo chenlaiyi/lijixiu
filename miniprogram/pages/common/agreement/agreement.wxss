@@ -1,0 +1,84 @@
+.agreement-page {
+  display: flex;
+  flex-direction: column;
+  background: #f7f7f8;
+}
+
+.agreement-tabs {
+  display: flex;
+  background: #ffffff;
+  border-bottom: 1rpx solid #ececee;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.agreement-tab {
+  flex: 1;
+  text-align: center;
+  font-size: 28rpx;
+  color: #6b6b70;
+  padding: 24rpx 0;
+  position: relative;
+}
+
+.agreement-tab.active {
+  color: #1f1f23;
+  font-weight: 600;
+}
+
+.agreement-tab.active::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 56rpx;
+  height: 4rpx;
+  background: #1f1f23;
+  border-radius: 2rpx;
+}
+
+.agreement-scroll {
+  flex: 1;
+  padding: 24rpx 32rpx 48rpx;
+  box-sizing: border-box;
+}
+
+.agreement-block {
+  margin-bottom: 28rpx;
+}
+
+.agreement-h1 {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1f1f23;
+  line-height: 1.4;
+  margin-bottom: 8rpx;
+}
+
+.agreement-h2 {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f1f23;
+  line-height: 1.4;
+  margin-bottom: 12rpx;
+}
+
+.agreement-meta {
+  display: block;
+  font-size: 24rpx;
+  color: #96969b;
+  margin-bottom: 8rpx;
+}
+
+.agreement-p {
+  display: block;
+  font-size: 28rpx;
+  color: #3a3a3f;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

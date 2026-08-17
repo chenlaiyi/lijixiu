@@ -1,0 +1,98 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "HTTP QPS (by path)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "sum by (path) (rate(xiulijiu_http_requests_total[1m]))",
+          "legendFormat": "{{path}}"
+        }
+      ]
+    },
+    {
+      "title": "5xx Error Rate",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(rate(xiulijiu_http_requests_errors_total[5m])) / clamp_min(sum(rate(xiulijiu_http_requests_total[5m])), 1)",
+          "legendFormat": "5xx rate"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "percentunit"}}
+    },
+    {
+      "title": "P95 Latency (s)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(xiulijiu_http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "title": "Active Alerts (critical/warning)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 6, "x": 12, "y": 8},
+      "targets": [
+        {"expr": "xiulijiu_alerts_active_critical", "legendFormat": "critical"},
+        {"expr": "xiulijiu_alerts_active_warning", "legendFormat": "warning"}
+      ]
+    },
+    {
+      "title": "Reconcile Mismatch",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 6, "x": 18, "y": 8},
+      "targets": [
+        {"expr": "xiulijiu_last_recon_mismatch", "legendFormat": "mismatch"}
+      ]
+    },
+    {
+      "title": "Uptime",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 16},
+      "targets": [
+        {"expr": "xiulijiu_uptime_seconds", "legendFormat": "seconds"}
+      ]
+    },
+    {
+      "title": "Orders Pending",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 16},
+      "targets": [
+        {"expr": "xiulijiu_orders_pending"}
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["xiulijiu"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "xiulijiu 平台总览",
+  "uid": "xiulijiu-overview",
+  "version": 1,
+  "weekStart": ""
+}
