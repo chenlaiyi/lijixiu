@@ -25,6 +25,7 @@ from ..schemas.store import (
     StoreStaffCreate,
     StoreUpdate,
 )
+from . import role as role_service
 
 
 async def create_store(db: AsyncSession, data: StoreCreate) -> Store:
@@ -32,11 +33,11 @@ async def create_store(db: AsyncSession, data: StoreCreate) -> Store:
     db.add(store)
     manager = await db.get(User, data.manager_id)
     if manager:
-        manager.business_role = BusinessRole.STORE_MANAGER.value
+        role_service.grant_business_role(manager, BusinessRole.STORE_MANAGER.value)
     if data.city_manager_id:
         city_manager = await db.get(User, data.city_manager_id)
         if city_manager:
-            city_manager.business_role = BusinessRole.CITY_MANAGER.value
+            role_service.grant_business_role(city_manager, BusinessRole.CITY_MANAGER.value)
     await db.commit()
     await db.refresh(store)
     return store
@@ -66,11 +67,11 @@ async def update_store(db: AsyncSession, store: Store, data: StoreUpdate) -> Sto
     if data.manager_id:
         manager = await db.get(User, data.manager_id)
         if manager:
-            manager.business_role = BusinessRole.STORE_MANAGER.value
+            role_service.grant_business_role(manager, BusinessRole.STORE_MANAGER.value)
     if data.city_manager_id:
         city_manager = await db.get(User, data.city_manager_id)
         if city_manager:
-            city_manager.business_role = BusinessRole.CITY_MANAGER.value
+            role_service.grant_business_role(city_manager, BusinessRole.CITY_MANAGER.value)
     await db.commit()
     await db.refresh(store)
     return store
@@ -86,7 +87,7 @@ async def add_store_staff(db: AsyncSession, store_id: int, data: StoreStaffCreat
             StoreStaffRole.TECHNICIAN: BusinessRole.REPAIRER.value,
             StoreStaffRole.SECOND_RECEIVER: BusinessRole.SECOND_RECEIVER.value,
         }
-        user.business_role = role_map[data.role]
+        role_service.grant_business_role(user, role_map[data.role])
     await db.commit()
     await db.refresh(staff)
     return staff
@@ -149,7 +150,7 @@ async def create_address(db: AsyncSession, data: StoreAddressCreate) -> StoreAdd
         BusinessRole.SECOND_RECEIVER.value,
         BusinessRole.PROMOTION_MANAGER.value,
     }
-    if not creator or creator.business_role not in allowed_roles:
+    if not role_service.has_any_role(creator, allowed_roles):
         raise ValueError("仅平台、城市、门店、师傅或推广人员可以建立标准地址")
     owner_id = data.business_owner_user_id or (assignment.manager_id if assignment else None)
     if owner_id and not await db.get(User, owner_id):

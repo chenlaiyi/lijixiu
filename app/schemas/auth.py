@@ -29,6 +29,17 @@ class ReviewLoginRequest(BaseModel):
     wx_code: str | None = Field(default=None, description="wx.login code")
 
 
+class AdminLoginRequest(BaseModel):
+    """管理后台账号密码登录(2026-10-07)。
+
+    凭据来自 .env 的 ADMIN_WEB_ACCOUNT / ADMIN_WEB_PASSWORD,
+    登录成功返回 ADMIN_WEB_PHONE 对应管理员用户的 token。
+    """
+
+    account: str = Field(min_length=1, max_length=64)
+    password: str = Field(min_length=1, max_length=128)
+
+
 class SmsCodeRequest(BaseModel):
     phone: str = Field(min_length=11, max_length=20)
 

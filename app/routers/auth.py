@@ -4,7 +4,6 @@ import hashlib
 import hmac
 import json
 import time
-import secrets
 from datetime import datetime, timedelta, timezone
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 
@@ -19,6 +18,7 @@ from ..core.logging import get_audit_logger
 from ..models.business import PhoneVerificationCode
 from ..models.user import BusinessRole, User, UserRole
 from ..schemas.auth import (
+    AdminLoginRequest,
     ReviewLoginRequest,
     SmsCodeRequest,
     SmsLoginRequest,
@@ -27,6 +27,7 @@ from ..schemas.auth import (
     WechatPhoneLoginRequest,
 )
 from ..schemas.user import AgreementRequest, AgreementStatus, UserCreate
+from ..services import role as role_service
 from ..services import user as user_service
 from ..services import wechat_pay
 from ..services.wechat_pay import WeChatPayError
@@ -47,6 +48,9 @@ _DEMO_ACCOUNTS = {
     "18800000006": (UserRole.CUSTOMER, BusinessRole.PROMOTION_MANAGER),
     "18800000007": (UserRole.ADMIN, BusinessRole.TECH_SUPPORT),
     "18800000008": (UserRole.ADMIN, BusinessRole.FINANCE),
+    # 2026-10-07 multi-role:真实手机号示例。登录只保证「店长」在角色集合里,
+    # scripts/seed_multi_role_demo.py 会给它补齐 师傅 + 业务(多角色演示账号)。
+    "18060936373": (UserRole.ADMIN, BusinessRole.STORE_MANAGER),
     "18800000999": (UserRole.REPAIRER, BusinessRole.REPAIRER),
 }
 
@@ -99,6 +103,7 @@ async def _login_with_phone(
     demo_identity = _DEMO_ACCOUNTS.get(phone)
     role = demo_identity[0] if demo_identity else UserRole.CUSTOMER
     business_role = demo_identity[1] if demo_identity else BusinessRole.CUSTOMER
+    demo_role_value = business_role.value
 
     user = await user_service.get_user_by_phone(db, phone)
     if not user:
@@ -109,15 +114,25 @@ async def _login_with_phone(
                 name=name,
                 role=role,
                 business_role=business_role,
+                business_roles=[business_role],
                 is_promotion_manager=business_role == BusinessRole.PROMOTION_MANAGER,
             ),
         )
-    elif demo_identity and user.business_role != business_role.value:
-        user.role = role
-        user.business_role = business_role.value
-        user.is_promotion_manager = business_role == BusinessRole.PROMOTION_MANAGER
-        await db.commit()
-        await db.refresh(user)
+    else:
+        # 2026-10-07 multi-role:演示/审核账号登录只保证「演示角色在集合里」,
+        # 不再把后台配好的其它角色覆盖掉(运营常给演示号叠加店长+师傅+业务
+        # 来演示一个号多角色)。存量单角色账号在此完成一次性迁移。
+        changed = False
+        roles = role_service.resolve_roles(user)
+        if not getattr(user, "business_roles", None):
+            changed = True
+        if demo_identity and demo_role_value not in roles:
+            roles = [*roles, demo_role_value]
+            changed = True
+        if changed:
+            role_service.sync_legacy_business_role(user, roles)
+            await db.commit()
+            await db.refresh(user)
 
     await _save_openid_if_available(db, user, wx_code)
     if phone == settings.WECHAT_REVIEW_PHONE.strip():
@@ -183,6 +198,9 @@ def _user_payload(user: User) -> dict:
         "name": user.name,
         "role": user.role.value,
         "business_role": user.business_role or user.role.value,
+        # 2026-10-07 multi-role:前端按集合渲染标签 + 决定当前身份
+        "business_roles": role_service.resolve_roles(user),
+        "active_business_role": role_service.active_role(user),
         "avatar": user.avatar,
         "is_promotion_manager": user.is_promotion_manager,
         "has_wechat_openid": bool(user.wechat_openid),
@@ -226,6 +244,34 @@ async def review_login(data: ReviewLoginRequest, db: AsyncSession = Depends(get_
     return await _login_with_phone(db, phone, "功能体验师傅", "repairer", data.wx_code)
 
 
+@router.post("/admin-login", response_model=WechatLoginResponse)
+async def admin_login(data: AdminLoginRequest, db: AsyncSession = Depends(get_db)):
+    """管理后台账号密码登录(2026-10-07)。
+
+    替代「手工到 /admin/ 粘贴 Bearer token」的用法:后台登录框填账号密码,
+    后台内部拿这里返回的 token 去调管理接口。
+
+    凭据来自 .env:`ADMIN_WEB_ACCOUNT` / `ADMIN_WEB_PASSWORD`,
+    登录成功返回 `ADMIN_WEB_PHONE`(默认 18800000000,platform_admin)对应的用户。
+    """
+    account = settings.ADMIN_WEB_ACCOUNT.strip()
+    password = settings.ADMIN_WEB_PASSWORD
+    phone = settings.ADMIN_WEB_PHONE.strip()
+    if not account or not password:
+        raise HTTPException(503, "Admin login is not configured")
+    if not (
+        hmac.compare_digest(data.account.strip(), account)
+        and hmac.compare_digest(data.password, password)
+    ):
+        raise HTTPException(401, "Account or password is incorrect")
+    if phone not in _DEMO_ACCOUNTS:
+        raise HTTPException(503, "Admin account is not linked to a demo user")
+    user_role, business_role = _DEMO_ACCOUNTS[phone]
+    if business_role != BusinessRole.PLATFORM_ADMIN:
+        raise HTTPException(503, "Admin account is not a platform admin")
+    return await _login_with_phone(db, phone, "演示管理员", user_role.value)
+
+
 @router.post("/wechat-phone-login", response_model=WechatLoginResponse)
 async def wechat_phone_login(
     data: WechatPhoneLoginRequest,
@@ -244,8 +290,30 @@ def _sms_hash(phone: str, code: str) -> str:
     return hashlib.sha256(f"{phone}:{code}:{settings.AUTH_SECRET}".encode("utf-8")).hexdigest()
 
 
+def _sms_debug_allowed() -> bool:
+    """2026-10-05:调试短信只在显式允许时可用。
+
+    之前生产 `SMS_PROVIDER=debug` 会把固定验证码直接回显在响应里,
+    `POST /api/v1/auth/sms/request` + `/sms/login` 组合即可登录任意手机号账号。
+    现在必须同时满足:
+      * SMS_PROVIDER == "debug"
+      * DEBUG 打开 且 ALLOW_SMS_DEBUG_ENDPOINT 打开
+    """
+    return (
+        settings.SMS_PROVIDER == "debug"
+        and settings.DEBUG
+        and settings.ALLOW_SMS_DEBUG_ENDPOINT
+    )
+
+
 @router.post("/sms/request")
 async def request_sms_code(data: SmsCodeRequest, db: AsyncSession = Depends(get_db)):
+    # 闸门检查必须放在限流之前:通道关闭时应稳定返回 503,
+    # 而不是因为上一条记录还在冷却期返回 429(会掩盖配置问题)。
+    if not _sms_debug_allowed():
+        # 真实短信通道未接入,或调试通道被关闭:不泄露验证码,也不静默成功
+        raise HTTPException(503, "SMS provider is not configured")
+
     now = datetime.now(timezone.utc)
     latest = (
         await db.execute(
@@ -261,11 +329,7 @@ async def request_sms_code(data: SmsCodeRequest, db: AsyncSession = Depends(get_
             created = created.replace(tzinfo=timezone.utc)
         if (now - created).total_seconds() < 60:
             raise HTTPException(429, "Please wait before requesting another code")
-    if settings.SMS_PROVIDER == "debug":
-        code = settings.SMS_DEBUG_CODE
-    else:
-        code = f"{secrets.randbelow(1000000):06d}"
-        raise HTTPException(503, "SMS provider is not configured")
+    code = settings.SMS_DEBUG_CODE
     item = PhoneVerificationCode(
         phone=data.phone,
         code_hash=_sms_hash(data.phone, code),
@@ -274,7 +338,7 @@ async def request_sms_code(data: SmsCodeRequest, db: AsyncSession = Depends(get_
     db.add(item)
     await db.commit()
     result = {"sent": True, "expires_in": 300}
-    if settings.SMS_PROVIDER == "debug":
+    if settings.DEBUG:
         result["debug_code"] = code
     return result
 
@@ -388,6 +452,8 @@ async def export_my_data(
         "user": {
             "id": user.id, "phone": user.phone, "name": user.name,
             "role": user.role.value, "business_role": user.business_role,
+            "business_roles": role_service.resolve_roles(user),
+            "active_business_role": role_service.active_role(user),
             "avatar": user.avatar, "created_at": user.created_at.isoformat() if user.created_at else None,
         },
         "agreements": {

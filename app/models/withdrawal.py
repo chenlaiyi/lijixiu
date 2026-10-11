@@ -3,10 +3,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Float, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, Float, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class WithdrawalStatus(str, enum.Enum):
@@ -25,7 +25,7 @@ class Withdrawal(Base):
     wallet_id: Mapped[int] = mapped_column(ForeignKey("wallets.id"))
     amount: Mapped[float] = mapped_column(Float)
     status: Mapped[WithdrawalStatus] = mapped_column(
-        Enum(WithdrawalStatus), default=WithdrawalStatus.PENDING
+        enum_column(WithdrawalStatus), default=WithdrawalStatus.PENDING
     )
     remark: Mapped[str | None] = mapped_column(Text, nullable=True)
     payout_provider: Mapped[str] = mapped_column(String(20), default="manual")

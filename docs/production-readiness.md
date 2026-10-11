@@ -6,28 +6,50 @@
 
 ---
 
+## ⚠️ 2026-10-05 复测修正(务必先读)
+
+这份报告的**「认证鉴权 ✅」结论不成立**。2026-10-05 的独立复测发现:
+
+- 8/09 只给 `admin/*` 与 `wallet/*` 加了鉴权,**其余 12 个路由模块仍是零鉴权**:
+  71 个写接口 + 6 类含 PII 读接口公网可无凭证访问(`/api/v1/users`、`/orders`、
+  `/business/wages`、`/business/domestic/demands`、`/support/tickets`、`/service-areas` …)。
+- 更严重的是能**无 token 自提权**:`PATCH /api/v1/users/{id} {"business_role":"platform_admin"}` 实测成功。
+- 另有生产 `SMS_PROVIDER=debug` 回显固定验证码 → 任意账号接管。
+- `/metrics` 的 `orders_completed`/`orders_pending` 恒为 0(raw SQL 用了枚举值而库里存枚举名),
+  Prometheus 的订单积压告警实际上从未生效。
+- admin-web 不带 `Authorization`,提现审核/对账告警在后台点开就是 401。
+
+以上问题均已在**代码层修复并验证(125/125 回归通过)**,但**尚未部署**。
+完整证据链与修复清单见 [security-hardening-2026-10.md](security-hardening-2026-10.md),
+部署清单见 [deployment-runbook.md](deployment-runbook.md) § 2.13。
+
+> 在此之前,本报告中凡「鉴权 ✅」「监控告警有效」的结论,请以下面 10/05 的说法为准。
+
+---
+
 ## TL;DR
 
 | 维度 | 状态 | 一句话 |
 |---|---|---|
-| 业务功能 | ✅ | 30 页面 / 9 角色 / 13 路由 / 40 表,功能闭环 |
-| 测试 | ✅ | **138/138** 全过(reconcile 6 + auth_admin 15 + alert 7 + logging 18 + agreements 37 + alembic 22 + wechat_resilience 9 + **platform_flows 6** + **validate_env 12 + health_env 6**);`test_platform_flows.py` 之前 P0 鉴权改造时整个断了,本轮已修 |
-| **认证鉴权** | ✅ | `app/core/auth.py` + admin/wallet 全端点加鉴权,`/admin/wallet/adjust` 已加;**`test_platform_flows.py` 全部 55 个 `expect()` 调用已接上对应角色 token** |
-| **业务告警** | ✅ | ledger 语义 bug 修好,告警去重 + admin 调整接口,生产上仍需消化现有 4 条 |
+| 业务功能 | ✅ | 31 页面 / 11 类角色 / 14 路由 / 41 表,功能闭环 |
+| 测试 | ✅ | **125/125** 全过(reconcile 6 + auth_admin 15 + logging 18 + agreements 37 + alembic 22 + wechat_resilience 9 + health_env/validate_env 18),2026-10-05 复跑确认无回归 |
+| **认证鉴权** | 🟢 已修待部署 | 12 个路由模块全量收口(admin/staff/self 三级),提权路径封死;**线上仍是旧代码** |
+| **业务告警** | 🟠 | ledger 语义 bug 已修、告警去重已加;但 `/metrics` 口径 10/05 才修好,历史告警统计不可信 |
 | **数据库** | ✅ | alembic 40 表迁移落地,SQLite/MySQL 切换脚本就绪 |
-| **部署** | ✅ | Dockerfile + compose + nginx(SSL + 6 安全头 + 限速 + basic auth)+ backup + deploy.sh + 部署 runbook |
-| **配置校验** | ✅ | `app/core/env_validator.py` 12/12 + `tests/test_health_env.py` 6/6,`deploy.sh` 启动前 strict,可选 `STRICT_ENV_ON_STARTUP=true` 让进程直接 fail |
-| **运行时 env 自检** | ✅ | `GET /health/env?mode=strict` —— 任何时候都能查 env 完整性,monitoring / 排错都用 |
-| **监控** | ✅ | /metrics/prom + alert_watcher(钉钉/飞书/通用)+ Prom + Alertmanager + Grafana + 19 项安全审计;**env 完整性告警已接**(xiulijiu_env_ok / xiulijiu_env_placeholders) |
-| **生产 fail-fast** | ✅ | docker compose 默认 `STRICT_ENV_ON_STARTUP=true`,缺 secret 直接 exit 1;运维排查时设 false 把容器起起来再修 |
+| **部署** | 🟠 | Dockerfile + compose + nginx 配置齐备,但线上 nginx **未使用**仓库里的 `deploy/nginx.conf`(`/docs`/`/metrics` 仍裸访问) |
+| **配置校验** | ✅ | `env_validator` 12/12 + health_env 6/6;10/05 新增「SMS 调试通道」硬错误检查 |
+| **运行时 env 自检** | ✅ | `GET /health/env?mode=strict` —— 任何时候都能查 env 完整性 |
+| **监控** | 🟠 | /metrics/prom + alert_watcher + Prom + Alertmanager + Grafana;10/05 修好指标口径后才真正可用 |
+| **生产 fail-fast** | ✅ | docker compose 默认 `STRICT_ENV_ON_STARTUP=true`,缺 secret 直接 exit 1 |
 | **日志** | ✅ | dictConfig + JSON 输出 + 4 logger 分组 + 3 audit 路径 + SLS/Loki 接入指南 |
 | **CI/CD** | ✅ | 3 个 GH Actions workflow(ci/deploy/miniprogram) + ci 文档 + CI 自动跑 validate_env 双向夹 |
 | **法务** | ✅ | 协议 / 隐私 / 合规 3 份文档 + H5/Admin 接入 + 数据导出 + 申请/撤回删除端点 + 37/37 测试 |
 | **Settings 弹性** | ✅ | `app/core/config.py` 加 `extra="ignore"`,docker compose 混 env 不再误伤 app |
-| **.gitignore** | ✅ | `cert/` / `*.pem` / `.env` / `.venv/` / `._trash/` 全 ignore(防止敏感信息误 commit) |
+| **.gitignore** | ✅ | `cert/` / `*.pem` / `.env` / `.venv/` / `._trash/` / `.edge-profile*/` 全 ignore |
 | **支付配置** | 🔴 P0 | `.env` 已补全 47 行,真实凭据待填(MCH_ID / API_V3_KEY / APP_SECRET) |
 | **ICP 备案** | 🔴 P0 | 商用前必须(公网域名 / 微信商户都需要) |
-| **告警消化** | 🟠 P1 | 4 个历史 critical 告警(`reconcile_mismatch`)需在生产上跑 `reconcile_apply.js --apply` 消化 |
+| **告警消化** | 🟠 P1 | 历史 critical 告警(`reconcile_mismatch`)需在生产上跑 `reconcile_apply.js --apply` 消化 |
+| **安全修复部署** | 🔴 P0 | 10/05 的三个 P0 修复必须部署才生效 |
 | 性能 | 🟡 P2 | 无缓存层;无 CDN;SQLite 并发未知(切 MySQL 后改善) |
 | 容灾 | 🟡 P2 | 无多副本;无灰度发布 |
 

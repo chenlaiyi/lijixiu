@@ -3,10 +3,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Float, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, Float, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class LedgerType(str, enum.Enum):
@@ -32,7 +32,7 @@ class Ledger(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     wallet_id: Mapped[int] = mapped_column(ForeignKey("wallets.id"), index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    type: Mapped[LedgerType] = mapped_column(Enum(LedgerType))
+    type: Mapped[LedgerType] = mapped_column(enum_column(LedgerType))
     amount: Mapped[float] = mapped_column(Float)
     balance_after: Mapped[float] = mapped_column(Float)
     reference_type: Mapped[str | None] = mapped_column(String(30), nullable=True)

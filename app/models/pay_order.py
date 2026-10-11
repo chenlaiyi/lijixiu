@@ -3,10 +3,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Float, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, Float, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class PayStatus(str, enum.Enum):
@@ -33,10 +33,10 @@ class PayOrder(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     amount: Mapped[float] = mapped_column(Float)
     status: Mapped[PayStatus] = mapped_column(
-        Enum(PayStatus), default=PayStatus.PENDING
+        enum_column(PayStatus), default=PayStatus.PENDING
     )
     provider: Mapped[PayProvider] = mapped_column(
-        Enum(PayProvider), default=PayProvider.WECHAT
+        enum_column(PayProvider), default=PayProvider.WECHAT
     )
     transaction_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     out_trade_no: Mapped[str | None] = mapped_column(

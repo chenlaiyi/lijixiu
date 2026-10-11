@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.auth import get_current_user, require_admin, require_self_or_admin
+from ..core.auth import get_current_user, is_staff, require_admin, require_self_or_admin
 from ..core.database import get_db
 from ..core.logging import get_audit_logger, get_security_logger
 from ..models.user import User
@@ -160,6 +160,18 @@ async def list_withdrawals(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    _admin: User = Depends(require_admin),  # 2026-08-09 仅管理员
+    user: User = Depends(get_current_user),
 ):
+    """提现记录列表。
+
+    2026-10-07:原来是 `require_admin`。但小程序「收益」页要展示
+    **自己的**提现记录(`/api/v1/wallet/withdrawals?user_id=<自己>`),
+    收成 admin-only 后该页只能拿到空列表 —— 提审演示时审核员看不到刚提交的申请。
+    这里改成与 `/balance/{user_id}`、`/ledger/{user_id}` 一致的收敛方式:
+    本人只能查自己,平台内部角色可查任意/全部。
+    """
+    if not is_staff(user):
+        if user_id is not None and user_id != user.id:
+            raise HTTPException(403, "not your withdrawal")
+        user_id = user.id
     return await wallet_service.list_withdrawals(db, user_id, status, skip, limit)

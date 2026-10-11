@@ -70,8 +70,21 @@ git clone <repo-url> .
 
 1. Actions → "Miniprogram CI" → Run workflow
 2. 填 Version(如 1.0.220)+ Description
-3. 选 env_version(trial / release / develop)
-4. 跑完:微信开发者工具会收到上传包,可去后台提审
+3. 跑完:该版本出现在微信公众平台的**开发版本**列表里
+
+> **`ci.upload` 只能产出「开发版本」。** 它的参数表里没有 `envVersion`
+> (miniprogram-ci 2.1.31 实测:`dist/@types/ci/upload.d.ts` 与 `preview.d.ts`
+> 都没有这个字段),所以工作流里原来那个 `env_version` 下拉是**静默失效**的
+> —— 选了 trial 也照样只是开发版本,已于 2026-10-07 移除。
+>
+> 体验版与提审都只能人工在公众平台操作:
+> 管理 → 版本管理 → 开发版本 → 选中该版本 → **选为体验版** → **提交审核**。
+> 详见 [wechat-review-guide.md](wechat-review-guide.md)。
+>
+> 另:小程序码(`getwxacodeunlimit`)的 `env_version` 取自后端
+> `WECHAT_MINIPROGRAM_ENV_VERSION`。`develop` 或非法取值在 strict 模式下会被
+> `validate_env.py --strict` 拦下;`trial` 只告警(正式版发布前它是唯一可用取值),
+> 但正式版发布后必须改成 `release`,否则生成的推广码只有体验成员打得开。
 
 ## 阶段拆分(按团队规模)
 
@@ -105,6 +118,8 @@ git clone <repo-url> .
 | deploy ssh 失败 | 检查 `SERVER_SSH_KEY` secret 是否完整(注意换行) |
 | deploy.sh 报 health check fail | 服务器上 `docker compose logs api` 看具体错 |
 | miniprogram 编译失败 | 看 miniprogram-ci 报错,通常是 WXML 标签不匹配 |
+| 上传成功但体验版没更新 | 上传的只是**开发版本**,要去公众平台手动「选为体验版」 |
+| miniprogram 上传被拒(密钥相关) | 确认该上传密钥是否开了 IP 白名单(公众平台「开发管理 → 开发设置」),开了的话 GitHub Actions 的动态 IP 不在名单里;可改用本机 `npm run upload` |
 | secret 找不到 | Settings → Secrets → Actions,确认名字拼写完全一致 |
 
 ## 改用 GitLab CI?

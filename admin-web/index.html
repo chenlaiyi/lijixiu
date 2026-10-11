@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>立即修管理后台</title>
   <link rel="icon" type="image/png" href="./assets/logo-mark.png">
-  <link rel="stylesheet" href="./styles.css?v=20260712-areas">
+  <link rel="stylesheet" href="./styles.css?v=20261007-roles">
 </head>
 <body>
   <svg class="icon-sprite" aria-hidden="true">
@@ -132,8 +132,10 @@
           <p id="view-subtitle">平台运行和关键业务指标</p>
         </div>
         <div class="top-actions">
+          <span id="auth-actor" class="status-dot muted">未登录</span>
           <span id="api-status" class="status-dot">检查中</span>
           <button id="refresh-btn" class="icon-btn" title="刷新当前视图" aria-label="刷新当前视图">↻</button>
+          <button id="logout-btn" class="icon-btn" title="退出登录" aria-label="退出登录" hidden>退出</button>
         </div>
       </header>
 
@@ -162,6 +164,6 @@
     <div style="margin-top:4px;">© 2026 立即修平台</div>
   </footer>
 
-  <script src="./app.js?v=20260712-areas"></script>
+  <script src="./app.js?v=20261007-roles"></script>
 </body>
 </html>

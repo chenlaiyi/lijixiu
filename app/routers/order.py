@@ -8,8 +8,10 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core.auth import get_current_user, is_staff, require_staff
 from ..core.config import settings
 from ..core.database import get_db
+from ..models.user import User, UserRole
 from ..schemas.order import (
     OrderAssign,
     OrderCreate,
@@ -23,6 +25,7 @@ from ..schemas.order import (
 from ..schemas.order_log import OrderLogOut
 from ..schemas.service_bill import ServiceBillCreate, ServiceBillOut, ServiceBillReturn
 from ..services import order as order_service
+from ..services import repairer as repairer_service
 from ..services import service_bill as bill_service
 from ..services import user as user_service
 
@@ -76,8 +79,45 @@ def _safe_ext(file: UploadFile, media_type: str) -> str:
     return _EXT_BY_CONTENT_TYPE.get(file.content_type or "", _DEFAULT_EXT_BY_MEDIA_TYPE.get(media_type, ".bin"))
 
 
+async def _own_repairer_id(db: AsyncSession, user: User) -> int | None:
+    """当前用户对应的「师傅档案 id」。
+
+    2026-10-06:小程序师傅端传的是 `repairer.id`(师傅档案 id),不是 `user.id`;
+    两者只有恰好落在同一批种子数据里时才相等。之前按 user.id 比对,会把师傅端
+    工单列表全部判成 403。这里做一次归属校验,把档案 id 也认作「自己」。
+    """
+    repairer = await repairer_service.get_repairer_by_user(db, user.id)
+    return repairer.id if repairer else None
+
+
+async def _require_order_visible(db: AsyncSession, order, user: User) -> None:
+    """2026-10-05:订单只能被「本人/指派师傅/平台内部角色」查看与操作。
+
+    订单里含客户姓名、电话、地址等个人信息,之前 /api/v1/orders 全裸奔。
+    """
+    if is_staff(user):
+        return
+    if order.customer_id == user.id:
+        return
+    if order.assigned_repairer_id == user.id or order.repairer_id == user.id:
+        return
+    own = await _own_repairer_id(db, user)
+    if own is not None and (
+        order.assigned_repairer_id == own or order.repairer_id == own
+    ):
+        return
+    raise HTTPException(403, "not your order")
+
+
 @router.post("", response_model=OrderOut, status_code=201)
-async def create_order(data: OrderCreate, db: AsyncSession = Depends(get_db)):
+async def create_order(
+    data: OrderCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05:必须登录
+):
+    # 客户只能给自己下单;内部角色可代客下单
+    if not is_staff(user) and data.customer_id != user.id:
+        raise HTTPException(403, "cannot create order for another customer")
     customer = await user_service.get_user(db, data.customer_id)
     if not customer:
         raise HTTPException(404, "客户不存在")
@@ -99,7 +139,30 @@ async def list_orders(
     store_id: int | None = None,
     is_proxy_order: bool | None = None,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05:必须登录
 ):
+    # 非内部角色强制收口到「自己的订单」,避免越权枚举他人订单(PII)
+    if not is_staff(user):
+        own_repairer_id = await _own_repairer_id(db, user)
+        allowed = {user.id}
+        if own_repairer_id is not None:
+            allowed.add(own_repairer_id)
+        if customer_id is not None and customer_id != user.id:
+            raise HTTPException(403, "not your order")
+        if assigned_repairer_id is not None and assigned_repairer_id not in allowed:
+            raise HTTPException(403, "not your order")
+        if repairer_id is not None and repairer_id not in allowed:
+            raise HTTPException(403, "not your order")
+        if user.role == UserRole.REPAIRER:
+            # 师傅侧不传参数时会扫全表(等于泄露全部订单),这里兜底为「自己名下」
+            return await order_service.list_orders(
+                db, skip, limit, None, own_repairer_id or user.id, None,
+                status, region_id, store_id, is_proxy_order,
+            )
+        return await order_service.list_orders(
+            db, skip, limit, user.id, None, None,
+            status, region_id, store_id, is_proxy_order,
+        )
     return await order_service.list_orders(
         db, skip, limit, customer_id, repairer_id,
         assigned_repairer_id, status, region_id, store_id, is_proxy_order,
@@ -107,10 +170,15 @@ async def list_orders(
 
 
 @router.get("/{order_id}", response_model=OrderOut)
-async def get_order(order_id: int, db: AsyncSession = Depends(get_db)):
+async def get_order(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     order = await order_service.get_order(db, order_id)
     if not order:
         raise HTTPException(404, "订单不存在")
+    await _require_order_visible(db, order, user)
     return order
 
 
@@ -124,10 +192,14 @@ async def upload_order_media(
     original_name: str | None = Form(None),
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     order = await order_service.get_order(db, order_id)
     if not order:
         raise HTTPException(404, "订单不存在")
+    await _require_order_visible(db, order, user)
+    # 素材归属以登录用户为准,忽略客户端传入的 uploader_id
+    uploader_id = user.id
     if media_type not in ("audio", "image", "video"):
         raise HTTPException(400, "媒体类型只支持 audio/image/video")
 
@@ -166,11 +238,15 @@ async def upload_order_media(
 
 @router.patch("/{order_id}", response_model=OrderOut)
 async def update_order(
-    order_id: int, data: OrderUpdate, db: AsyncSession = Depends(get_db)
+    order_id: int,
+    data: OrderUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     order = await order_service.get_order(db, order_id)
     if not order:
         raise HTTPException(404, "订单不存在")
+    await _require_order_visible(db, order, user)
     try:
         return await order_service.update_order(db, order, data)
     except ValueError as e:
@@ -186,17 +262,24 @@ async def transition_order(
     order_id: int,
     data: OrderTransition,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     """执行状态流转（customer 确认完成 / repairer 接单 / admin 改状态）"""
     order = await order_service.get_order(db, order_id)
     if not order:
         raise HTTPException(404, "订单不存在")
+    await _require_order_visible(db, order, user)
+    # 操作者身份以登录用户为准,禁止伪造 operator_id
+    operator_type = data.operator_type
+    operator_id = user.id
+    if is_staff(user):
+        operator_type = "admin"
     try:
         return await order_service.transition_status(
             db, order,
             to_status=data.to_status,
-            operator_type=data.operator_type,
-            operator_id=data.operator_id,
+            operator_type=operator_type,
+            operator_id=operator_id,
             remark=data.remark,
         )
     except ValueError as e:
@@ -211,6 +294,7 @@ async def transition_order(
 async def auto_dispatch_order(
     order_id: int,
     db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
 ):
     """自动派单：区域优先匹配合适师傅"""
     order = await order_service.get_order(db, order_id)
@@ -227,6 +311,7 @@ async def store_accept_order(
     order_id: int,
     manager_id: int | None = None,
     db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
 ):
     order = await order_service.get_order(db, order_id)
     if not order:
@@ -242,6 +327,7 @@ async def manual_assign_order(
     order_id: int,
     data: OrderAssign,
     db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
 ):
     """管理员手动指派师傅"""
     order = await order_service.get_order(db, order_id)
@@ -258,6 +344,7 @@ async def store_self_service(
     order_id: int,
     data: StoreSelfServiceRequest,
     db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
 ):
     order = await order_service.get_order(db, order_id)
     if not order:
@@ -275,10 +362,12 @@ async def submit_service_bill(
     order_id: int,
     data: ServiceBillCreate,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     order = await order_service.get_order(db, order_id)
     if not order:
         raise HTTPException(404, "订单不存在")
+    await _require_order_visible(db, order, user)
     try:
         return await bill_service.submit_bill(db, order, data)
     except ValueError as e:
@@ -289,10 +378,15 @@ async def submit_service_bill(
 async def get_latest_service_bill(
     order_id: int,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     order = await order_service.get_order(db, order_id)
+    if not order:
+        raise HTTPException(404, "服务单不存在")
+    # 2026-10-06:先校验归属再查单据,避免用 404/200 的差异探测他人订单是否有服务单
+    await _require_order_visible(db, order, user)
     bill = await bill_service.get_latest_bill(db, order_id)
-    if not order or not bill:
+    if not bill:
         raise HTTPException(404, "服务单不存在")
     return bill
 
@@ -302,10 +396,14 @@ async def return_service_bill(
     order_id: int,
     data: ServiceBillReturn,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     order = await order_service.get_order(db, order_id)
+    if not order:
+        raise HTTPException(404, "订单或服务单不存在")
+    await _require_order_visible(db, order, user)
     bill = await bill_service.get_latest_bill(db, order_id)
-    if not order or not bill:
+    if not bill:
         raise HTTPException(404, "订单或服务单不存在")
     try:
         return await bill_service.return_bill(db, order, bill, data.reason)
@@ -317,10 +415,14 @@ async def return_service_bill(
 async def confirm_service_bill(
     order_id: int,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     order = await order_service.get_order(db, order_id)
+    if not order:
+        raise HTTPException(404, "订单或服务单不存在")
+    await _require_order_visible(db, order, user)
     bill = await bill_service.get_latest_bill(db, order_id)
-    if not order or not bill:
+    if not bill:
         raise HTTPException(404, "订单或服务单不存在")
     try:
         return await bill_service.confirm_bill(db, order, bill)
@@ -333,10 +435,12 @@ async def rate_order(
     order_id: int,
     data: OrderRatingRequest,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     order = await order_service.get_order(db, order_id)
     if not order:
         raise HTTPException(404, "订单不存在")
+    await _require_order_visible(db, order, user)
     return await order_service.rate_order(db, order, data.rating, data.remark)
 
 
@@ -346,6 +450,7 @@ async def store_review_order(
     data: StoreReviewRequest,
     manager_id: int | None = None,
     db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
 ):
     order = await order_service.get_order(db, order_id)
     if not order:
@@ -371,9 +476,11 @@ async def store_review_order(
 async def get_order_logs(
     order_id: int,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     """查询订单流转日志"""
     order = await order_service.get_order(db, order_id)
     if not order:
         raise HTTPException(404, "订单不存在")
+    await _require_order_visible(db, order, user)
     return await order_service.get_order_logs(db, order_id)

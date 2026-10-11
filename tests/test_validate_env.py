@@ -250,3 +250,88 @@ def test_placeholder_detection_various_patterns(tmp_path: Path) -> None:
     ])
     r = env_validator.validate_from_environ(env_path=p, mode="dev")
     assert "AUTH_SECRET" in r.placeholders
+
+
+# ---------- 小程序码 env_version(2026-10-07) ----------
+
+
+def _strict_env_lines(env_version: str) -> list[str]:
+    """一份除 env_version 外都能过 strict 的完整 .env。
+
+    必须写全 `SMS_PROVIDER` / `ALLOW_SMS_DEBUG_ENDPOINT`:别的测试模块会把
+    `debug`+`true` 留在 `os.environ` 里,而 `validate_from_environ` 会合并
+    `os.environ`,漏写就会串进 SMS 违规(全量 pytest 时才暴露)。
+    """
+    return [
+        "DATABASE_URL=mysql+aiomysql://u:p@mysql:3306/xiulijiu",
+        "APP_NAME=test",
+        "DEBUG=false",
+        "PUBLIC_BASE_URL=https://x.iddg.cn",
+        "AUTH_SECRET=this-is-a-strong-enough-secret-32-chars-min-x",
+        f"WECHAT_MINIPROGRAM_ENV_VERSION={env_version}",
+        "PAYMENT_ALLOW_MOCK=false",
+        "SMS_PROVIDER=aliyun",
+        "ALLOW_SMS_DEBUG_ENDPOINT=false",
+        "WECHAT_PAY_APPID=wx123",
+        "WECHAT_PAY_MCH_ID=1481119632",
+        "WECHAT_PAY_API_V3_KEY=a-real-32-byte-key-not-placeholder",
+        "WECHAT_PAY_CERT_PATH=cert/apiclient_cert.pem",
+        "WECHAT_PAY_KEY_PATH=cert/apiclient_key.pem",
+        "WECHAT_PAY_NOTIFY_URL=https://x.iddg.cn/api/v1/payment/wechat/notify",
+        "WECHAT_REFUND_NOTIFY_URL=https://x.iddg.cn/api/v1/payment/wechat/refund-notify",
+        "WECHAT_APP_SECRET=real-app-secret",
+        "WECHAT_TRANSFER_NOTIFY_URL=https://x.iddg.cn/api/v1/wallet/wechat/transfer-notify",
+    ]
+
+
+def test_strict_mode_passes_with_release_env_version(tmp_path: Path) -> None:
+    p = _write_env(tmp_path, _strict_env_lines("release"))
+    r = env_validator.validate_from_environ(env_path=p, mode="strict")
+    assert r.ok, f"expected OK, got errors: {r.errors}"
+    assert not any("MINIPROGRAM" in w for w in r.warnings)
+
+
+def test_strict_mode_allows_trial_but_warns(tmp_path: Path) -> None:
+    """正式版发布之前 trial 是唯一可用取值,不能拦;但必须提示。"""
+    p = _write_env(tmp_path, _strict_env_lines("trial"))
+    r = env_validator.validate_from_environ(env_path=p, mode="strict")
+    assert r.ok, f"trial 不该让 strict 失败(会逼出出不了码的配置),errors={r.errors}"
+    assert any("WECHAT_MINIPROGRAM_ENV_VERSION=trial" in w for w in r.warnings)
+
+
+@pytest.mark.parametrize("value", ["develop", "production", "TRIAL2"])
+def test_strict_mode_rejects_unusable_env_version(tmp_path: Path, value: str) -> None:
+    """develop / 非法取值:线上小程序码必然打不开。"""
+    p = _write_env(tmp_path, _strict_env_lines(value))
+    r = env_validator.validate_from_environ(env_path=p, mode="strict")
+    assert not r.ok
+    assert any("WECHAT_MINIPROGRAM_ENV_VERSION" in e for e in r.errors)
+
+
+def test_dev_mode_only_warns_on_trial_env_version(tmp_path: Path) -> None:
+    """本地开发用 trial 是正常的,只提示不拦。"""
+    p = _write_env(tmp_path, [
+        "DATABASE_URL=sqlite+aiosqlite:///./xiulijiu.db",
+        "APP_NAME=test",
+        "DEBUG=true",
+        "PUBLIC_BASE_URL=http://localhost:8000",
+        "AUTH_SECRET=local-dev-only-rotate-before-prod-32b",
+        "WECHAT_MINIPROGRAM_ENV_VERSION=trial",
+        "PAYMENT_ALLOW_MOCK=true",
+    ])
+    r = env_validator.validate_from_environ(env_path=p, mode="dev")
+    assert r.ok, f"dev 模式不该拦,errors={r.errors}"
+    assert any("WECHAT_MINIPROGRAM_ENV_VERSION" in w for w in r.warnings)
+
+
+def test_validate_settings_also_catches_develop(tmp_path: Path) -> None:
+    """validate_settings(启动 / /health/env 走的路径)也要命中同一规则。"""
+
+    class _Settings:
+        WECHAT_MINIPROGRAM_ENV_VERSION = "develop"
+
+    r = env_validator.validate_settings(
+        _Settings(), mode="strict", env_path=tmp_path / "missing.env"
+    )
+    assert any("WECHAT_MINIPROGRAM_ENV_VERSION" in e for e in r.errors)
+

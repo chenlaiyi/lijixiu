@@ -3,10 +3,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, String, Text, func
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class OrderStatus(str, enum.Enum):
@@ -152,7 +152,7 @@ class Order(Base):
     assigned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     store_id: Mapped[int | None] = mapped_column(ForeignKey("stores.id"), nullable=True, index=True)
-    source: Mapped[OrderSource] = mapped_column(Enum(OrderSource), default=OrderSource.REPAIR)
+    source: Mapped[OrderSource] = mapped_column(enum_column(OrderSource), default=OrderSource.REPAIR)
     region_id: Mapped[int] = mapped_column(ForeignKey("regions.id"), index=True)
     address_book_id: Mapped[int | None] = mapped_column(
         ForeignKey("store_addresses.id"), nullable=True
@@ -177,7 +177,7 @@ class Order(Base):
     service_area_name_snapshot: Mapped[str | None] = mapped_column(
         String(120), nullable=True
     )
-    category: Mapped[OrderCategory] = mapped_column(Enum(OrderCategory), default=OrderCategory.OTHER)
+    category: Mapped[OrderCategory] = mapped_column(enum_column(OrderCategory), default=OrderCategory.OTHER)
     description: Mapped[str] = mapped_column(Text)
     media_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     address: Mapped[str] = mapped_column(String(500))
@@ -187,7 +187,7 @@ class Order(Base):
 
     price: Mapped[float] = mapped_column(Float, default=0.0)
     commissionable_amount: Mapped[float] = mapped_column(Float, default=0.0)
-    status: Mapped[OrderStatus] = mapped_column(Enum(OrderStatus), default=OrderStatus.CREATED)
+    status: Mapped[OrderStatus] = mapped_column(enum_column(OrderStatus), default=OrderStatus.CREATED)
     scheduled_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

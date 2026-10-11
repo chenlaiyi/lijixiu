@@ -3,10 +3,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class OperatorType(str, enum.Enum):
@@ -32,7 +32,7 @@ class OrderLog(Base):
         String(20), comment="Status after the change"
     )
     operator_type: Mapped[OperatorType] = mapped_column(
-        Enum(OperatorType, name="operatortype"),
+        enum_column(OperatorType, name="operatortype"),
         comment="customer | repairer | admin | system",
     )
     operator_id: Mapped[int | None] = mapped_column(

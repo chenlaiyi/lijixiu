@@ -28,6 +28,7 @@ import asyncio  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app.core.auth import make_token  # noqa: E402
+from app.core.config import settings  # noqa: E402
 from app.core.database import init_db  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models.ledger import LedgerType  # noqa: E402
@@ -142,6 +143,62 @@ def main_sync():
     body = r.json()
     has_diff = any(d["user_id"] == 9003 for d in body.get("details", []))
     check("diff_resolved_for_9003", not has_diff, f"details={body.get('details', [])}")
+
+    # === 2026-10-07:管理后台账号密码登录(替代手工粘贴 token)===
+    # 未配置时必须是 503,不能默默放行
+    r = client.post("/api/v1/auth/admin-login", json={"account": "ops", "password": "x"})
+    check("admin_login_unconfigured_503", r.status_code == 503, f"status={r.status_code}")
+
+    # 配置后:正确凭据 200 且角色为 platform_admin;错误凭据 401
+    os.environ["ADMIN_WEB_ACCOUNT"] = "ops"
+    os.environ["ADMIN_WEB_PASSWORD"] = "OpsPass123!@#"
+    os.environ["ADMIN_WEB_PHONE"] = "18800000000"
+    settings.ADMIN_WEB_ACCOUNT = "ops"
+    settings.ADMIN_WEB_PASSWORD = "OpsPass123!@#"
+    settings.ADMIN_WEB_PHONE = "18800000000"
+
+    r = client.post("/api/v1/auth/admin-login", json={"account": "ops", "password": "OpsPass123!@#"})
+    check("admin_login_200", r.status_code == 200, f"status={r.status_code} body={r.text[:120]}")
+    if r.status_code == 200:
+        payload = r.json()
+        check("admin_login_role_platform_admin",
+              payload["user"]["business_role"] == "platform_admin",
+              payload["user"]["business_role"])
+        check("admin_login_returns_token", bool(payload.get("token")))
+        # 拿到的 token 必须能过 admin 接口
+        r2 = client.post("/api/v1/admin/reconcile/run",
+                         headers={"Authorization": f"Bearer {payload['token']}"})
+        check("admin_login_token_can_call_admin", r2.status_code == 200, f"status={r2.status_code}")
+
+    r = client.post("/api/v1/auth/admin-login", json={"account": "ops", "password": "wrong"})
+    check("admin_login_wrong_password_401", r.status_code == 401, f"status={r.status_code}")
+    r = client.post("/api/v1/auth/admin-login", json={"account": "nobody", "password": "OpsPass123!@#"})
+    check("admin_login_wrong_account_401", r.status_code == 401, f"status={r.status_code}")
+
+    # === 2026-10-07:后台概览指标走 Bearer 端点,不再调 /metrics ===
+    # 背景:后台原来 fetch("/metrics"),而该路径有 nginx basic auth
+    # -> 浏览器登录后台后还会弹一个原生账号密码框。
+    if admin_token:
+        r = client.get("/api/v1/admin/metrics",
+                       headers={"Authorization": f"Bearer {admin_token}"})
+        check("admin_metrics_200", r.status_code == 200, f"status={r.status_code}")
+        if r.status_code == 200:
+            data = r.json()
+            for key in ("orders_total", "orders_completed", "orders_pending",
+                        "wallets_total", "total_balance", "alerts_active"):
+                check(f"admin_metrics_has_{key}", key in data, str(list(data.keys()))[:80])
+            # 与 /metrics 共用同一份口径:业务字段必须一致
+            plain = client.get("/metrics").json()
+            shared = {k: v for k, v in data.items() if k in plain}
+            same = all(plain[k] == v for k, v in shared.items())
+            check("admin_metrics_matches_metrics", same and bool(shared),
+                  f"shared={shared}")
+
+    r = client.get("/api/v1/admin/metrics")
+    check("admin_metrics_no_token_401", r.status_code == 401, f"status={r.status_code}")
+
+    r = client.get("/api/v1/admin/metrics", headers={"Authorization": f"Bearer {customer_token}"})
+    check("admin_metrics_customer_403", r.status_code == 403, f"status={r.status_code}")
 
     # === Summary ===
     print("---")

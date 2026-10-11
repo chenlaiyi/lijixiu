@@ -4,7 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core.auth import get_current_user, is_staff, require_staff, require_staff_or_self
 from ..core.database import get_db
+from ..models.user import User
 from ..schemas.payment import (
     PayCallbackRequest,
     PayCreateRequest,
@@ -25,7 +27,11 @@ router = APIRouter(prefix="/api/v1/payment", tags=["payment"])
 async def create_payment(
     data: PayCreateRequest,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
 ):
+    # 只能给自己发起支付;内部角色可代客发起
+    if not is_staff(user) and data.user_id != user.id:
+        raise HTTPException(403, "cannot pay for another user")
     try:
         pay_order = await payment_service.create_payment(db, data)
         intent = await payment_service.create_payment_intent(db, pay_order, data)
@@ -45,6 +51,7 @@ async def create_payment(
 async def payment_callback(
     data: PayCallbackRequest,
     db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),  # 2026-10-05:mock 回调仅内部可用
 ):
     try:
         pay_order = await payment_service.handle_callback(
@@ -84,7 +91,9 @@ async def wechat_refund_notify(
 
 
 @router.get("/wechat/config-status")
-async def wechat_payment_config_status():
+async def wechat_payment_config_status(
+    _staff: User = Depends(require_staff),  # 2026-10-05:配置诊断不对外
+):
     return wechat_pay.config_status()
 
 
@@ -92,6 +101,7 @@ async def wechat_payment_config_status():
 async def sync_wechat_payment(
     pay_order_id: int,
     db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
 ):
     try:
         return await payment_service.sync_wechat_payment(db, pay_order_id)
@@ -103,6 +113,7 @@ async def sync_wechat_payment(
 async def create_refund(
     data: RefundCreateRequest,
     db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),  # 2026-10-05:退款仅内部发起
 ):
     try:
         return await payment_service.create_refund(db, data)
@@ -114,6 +125,7 @@ async def create_refund(
 async def sync_wechat_refund(
     refund_order_id: int,
     db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
 ):
     try:
         return await payment_service.sync_wechat_refund(db, refund_order_id)
@@ -129,6 +141,7 @@ async def list_refunds(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),  # 2026-10-05
 ):
     return await payment_service.list_refunds(db, pay_order_id, order_id, status, skip, limit)
 
@@ -137,10 +150,12 @@ async def list_refunds(
 async def get_payment(
     pay_order_id: int,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     po = await payment_service.get_pay_order(db, pay_order_id)
     if not po:
         raise HTTPException(404, "pay order not found")
+    require_staff_or_self(po.user_id, user)
     return po
 
 
@@ -152,5 +167,11 @@ async def list_payments(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
 ):
+    # 非内部角色只能看自己的支付单
+    if not is_staff(user):
+        if user_id is not None and user_id != user.id:
+            raise HTTPException(403, "not your payment")
+        user_id = user.id
     return await payment_service.list_pay_orders(db, order_id, user_id, status, skip, limit)

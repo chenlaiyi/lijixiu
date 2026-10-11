@@ -3,10 +3,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, String, Text, func
+from sqlalchemy import DateTime, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class IdempotencyStatus(str, enum.Enum):
@@ -31,7 +31,7 @@ class IdempotencyKey(Base):
         comment="Unique key in the form of action:resource_id",
     )
     status: Mapped[IdempotencyStatus] = mapped_column(
-        Enum(IdempotencyStatus, name="idempotencystatus"),
+        enum_column(IdempotencyStatus, name="idempotencystatus"),
         default=IdempotencyStatus.PROCESSING,
         comment="processing | done",
     )

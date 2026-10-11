@@ -18,7 +18,9 @@ from .core.middleware import RequestIDMiddleware, metrics as prom_metrics
 
 # 启动时配置日志(必须在其他模块 logger 使用前)
 configure_logging()
+from .models.alert_event import AlertSeverity
 from .models.order import Order, OrderStatus
+from .models.reconciliation import ReconcileStatus
 from .routers import (
     admin,
     auth,
@@ -180,57 +182,35 @@ async def health_env(mode: str = "dev"):
     return body
 
 
+# 2026-10-07:业务指标采集抽到 app/services/business_metrics.py,
+# 让后台概览(/api/v1/admin/metrics,Bearer)与 Prometheus(/metrics,basic auth)
+# 共用同一份口径,同时避免 admin 路由 import main 造成的循环导入。
+from .services.business_metrics import business_metrics as _business_metrics  # noqa: E402
+
+
 @app.get("/metrics")
 async def metrics():
     """业务指标(JSON,保留兼容)。"""
     try:
         async with async_session() as db:
-            orders_total = (await db.execute(
-                text("SELECT COUNT(*) FROM orders")
-            )).scalar()
-            orders_completed = (await db.execute(
-                text("SELECT COUNT(*) FROM orders WHERE status='completed'")
-            )).scalar()
-            wallets_total = (await db.execute(
-                text("SELECT COUNT(*) FROM wallets")
-            )).scalar()
-            total_balance = (await db.execute(
-                text("SELECT COALESCE(SUM(available_balance), 0) FROM wallets")
-            )).scalar() or 0
-            alerts_active = (await db.execute(
-                text("SELECT COUNT(*) FROM alert_events WHERE resolved=0")
-            )).scalar()
-            # 2026-08-09:扩展对账/订单状态/告警分布指标
-            alerts_critical = (await db.execute(
-                text("SELECT COUNT(*) FROM alert_events WHERE resolved=0 AND severity='critical'")
-            )).scalar() or 0
-            alerts_warning = (await db.execute(
-                text("SELECT COUNT(*) FROM alert_events WHERE resolved=0 AND severity='warning'")
-            )).scalar() or 0
-            orders_pending = (await db.execute(
-                text("SELECT COUNT(*) FROM orders WHERE status IN ('store_pending','store_accepted','dispatched','assigned')")
-            )).scalar() or 0
-            # 最近一次对账的 mismatch 数
-            last_recon_mismatch = (await db.execute(
-                text("SELECT COUNT(*) FROM reconciliation_logs WHERE status='mismatch' AND created_at = (SELECT MAX(created_at) FROM reconciliation_logs)")
-            )).scalar() or 0
+            data = await _business_metrics(db)
     except Exception:
-        orders_total = orders_completed = wallets_total = 0
-        total_balance = 0
-        alerts_active = -1
-        alerts_critical = alerts_warning = orders_pending = last_recon_mismatch = 0
+        data = {
+            "orders_total": 0,
+            "orders_completed": 0,
+            "orders_pending": 0,
+            "wallets_total": 0,
+            "total_balance": 0,
+            "alerts_active": -1,
+            "alerts_critical": 0,
+            "alerts_warning": 0,
+            "last_recon_mismatch": 0,
+        }
 
     return {
         "uptime_seconds": round(time.time() - _START_TIME, 2),
-        "orders_total": orders_total,
-        "orders_completed": orders_completed,
-        "orders_pending": orders_pending,
-        "wallets_total": wallets_total,
-        "total_balance": round(total_balance, 2),
-        "alerts_active": alerts_active,
-        "alerts_critical": alerts_critical,
-        "alerts_warning": alerts_warning,
-        "last_recon_mismatch": last_recon_mismatch,
+        **data,
+        "total_balance": round(float(data.get("total_balance") or 0), 2),
     }
 
 
@@ -239,18 +219,19 @@ async def metrics_prometheus():
     """Prometheus 文本格式指标(2026-08-09)。"""
     lines: list[str] = [prom_metrics.render_prometheus().rstrip("\n")]
 
-    # 业务指标(从 /metrics JSON 端点复用)
+    # 业务指标(与 /metrics JSON 端点共用同一采集函数)
     try:
         async with async_session() as db:
-            orders_total = (await db.execute(text("SELECT COUNT(*) FROM orders"))).scalar() or 0
-            orders_completed = (await db.execute(text("SELECT COUNT(*) FROM orders WHERE status='completed'"))).scalar() or 0
-            orders_pending = (await db.execute(text("SELECT COUNT(*) FROM orders WHERE status IN ('store_pending','store_accepted','dispatched','assigned')"))).scalar() or 0
-            wallets_total = (await db.execute(text("SELECT COUNT(*) FROM wallets"))).scalar() or 0
-            total_balance = (await db.execute(text("SELECT COALESCE(SUM(available_balance), 0) FROM wallets"))).scalar() or 0
-            alerts_active = (await db.execute(text("SELECT COUNT(*) FROM alert_events WHERE resolved=0"))).scalar() or 0
-            alerts_critical = (await db.execute(text("SELECT COUNT(*) FROM alert_events WHERE resolved=0 AND severity='critical'"))).scalar() or 0
-            alerts_warning = (await db.execute(text("SELECT COUNT(*) FROM alert_events WHERE resolved=0 AND severity='warning'"))).scalar() or 0
-            last_recon_mismatch = (await db.execute(text("SELECT COUNT(*) FROM reconciliation_logs WHERE status='mismatch' AND created_at = (SELECT MAX(created_at) FROM reconciliation_logs)"))).scalar() or 0
+            data = await _business_metrics(db)
+        orders_total = data["orders_total"]
+        orders_completed = data["orders_completed"]
+        orders_pending = data["orders_pending"]
+        wallets_total = data["wallets_total"]
+        total_balance = data["total_balance"]
+        alerts_active = data["alerts_active"]
+        alerts_critical = data["alerts_critical"]
+        alerts_warning = data["alerts_warning"]
+        last_recon_mismatch = data["last_recon_mismatch"]
     except Exception:
         orders_total = orders_completed = orders_pending = wallets_total = 0
         total_balance = alerts_active = alerts_critical = alerts_warning = last_recon_mismatch = 0

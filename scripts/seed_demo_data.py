@@ -37,6 +37,10 @@ USERS = [
     DemoUser("channel_manager", "18800000006", "演示推广经理", "customer"),
     DemoUser("tech_support", "18800000007", "演示服务保障", "admin"),
     DemoUser("finance", "18800000008", "演示财务", "admin"),
+    # 2026-10-07 multi-role:一个账号同时是店长 + 师傅 + 业务。
+    # 登录只保证「店长」;师傅 + 业务由 scripts/seed_multi_role_demo.py 补齐,
+    # 或者直接在管理后台「用户 → 配置角色」里多选。
+    DemoUser("multi_role", "18060936373", "多角色演示", "admin"),
 ]
 
 

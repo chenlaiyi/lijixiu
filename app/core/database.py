@@ -55,6 +55,7 @@ async def init_db():
         SupportReply,
         SupportTicket,
         User,
+        UserRoleGrant,
         Wallet,
         WageRecord,
         WarrantyCertificate,
@@ -73,6 +74,19 @@ async def init_db():
             ("users", "is_promotion_manager", "BOOLEAN DEFAULT 0"),
             ("users", "wechat_openid", "VARCHAR(128)"),
             ("users", "business_role", "VARCHAR(30) DEFAULT 'customer'"),
+            # 2026-10-07 multi-role: 一个账号可同时拥有店长/师傅/业务等多个角色
+            ("users", "business_roles", "JSON"),
+            ("users", "active_business_role", "VARCHAR(30)"),
+            # 2026-10-07:这几列只有 alembic 迁移里有,而生产库历史上「从未跑过
+            # alembic」(见 2026_08_14 迁移注释)。补进轻量迁移,保证
+            # create_all + 轻量迁移就能把老库带到现在,不会 500。
+            ("users", "agreed_terms_version", "VARCHAR(20)"),
+            ("users", "agreed_privacy_version", "VARCHAR(20)"),
+            ("users", "agreed_at", "DATETIME"),
+            ("users", "deletion_requested_at", "DATETIME"),
+            ("users", "deletion_scheduled_at", "DATETIME"),
+            ("users", "last_login_at", "DATETIME"),
+            ("users", "avatar", "VARCHAR(500)"),
             ("orders", "store_id", "INTEGER REFERENCES stores(id)"),
             ("orders", "source", "VARCHAR(20) DEFAULT 'repair'"),
             ("orders", "address_book_id", "INTEGER REFERENCES store_addresses(id)"),
@@ -154,6 +168,38 @@ async def init_db():
         await conn.execute(
             text("UPDATE orders SET source='AFTER_SALES' WHERE source='after_sales'")
         )
+
+        # 2026-10-07 multi-role backfill:
+        #   存量用户原来只有一个 business_role,迁移后把它灌进 business_roles,
+        #   同时把 active_business_role 指向它 —— 这样老账号第一次进小程序
+        #   就落在自己的工作台,不会掉回客户身份。
+        #   `NOT IN ('[]','null','')` 保证只在空值时写入,可反复执行。
+        try:
+            await conn.execute(
+                text(
+                    "UPDATE users SET active_business_role = "
+                    "CASE WHEN business_role IS NULL OR business_role = '' "
+                    "THEN 'customer' ELSE business_role END "
+                    "WHERE active_business_role IS NULL OR active_business_role = ''"
+                )
+            )
+        except Exception:
+            pass
+
+        # business_roles 是 JSON 数组列,必须写成合法 JSON(如 ["store_manager"])。
+        # `NOT LIKE '[%'` 保证只在空值/非数组值时回填,可反复执行。
+        try:
+            await conn.execute(
+                text(
+                    "UPDATE users SET business_roles = '[\"' || "
+                    "CASE WHEN business_role IS NULL OR business_role = '' "
+                    "THEN 'customer' ELSE business_role END || '\"]' "
+                    "WHERE business_roles IS NULL OR business_roles = '' "
+                    "OR business_roles = 'null' OR business_roles NOT LIKE '[%'"
+                )
+            )
+        except Exception:
+            pass
 
         await _create_optional_unique_index(
             conn,

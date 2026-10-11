@@ -45,10 +45,23 @@ jobs:
           DATABASE_URL: 'sqlite+aiosqlite:///:memory:'
           SMS_PROVIDER: debug
           SMS_DEBUG_CODE: '246810'
+          # 2026-10-05:调试短信闸门。CI 需要它才能拿到验证码,
+          # 生产侧该值必须为 false。
+          ALLOW_SMS_DEBUG_ENDPOINT: 'true'
           PAYMENT_ALLOW_MOCK: 'true'
         run: |
           python tests/test_reconcile_balance.py
           python tests/test_auth_admin.py
+          # 2026-10-06:订单级鉴权回归。曾因漏 await 让守卫静默失效,
+          # 客户能读写他人订单,而当时的 125 项测试全绿 —— 必须有这条。
+          python tests/test_order_authz.py
+          # 与上面互补:确保「合法操作」不被鉴权误伤,并覆盖钱包/内部数据的跨角色边界
+          python tests/test_role_boundaries.py
+          # 2026-10-07:一个账号多角色(店长+师傅+业务)。覆盖角色集合接口、
+          # 并集鉴权、身份切换与「不能自己给自己加角色」的越权防护。
+          python tests/test_multi_role.py
+          # 老库(只有 business_role)迁移回填 + 幂等 + 越权边界
+          python tests/test_multi_role_migration.py
           python -m pytest tests/test_validate_env.py tests/test_health_env.py -v
 
       - name: Validate .env completeness
@@ -64,6 +77,9 @@ jobs:
           AUTH_SECRET=ci-strong-secret-must-be-long-enough-and-varied-32+chars
           WECHAT_MINIPROGRAM_ENV_VERSION=release
           PAYMENT_ALLOW_MOCK=false
+          SMS_PROVIDER=aliyun
+          SMS_DEBUG_CODE=246810
+          ALLOW_SMS_DEBUG_ENDPOINT=false
           WECHAT_PAY_APPID=wx_ci_test_appid
           WECHAT_PAY_MCH_ID=1481119632
           WECHAT_PAY_API_V3_KEY=ci-32-byte-v3-key-not-a-real-secret-1234
@@ -77,6 +93,17 @@ jobs:
           EOF
           python scripts/validate_env.py --strict
           echo "OK: strict mode passed with all keys filled"
+          # 1b) 2026-10-05:开着调试短信通道时严格模式必须拒绝
+          #     (校验器要求 SMS_PROVIDER=debug 且 ALLOW_SMS_DEBUG_ENDPOINT=true 才算违规)
+          sed -i 's/^SMS_PROVIDER=.*/SMS_PROVIDER=debug/' .env
+          sed -i 's/^ALLOW_SMS_DEBUG_ENDPOINT=.*/ALLOW_SMS_DEBUG_ENDPOINT=true/' .env
+          if python scripts/validate_env.py --strict; then
+            echo "FAIL: validator should have rejected enabled SMS debug endpoint"
+            exit 1
+          fi
+          echo "OK: validator correctly rejected ALLOW_SMS_DEBUG_ENDPOINT=true"
+          sed -i 's/^SMS_PROVIDER=.*/SMS_PROVIDER=aliyun/' .env
+          sed -i 's/^ALLOW_SMS_DEBUG_ENDPOINT=.*/ALLOW_SMS_DEBUG_ENDPOINT=false/' .env
           # 2) 把 MCH_ID 改回 FILL 占位,严格模式必须 fail
           sed -i 's/WECHAT_PAY_MCH_ID=.*/WECHAT_PAY_MCH_ID=FILL_MCH_ID_TEST/' .env
           if python scripts/validate_env.py --strict; then
@@ -92,6 +119,7 @@ jobs:
           DATABASE_URL: 'sqlite+aiosqlite:///:memory:'
           SMS_PROVIDER: debug
           SMS_DEBUG_CODE: '246810'
+          ALLOW_SMS_DEBUG_ENDPOINT: 'true'
           PAYMENT_ALLOW_MOCK: 'true'
         run: |
           python scripts/test_platform_flows.py 2>&1 | grep -E '=ok$|=fail$' > flow_results.txt

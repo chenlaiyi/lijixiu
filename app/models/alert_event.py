@@ -3,10 +3,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class AlertType(str, enum.Enum):
@@ -29,12 +29,12 @@ class AlertEvent(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     type: Mapped[AlertType] = mapped_column(
-        Enum(AlertType, name="alerttype"),
+        enum_column(AlertType, name="alerttype"),
         index=True,
         comment="Alert type: payment_failed / wallet_inconsistency / profit_error / reconcile_mismatch",
     )
     severity: Mapped[AlertSeverity] = mapped_column(
-        Enum(AlertSeverity, name="alertseverity"),
+        enum_column(AlertSeverity, name="alertseverity"),
         default=AlertSeverity.WARNING,
         comment="Severity: info / warning / critical",
     )

@@ -82,8 +82,69 @@ RECOMMENDED = [
     "WECHAT_WITHDRAW_AUTO_TRANSFER",
     "SMS_PROVIDER",
     "SMS_DEBUG_CODE",
+    "ALLOW_SMS_DEBUG_ENDPOINT",
     "MYSQL_HOST",
+    # 2026-10-07:管理后台账号密码登录。不配的话后台只能用应急的 token 登录,
+    # 且登录框会提示「后台登录未配置」。
+    "ADMIN_WEB_ACCOUNT",
+    "ADMIN_WEB_PASSWORD",
 ]
+
+
+def _sms_debug_violation(merged: dict[str, str]) -> str | None:
+    """2026-10-05:生产不允许开着调试短信通道。
+
+    `SMS_PROVIDER=debug` + `ALLOW_SMS_DEBUG_ENDPOINT=true` 会让
+    `/api/v1/auth/sms/request` 回显固定验证码,等于把任意手机号账号交出去。
+    """
+    provider = _get(merged, "SMS_PROVIDER").lower()
+    allow = _get(merged, "ALLOW_SMS_DEBUG_ENDPOINT").lower() in {"1", "true", "yes", "on"}
+    if provider == "debug" and allow:
+        return (
+            "SMS debug endpoint is enabled (SMS_PROVIDER=debug + "
+            "ALLOW_SMS_DEBUG_ENDPOINT=true) — anyone can log in as any phone number"
+        )
+    return None
+
+
+def _miniprogram_env_violation(merged: dict[str, str]) -> str | None:
+    """2026-10-07:线上小程序码不能指向开发版,也不能是非法取值。
+
+    `WECHAT_MINIPROGRAM_ENV_VERSION` 直接喂给微信 `getwxacodeunlimit` 的
+    `env_version`(见 app/services/wechat_pay.py::get_mini_program_code)。
+
+    - `develop`:只有开发者能打开,线上生成的推广/代理码必然是坏链接 → 硬错误;
+    - `release` / `trial`:合法。`trial` 的隐患由 `_miniprogram_env_warning` 提示
+      —— 小程序**正式版发布之前它仍是唯一可用的取值**(没有正式版时
+      `env_version=release` 不一定出得了码),所以这里不拦,免得把部署逼进
+      「要么部署失败、要么小程序码生成失败」的两难。
+
+    这个变量过去只被检查「是否存在」,不校验取值,所以线上一直留在 `trial`。
+    """
+    value = _get(merged, "WECHAT_MINIPROGRAM_ENV_VERSION").lower()
+    if not value or value in ("release", "trial"):
+        return None
+    if value == "develop":
+        return (
+            "WECHAT_MINIPROGRAM_ENV_VERSION=develop — production mini-program codes "
+            "(wxacode) would only open for developers"
+        )
+    return (
+        f"WECHAT_MINIPROGRAM_ENV_VERSION={value!r} is not a valid WeChat env_version "
+        "(release / trial / develop)"
+    )
+
+
+def _miniprogram_env_warning(merged: dict[str, str]) -> str | None:
+    """`trial` 在小程序正式发布后就是隐患 —— 提醒切换,但不拦部署。"""
+    value = _get(merged, "WECHAT_MINIPROGRAM_ENV_VERSION").lower()
+    if value == "trial":
+        return (
+            "WECHAT_MINIPROGRAM_ENV_VERSION=trial — mini-program codes (wxacode) point "
+            "at the 体验版, which non-members cannot open; switch to release after the "
+            "mini program is formally published"
+        )
+    return None
 
 
 def _is_placeholder(value: str) -> bool:
@@ -136,6 +197,21 @@ def _get(merged: dict[str, str], key: str) -> str:
     return str(merged.get(key, "") or "").strip()
 
 
+def _effective(settings: Any, file_vars: dict[str, str], key: str) -> str:
+    """取「真实生效」的配置值。
+
+    优先级与 Pydantic Settings 一致:os.environ > .env 文件 > 代码默认值。
+    之前只看 file_vars,导致用环境变量覆盖 `.env`(比如部署时
+    `ALLOW_SMS_DEBUG_ENDPOINT=false`)时,校验会误报。
+    """
+    if key in os.environ and str(os.environ[key]).strip():
+        return str(os.environ[key]).strip()
+    value = _get(file_vars, key)
+    if value:
+        return value
+    return str(getattr(settings, key, "") or "").strip()
+
+
 def validate_settings(
     settings: Any,
     mode: str = "dev",
@@ -156,7 +232,7 @@ def validate_settings(
 
     required = PROD_REQUIRED if mode == "strict" else ALWAYS_REQUIRED
     for key in required:
-        val = _get(file_vars, key) or str(getattr(settings, key, "") or "").strip()
+        val = _effective(settings, file_vars, key)
         if not val:
             report.missing.append(key)
             continue
@@ -165,9 +241,7 @@ def validate_settings(
             continue
 
     # AUTH_SECRET 强度
-    auth_secret = _get(file_vars, "AUTH_SECRET") or str(
-        getattr(settings, "AUTH_SECRET", "") or ""
-    )
+    auth_secret = _effective(settings, file_vars, "AUTH_SECRET")
     if mode == "strict":
         if not _looks_strong(auth_secret):
             report.weak_secrets.append("AUTH_SECRET")
@@ -178,23 +252,50 @@ def validate_settings(
             )
 
     # 条件性检查
-    public_url = _get(file_vars, "PUBLIC_BASE_URL") or str(
-        getattr(settings, "PUBLIC_BASE_URL", "") or ""
-    )
+    public_url = _effective(settings, file_vars, "PUBLIC_BASE_URL")
     if mode == "strict" and public_url and not public_url.startswith("https://"):
         report.warnings.append(f"PUBLIC_BASE_URL={public_url!r} is not https://")
 
-    db_url = _get(file_vars, "DATABASE_URL") or str(
-        getattr(settings, "DATABASE_URL", "") or ""
-    )
+    db_url = _effective(settings, file_vars, "DATABASE_URL")
     if mode == "strict" and db_url.startswith("sqlite"):
         report.warnings.append("DATABASE_URL uses sqlite — use MySQL in production")
 
+    # 调试短信通道:strict 模式视为硬错误
+    sms_violation = _sms_debug_violation(
+        {
+            "SMS_PROVIDER": _effective(settings, file_vars, "SMS_PROVIDER"),
+            "ALLOW_SMS_DEBUG_ENDPOINT": _effective(
+                settings, file_vars, "ALLOW_SMS_DEBUG_ENDPOINT"
+            ),
+        }
+    )
+    if sms_violation:
+        if mode == "strict":
+            report.weak_secrets.append(f"SMS_DEBUG_ENABLED ({sms_violation})")
+        else:
+            report.warnings.append(sms_violation)
+
+    # 小程序码 env_version:develop/非法值在 strict 下是硬错误,trial 只警告
+    miniprogram_env = {
+        "WECHAT_MINIPROGRAM_ENV_VERSION": _effective(
+            settings, file_vars, "WECHAT_MINIPROGRAM_ENV_VERSION"
+        ),
+    }
+    miniprogram_violation = _miniprogram_env_violation(miniprogram_env)
+    if miniprogram_violation:
+        if mode == "strict":
+            report.weak_secrets.append(
+                f"MINIPROGRAM_ENV_VERSION ({miniprogram_violation})"
+            )
+        else:
+            report.warnings.append(miniprogram_violation)
+    miniprogram_warning = _miniprogram_env_warning(miniprogram_env)
+    if miniprogram_warning:
+        report.warnings.append(miniprogram_warning)
+
     # 推荐变量缺失
     for key in RECOMMENDED:
-        file_val = _get(file_vars, key)
-        settings_val = str(getattr(settings, key, "") or "").strip()
-        if not file_val and not settings_val:
+        if not _effective(settings, file_vars, key):
             report.warnings.append(f"RECOMMENDED var {key} not set")
 
     return report
@@ -241,6 +342,25 @@ def validate_from_environ(
     db_url = _get(merged, "DATABASE_URL")
     if mode == "strict" and db_url.startswith("sqlite"):
         report.warnings.append("DATABASE_URL uses sqlite — use MySQL in production")
+
+    sms_violation = _sms_debug_violation(merged)
+    if sms_violation:
+        if mode == "strict":
+            report.weak_secrets.append(f"SMS_DEBUG_ENABLED ({sms_violation})")
+        else:
+            report.warnings.append(sms_violation)
+
+    miniprogram_violation = _miniprogram_env_violation(merged)
+    if miniprogram_violation:
+        if mode == "strict":
+            report.weak_secrets.append(
+                f"MINIPROGRAM_ENV_VERSION ({miniprogram_violation})"
+            )
+        else:
+            report.warnings.append(miniprogram_violation)
+    miniprogram_warning = _miniprogram_env_warning(merged)
+    if miniprogram_warning:
+        report.warnings.append(miniprogram_warning)
 
     for key in RECOMMENDED:
         if not _get(merged, key):

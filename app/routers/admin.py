@@ -8,8 +8,10 @@ from ..core.auth import require_admin
 from ..core.database import get_db, engine
 from ..core.logging import get_audit_logger, get_security_logger
 from ..models.alert_event import AlertEvent, AlertType
+from ..models.reconciliation import ReconcileStatus
 from ..models.user import User
 from ..services import alerts, safety
+from ..services.business_metrics import business_metrics
 
 audit_log = get_audit_logger()
 security_log = get_security_logger()
@@ -50,15 +52,16 @@ async def run_reconciliation(
         },
     )
     logs = await safety.run_reconciliation(db)
-    ok = sum(1 for l in logs if l.status == "ok")
-    mismatch = sum(1 for l in logs if l.status == "mismatch")
+    # 2026-10-05:枚举列返回的是枚举成员,必须与成员比较(旧代码比字符串恒为 False)
+    ok = sum(1 for l in logs if l.status == ReconcileStatus.OK)
+    mismatch = sum(1 for l in logs if l.status == ReconcileStatus.MISMATCH)
 
     # 差异写入告警(去重:每钱包最多一条未解决告警)
     created = 0
     skipped = 0
     if mismatch > 0:
         for l in logs:
-            if l.status == "mismatch":
+            if l.status == ReconcileStatus.MISMATCH:
                 existing = await _existing_reconcile_alert(db, l.wallet_id)
                 if existing:
                     # 已存在未解决告警,更新 detail 和 amount(让最新对账结果覆盖)
@@ -84,8 +87,8 @@ async def run_reconciliation(
         "alerts_updated": skipped,
         "details": [
             {"wallet_id": l.wallet_id, "user_id": l.user_id,
-             "status": l.status, "difference": l.difference}
-            for l in logs if l.status == "mismatch"
+             "status": l.status.value, "difference": l.difference}
+            for l in logs if l.status == ReconcileStatus.MISMATCH
         ],
     }
 
@@ -104,6 +107,25 @@ async def get_reconciliation_logs(
          "detail": l.detail, "created_at": l.created_at.isoformat()}
         for l in logs
     ]
+
+
+# ═══════════════════ 指标 ═══════════════════
+
+@router.get("/metrics")
+async def admin_metrics(
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    """后台概览页用的业务指标(2026-10-07)。
+
+    为什么不让后台直接调 `/metrics`:那个路径用 nginx basic auth 保护
+    (避免公网裸访问),浏览器请求它时会弹**原生账号密码框** ——
+    后台明明已经用 Bearer token 登录了,却还要再被 basic auth 拦一次。
+
+    所以给后台一个走 Bearer token 的等价端点,与 `/metrics` 共用
+    `app/services/business_metrics.py` 的同一份口径。
+    """
+    return await business_metrics(db)
 
 
 # ═══════════════════ 告警 ═══════════════════

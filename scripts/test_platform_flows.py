@@ -54,11 +54,15 @@ def demo_login(client: TestClient, phone: str, name: str):
     )
 
 
-def advance_to_service(client: TestClient, order: dict, manager: dict) -> tuple[dict, int]:
+def advance_to_service(
+    client: TestClient, order: dict, manager: dict, token: str
+) -> tuple[dict, int]:
+    """把订单推进到服务中。2026-10-05 起这些端点需要内部角色 token。"""
     order = expect(
         client.post(
             f"/api/v1/orders/{order['id']}/self-service",
             json={"manager_id": manager["id"], "skills": "general service"},
+            headers=hdr(token),
         ),
         "manager self service",
     )
@@ -71,6 +75,7 @@ def advance_to_service(client: TestClient, order: dict, manager: dict) -> tuple[
                 "operator_type": "repairer",
                 "operator_id": manager["id"],
             },
+            headers=hdr(token),
         ),
         "repairer accepts",
     )
@@ -82,13 +87,16 @@ def advance_to_service(client: TestClient, order: dict, manager: dict) -> tuple[
                 "operator_type": "repairer",
                 "operator_id": manager["id"],
             },
+            headers=hdr(token),
         ),
         "service starts",
     )
     return order, repairer_id
 
 
-def create_bill(client: TestClient, order_id: int, repairer_id: int, amount: float):
+def create_bill(
+    client: TestClient, order_id: int, repairer_id: int, amount: float, token: str
+):
     bill = expect(
         client.post(
             f"/api/v1/orders/{order_id}/service-bill",
@@ -102,6 +110,7 @@ def create_bill(client: TestClient, order_id: int, repairer_id: int, amount: flo
                 "confirmation_method": "phone",
                 "confirmation_note": "confirmed by phone",
             },
+            headers=hdr(token),
         ),
         "service bill",
     )
@@ -109,7 +118,15 @@ def create_bill(client: TestClient, order_id: int, repairer_id: int, amount: flo
     return bill
 
 
-def mock_pay(client: TestClient, order_id: int, payer_id: int, amount: float, tx: str):
+def mock_pay(
+    client: TestClient,
+    order_id: int,
+    payer_id: int,
+    amount: float,
+    tx: str,
+    token: str,
+):
+    """发起 mock 支付并回调。两个端点 2026-10-05 起都需要内部角色 token。"""
     payment = expect(
         client.post(
             "/api/v1/payment/create",
@@ -119,6 +136,7 @@ def mock_pay(client: TestClient, order_id: int, payer_id: int, amount: float, tx
                 "amount": amount,
                 "provider": "mock",
             },
+            headers=hdr(token),
         ),
         "create payment",
     )
@@ -126,6 +144,7 @@ def mock_pay(client: TestClient, order_id: int, payer_id: int, amount: float, tx
         client.post(
             "/api/v1/payment/callback",
             json={"pay_order_id": payment["pay_order_id"], "transaction_id": tx},
+            headers=hdr(token),
         ),
         "payment callback",
     )
@@ -228,10 +247,13 @@ def run() -> None:
             "sms login",
         )["user"]
 
+        # 2026-10-05:用户改资料 / 建区域 / 建门店 都已收口到「本人或平台内部角色」,
+        # 这里统一用 platform_admin 的 token(之前的 expect 没带 Authorization)。
         expect(
             client.patch(
                 f"/api/v1/users/{users['customer']['id']}",
                 json={"promotion_manager_id": users["promotion"]["id"]},
+                headers=hdr(tokens["manager"]),
             ),
             "link promotion manager",
         )
@@ -239,6 +261,7 @@ def run() -> None:
             client.post(
                 "/api/v1/regions",
                 json={"name": "Flow Region", "level": 3, "manager_id": users["city"]["id"]},
+                headers=hdr(tokens["manager"]),
             ),
             "region",
         )
@@ -251,6 +274,7 @@ def run() -> None:
                     "manager_id": users["manager"]["id"],
                     "city_manager_id": users["city"]["id"],
                 },
+                headers=hdr(tokens["manager"]),
             ),
             "store",
         )
@@ -258,11 +282,15 @@ def run() -> None:
             client.patch(
                 f"/api/v1/stores/{store['id']}",
                 json={"status": "active", "enabled": True},
+                headers=hdr(tokens["manager"]),
             ),
             "activate store",
         )
         area_data = expect(
-            client.get("/api/v1/service-areas?district=思明区&limit=3"),
+            client.get(
+                "/api/v1/service-areas?district=思明区&limit=3",
+                headers=hdr(tokens["manager"]),
+            ),
             "xiamen service areas",
         )
         assert area_data["total"] == 98
@@ -279,6 +307,7 @@ def run() -> None:
             client.post(
                 "/api/v1/service-areas/assignments/bulk",
                 json={**assignment_body, "dry_run": True},
+                headers=hdr(tokens["admin"]),
             ),
             "service area assignment preview",
         )
@@ -287,6 +316,7 @@ def run() -> None:
             client.post(
                 "/api/v1/service-areas/assignments/bulk",
                 json={**assignment_body, "dry_run": False},
+                headers=hdr(tokens["admin"]),
             ),
             "service area assignment",
         )
@@ -297,6 +327,7 @@ def run() -> None:
                 "manager_id": users["finance"]["id"],
                 "conflict_mode": "replace",
             },
+            headers=hdr(tokens["admin"]),
         )
         assert invalid_manager.status_code == 400
         matched_area = area_data["items"][0]
@@ -313,6 +344,7 @@ def run() -> None:
                     "business_owner_user_id": users["promotion"]["id"],
                     "created_by_user_id": users["admin"]["id"],
                 },
+                headers=hdr(tokens["manager"]),
             ),
             "standard service address",
         )
@@ -329,6 +361,7 @@ def run() -> None:
                 "room": "101",
                 "created_by_user_id": users["admin"]["id"],
             },
+            headers=hdr(tokens["manager"]),
         )
         assert duplicate_address.status_code == 400
         unregistered_address_order = client.post(
@@ -340,6 +373,7 @@ def run() -> None:
                 "description": "Unregistered address must be blocked",
                 "address": "Any free text address",
             },
+            headers=hdr(tokens["manager"]),
         )
         assert unregistered_address_order.status_code == 400
         matched_order = expect(
@@ -354,6 +388,7 @@ def run() -> None:
                     "address": "This client text must be ignored",
                     "contact_phone": users["customer"]["phone"],
                 },
+                headers=hdr(tokens["manager"]),
             ),
             "service area routed order",
         )
@@ -365,7 +400,10 @@ def run() -> None:
         assert matched_order["service_area_name_snapshot"] == matched_area["name"]
         assert matched_order["service_area_manager_id"] == users["manager"]["id"]
         assignment_logs = expect(
-            client.get("/api/v1/service-areas/assignment-logs?limit=10"),
+            client.get(
+                "/api/v1/service-areas/assignment-logs?limit=10",
+                headers=hdr(tokens["admin"]),
+            ),
             "service area assignment logs",
         )
         assert any(item["operator_user_id"] == users["admin"]["id"] for item in assignment_logs)
@@ -379,6 +417,7 @@ def run() -> None:
                     "service_address_id": standard_address["id"],
                     "is_default": True,
                 },
+                headers=hdr(tokens["manager"]),
             ),
             "customer address",
         )
@@ -400,11 +439,14 @@ def run() -> None:
                     "is_proxy_order": True,
                     "proxy_reason": "phone_request",
                 },
+                headers=hdr(tokens["manager"]),
             ),
             "proxy order",
         )
-        proxy_order, repairer_id = advance_to_service(client, proxy_order, users["manager"])
-        create_bill(client, proxy_order["id"], repairer_id, 200)
+        proxy_order, repairer_id = advance_to_service(
+            client, proxy_order, users["manager"], tokens["manager"]
+        )
+        create_bill(client, proxy_order["id"], repairer_id, 200, tokens["manager"])
         assert PayCreateRequest(
             order_id=proxy_order["id"], user_id=payer["id"], amount=200
         ).provider == PayProvider.WECHAT
@@ -422,10 +464,14 @@ def run() -> None:
                 "amount": 200,
                 "js_code": "test-code",
             },
+            headers=hdr(tokens["manager"]),
         )
         assert failed_wechat.status_code == 400
         failed_attempts = expect(
-            client.get(f"/api/v1/payment/list?order_id={proxy_order['id']}&limit=10"),
+            client.get(
+                f"/api/v1/payment/list?order_id={proxy_order['id']}&limit=10",
+                headers=hdr(tokens["manager"]),
+            ),
             "failed wechat payment attempt",
         )
         assert failed_attempts[0]["provider"] == "wechat"
@@ -452,6 +498,7 @@ def run() -> None:
                         "amount": 200,
                         "js_code": "test-code",
                     },
+                    headers=hdr(tokens["manager"]),
                 ),
                 "default wechat payment",
             )
@@ -469,6 +516,7 @@ def run() -> None:
                 "amount": 200,
                 "provider": "mock",
             },
+            headers=hdr(tokens["manager"]),
         )
         assert rejected_mock.status_code == 400
         assert "模拟支付已关闭" in rejected_mock.text
@@ -477,6 +525,7 @@ def run() -> None:
             client.post(
                 f"/api/v1/business/orders/{proxy_order['id']}/access/claim",
                 json={"created_by_user_id": users["manager"]["id"]},
+                headers=hdr(tokens["manager"]),
             ),
             "claim code",
         )
@@ -484,6 +533,7 @@ def run() -> None:
             client.post(
                 "/api/v1/business/orders/claim",
                 json={"token": claim_code["token"], "user_id": payer["id"]},
+                headers=hdr(tokens["manager"]),
             ),
             "mismatched claim",
         )
@@ -492,11 +542,14 @@ def run() -> None:
             client.post(
                 "/api/v1/business/orders/claim",
                 json={"token": claim_code["token"], "user_id": users["customer"]["id"]},
+                headers=hdr(tokens["manager"]),
             ),
             "customer claim",
         )
         assert claimed["action"] == "claimed"
-        mock_pay(client, proxy_order["id"], payer["id"], 200, "proxy-pay")
+        mock_pay(
+            client, proxy_order["id"], payer["id"], 200, "proxy-pay", tokens["manager"]
+        )
         completed = expect(
             client.post(
                 f"/api/v1/orders/{proxy_order['id']}/store-review?manager_id={users['manager']['id']}",
@@ -505,12 +558,16 @@ def run() -> None:
                     "wage_mode": "per_order",
                     "remark": "approved",
                 },
+                headers=hdr(tokens["manager"]),
             ),
             "store review",
         )
         assert completed["status"] == "completed"
         profits = expect(
-            client.get(f"/api/v1/finance/profit/order/{proxy_order['id']}"),
+            client.get(
+                f"/api/v1/finance/profit/order/{proxy_order['id']}",
+                headers=hdr(tokens["manager"]),
+            ),
             "proxy profits",
         )
         assert abs(profits["total_distributed"] - 200) < 0.01
@@ -521,7 +578,8 @@ def run() -> None:
         assert roles["channel_manager_commission"]["user_id"] == users["promotion"]["id"]
         warranties = expect(
             client.get(
-                f"/api/v1/business/warranties?customer_id={users['customer']['id']}"
+                f"/api/v1/business/warranties?customer_id={users['customer']['id']}",
+                headers=hdr(tokens["manager"]),
             ),
             "warranties",
         )
@@ -538,7 +596,8 @@ def run() -> None:
             conn.close()
         active_warranties = expect(
             client.get(
-                f"/api/v1/business/warranties?customer_id={users['customer']['id']}"
+                f"/api/v1/business/warranties?customer_id={users['customer']['id']}",
+                headers=hdr(tokens["manager"]),
             ),
             "active warranties after expiration",
         )
@@ -546,7 +605,8 @@ def run() -> None:
         warranty_history = expect(
             client.get(
                 f"/api/v1/business/warranties?customer_id={users['customer']['id']}"
-                "&include_expired=true"
+                "&include_expired=true",
+                headers=hdr(tokens["manager"]),
             ),
             "warranty history",
         )
@@ -565,21 +625,35 @@ def run() -> None:
                     "address_book_id": standard_address["id"],
                     "address": standard_address["full_address"],
                 },
+                headers=hdr(tokens["manager"]),
             ),
             "monthly order",
         )
-        monthly_order, monthly_repairer = advance_to_service(client, monthly_order, users["manager"])
-        create_bill(client, monthly_order["id"], monthly_repairer, 100)
-        mock_pay(client, monthly_order["id"], users["customer"]["id"], 100, "monthly-pay")
+        monthly_order, monthly_repairer = advance_to_service(
+            client, monthly_order, users["manager"], tokens["manager"]
+        )
+        create_bill(client, monthly_order["id"], monthly_repairer, 100, tokens["manager"])
+        mock_pay(
+            client,
+            monthly_order["id"],
+            users["customer"]["id"],
+            100,
+            "monthly-pay",
+            tokens["manager"],
+        )
         expect(
             client.post(
                 f"/api/v1/orders/{monthly_order['id']}/store-review?manager_id={users['manager']['id']}",
                 json={"technician_wage_amount": 0, "wage_mode": "monthly"},
+                headers=hdr(tokens["manager"]),
             ),
             "monthly review",
         )
         wages = expect(
-            client.get(f"/api/v1/business/wages?store_id={store['id']}&wage_mode=monthly"),
+            client.get(
+                f"/api/v1/business/wages?store_id={store['id']}&wage_mode=monthly",
+                headers=hdr(tokens["manager"]),
+            ),
             "monthly wages",
         )
         assert wages and wages[0]["work_units"] == 1
@@ -598,6 +672,7 @@ def run() -> None:
                         }
                     ],
                 },
+                headers=hdr(tokens["manager"]),
             ),
             "create payroll",
         )
@@ -605,6 +680,7 @@ def run() -> None:
             client.post(
                 f"/api/v1/business/payroll/{payroll['period_id']}/pay",
                 json={"store_id": store["id"], "manager_id": users["manager"]["id"]},
+                headers=hdr(tokens["manager"]),
             ),
             "pay payroll",
         )
@@ -625,6 +701,7 @@ def run() -> None:
                     "health_verified": True,
                     "training_verified": True,
                 },
+                headers=hdr(tokens["manager"]),
             ),
             "domestic worker",
         )
@@ -645,6 +722,7 @@ def run() -> None:
                     "budget_max": 11000,
                     "service_start": "2026-08-01",
                 },
+                headers=hdr(tokens["manager"]),
             ),
             "domestic demand",
         )
@@ -655,6 +733,7 @@ def run() -> None:
                     "worker_id": worker["id"],
                     "proposed_by_user_id": users["manager"]["id"],
                 },
+                headers=hdr(tokens["manager"]),
             ),
             "domestic candidate",
         )
@@ -674,12 +753,14 @@ def run() -> None:
                         {"stage_name": "final", "amount": 7300},
                     ],
                 },
+                headers=hdr(tokens["manager"]),
             ),
             "domestic contract",
         )
         stages = expect(
             client.get(
-                f"/api/v1/business/domestic/contracts/{contract['id']}/stages"
+                f"/api/v1/business/domestic/contracts/{contract['id']}/stages",
+                headers=hdr(tokens["manager"]),
             ),
             "payment stages",
         )
@@ -688,6 +769,7 @@ def run() -> None:
                 client.post(
                     f"/api/v1/business/domestic/stages/{stage['id']}/payment",
                     json={"user_id": payer["id"], "provider": "mock"},
+                    headers=hdr(tokens["manager"]),
                 ),
                 f"stage payment {index}",
             )
@@ -698,6 +780,7 @@ def run() -> None:
                         "pay_order_id": payment["pay_order_id"],
                         "transaction_id": f"stage-{index}",
                     },
+                    headers=hdr(tokens["manager"]),
                 ),
                 f"stage callback {index}",
             )
@@ -705,6 +788,7 @@ def run() -> None:
             client.post(
                 f"/api/v1/business/domestic/contracts/{contract['id']}/action",
                 json={"operator_id": users["manager"]["id"], "action": "start"},
+                headers=hdr(tokens["manager"]),
             ),
             "start contract",
         )
@@ -712,12 +796,16 @@ def run() -> None:
             client.post(
                 f"/api/v1/business/domestic/contracts/{contract['id']}/action",
                 json={"operator_id": users["manager"]["id"], "action": "complete"},
+                headers=hdr(tokens["manager"]),
             ),
             "complete contract",
         )
         assert finished_contract["status"] == "completed"
         domestic_profit = expect(
-            client.get(f"/api/v1/finance/profit/order/{contract['order_id']}"),
+            client.get(
+                f"/api/v1/finance/profit/order/{contract['order_id']}",
+                headers=hdr(tokens["manager"]),
+            ),
             "domestic profits",
         )
         assert abs(domestic_profit["total_distributed"] - 10300) < 0.01

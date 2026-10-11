@@ -3,10 +3,10 @@
 import enum
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, Enum, Float, ForeignKey, String, Text, func
+from sqlalchemy import Date, DateTime, Float, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class SettlementStatus(str, enum.Enum):
@@ -35,7 +35,7 @@ class SettlementPeriod(Base):
     period_start: Mapped[date] = mapped_column(Date)
     period_end: Mapped[date] = mapped_column(Date)
     status: Mapped[SettlementStatus] = mapped_column(
-        Enum(SettlementStatus), default=SettlementStatus.GENERATED
+        enum_column(SettlementStatus), default=SettlementStatus.GENERATED
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
@@ -51,10 +51,10 @@ class SettlementItem(Base):
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     store_id: Mapped[int | None] = mapped_column(ForeignKey("stores.id"), nullable=True, index=True)
     order_id: Mapped[int | None] = mapped_column(ForeignKey("orders.id"), nullable=True, index=True)
-    item_type: Mapped[SettlementItemType] = mapped_column(Enum(SettlementItemType))
+    item_type: Mapped[SettlementItemType] = mapped_column(enum_column(SettlementItemType))
     amount: Mapped[float] = mapped_column(Float, default=0.0)
     status: Mapped[SettlementStatus] = mapped_column(
-        Enum(SettlementStatus), default=SettlementStatus.GENERATED
+        enum_column(SettlementStatus), default=SettlementStatus.GENERATED
     )
     remark: Mapped[str | None] = mapped_column(Text, nullable=True)
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

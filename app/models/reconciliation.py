@@ -3,10 +3,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Float, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, Float, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class ReconcileStatus(str, enum.Enum):
@@ -36,7 +36,7 @@ class ReconciliationLog(Base):
         Float, comment="ledger_sum - wallet_available"
     )
     status: Mapped[ReconcileStatus] = mapped_column(
-        Enum(ReconcileStatus, name="reconcilestatus"),
+        enum_column(ReconcileStatus, name="reconcilestatus"),
         comment="ok | mismatch",
     )
     detail: Mapped[str | None] = mapped_column(

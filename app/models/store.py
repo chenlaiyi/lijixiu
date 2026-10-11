@@ -3,10 +3,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class StoreStatus(str, enum.Enum):
@@ -42,7 +42,7 @@ class Store(Base):
         comment="Default secondary receiver repairer id (for two-person delivery)",
     )
     status: Mapped[StoreStatus] = mapped_column(
-        Enum(StoreStatus), default=StoreStatus.DRAFT
+        enum_column(StoreStatus), default=StoreStatus.DRAFT
     )
     enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     remark: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -68,7 +68,7 @@ class StoreStaff(Base):
         ForeignKey("repairers.id"), nullable=True,
         comment="Linked repairer id if this staff member is also a repairer",
     )
-    role: Mapped[StoreStaffRole] = mapped_column(Enum(StoreStaffRole))
+    role: Mapped[StoreStaffRole] = mapped_column(enum_column(StoreStaffRole))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

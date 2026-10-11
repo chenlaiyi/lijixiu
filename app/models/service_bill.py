@@ -3,10 +3,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class ServiceBillStatus(str, enum.Enum):
@@ -28,7 +28,7 @@ class ServiceBill(Base):
     warranty_days: Mapped[int] = mapped_column(Integer, default=0)
     media_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[ServiceBillStatus] = mapped_column(
-        Enum(ServiceBillStatus), default=ServiceBillStatus.SUBMITTED
+        enum_column(ServiceBillStatus), default=ServiceBillStatus.SUBMITTED
     )
     return_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     revision: Mapped[int] = mapped_column(Integer, default=1)

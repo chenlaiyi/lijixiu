@@ -35,8 +35,20 @@ const CHECKS = [
   { type: 'auth', url: '/redoc', expectStatus: 401, required: true, note: 'Redoc UI 必须带鉴权' },
   { type: 'auth', url: '/openapi.json', expectStatus: 401, required: true, note: 'OpenAPI schema 必须带鉴权' },
   { type: 'auth', url: '/metrics', expectStatus: 401, required: true, note: 'Prometheus 指标必须带鉴权' },
-  { type: 'auth', url: '/admin/', expectStatus: 401, required: true, note: 'Admin 后台必须带鉴权' },
-  { type: 'auth', url: '/admin/index.html', expectStatus: 401, required: true, note: 'Admin 静态文件必须带鉴权' },
+  // 2026-10-07:后台改为「一层鉴权」——静态页(登录卡片)公网可读,
+  // 鉴权落在后台登录接口 + 管理 API 上。因此这里断言:
+  //   /admin/ 返回 200,但只是页面外壳(登录表单由 app.js 渲染),
+  //   且不含任何真实业务数据 / 演示账号手机号
+  //   管理 API 无 token 必须 401(见下面两条)
+  {
+    type: 'body', url: '/admin/', expectStatus: 200, required: true,
+    // 外壳标志:标题 + 挂载点 + 自己的脚本
+    mustInclude: ['立即修管理后台', 'app.js', '<body'],
+    // 真数据才算泄露;platform_admin 是前端做角色判断的字面量,不算数据
+    mustExclude: ['演示管理员', '18800000000', 'available_balance', '演示客户'],
+    note: 'Admin 页面外壳可读,但不含业务数据/账号',
+  },
+  { type: 'auth', url: '/admin/index.html', expectStatus: 200, required: true, note: 'Admin 登录页入口' },
   { type: 'auth', url: '/.env', expectStatus: [404, 401], required: true, note: '.env 不可外泄' },
   { type: 'auth', url: '/api/v1/wallet/balance/1', expectStatus: 401, required: true, note: '钱包余额必须鉴权' },
   { type: 'auth', url: '/api/v1/admin/alerts', expectStatus: 401, required: true, note: 'Admin API 必须鉴权' },
@@ -98,6 +110,17 @@ async function main() {
       const expectStatuses = Array.isArray(c.expectStatus) ? c.expectStatus : [c.expectStatus];
       ok = expectStatuses.includes(res.status);
       detail = 'status=' + res.status + ' (期望 ' + expectStatuses.join('/') + ')';
+    } else if (c.type === 'body') {
+      // 2026-10-07:/admin/ 现在是公网可读的登录页(一层鉴权),
+      // 所以必须证明它「只有登录表单、没有业务数据」。
+      const expectStatuses = Array.isArray(c.expectStatus) ? c.expectStatus : [c.expectStatus];
+      const statusOk = expectStatuses.includes(res.status);
+      const hasMarker = c.mustInclude.every(s => res.body.includes(s));
+      const forbidden = (c.mustExclude || []).filter(s => res.body.includes(s));
+      ok = statusOk && hasMarker && forbidden.length === 0;
+      detail = 'status=' + res.status
+        + (hasMarker ? ' 含必需标志' : ' 缺必需标志 ✗')
+        + (forbidden.length ? ' 含禁用标记:' + forbidden.join(',') + ' ✗' : ' 无禁用标记');
     }
 
     const required = c.required;

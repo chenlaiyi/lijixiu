@@ -9,6 +9,7 @@ from ..models.order import Order
 from ..models.profit_share import PROFIT_RATIOS, ProfitRole, ProfitShare, ProfitStatus
 from ..models.store import Store
 from ..models.user import BusinessRole, User
+from . import role as role_service
 
 
 async def _find_channel_manager(db: AsyncSession, customer_id: int) -> int | None:
@@ -23,14 +24,16 @@ async def _find_channel_manager(db: AsyncSession, customer_id: int) -> int | Non
 
 
 async def _find_business_role_user(db: AsyncSession, role: BusinessRole) -> int | None:
-    return (
-        await db.execute(
-            select(User.id)
-            .where(User.business_role == role.value)
-            .order_by(User.id)
-            .limit(1)
-        )
-    ).scalar_one_or_none()
+    """Pick one account holding `role` (多角色并集,不再只看 business_role)。
+
+    用户表规模很小(平台内部账号),这里为了同时兼容 SQLite/MySQL 的 JSON 列,
+    直接在 Python 侧匹配角色集合,避免方言相关的 JSON 查询函数。
+    """
+    rows = (await db.execute(select(User.id, User.business_roles).order_by(User.id))).all()
+    for user_id, roles in rows:
+        if role_service.roles_contain(roles, role.value):
+            return user_id
+    return None
 
 
 async def calculate_and_save(db: AsyncSession, order: Order) -> list[ProfitShare]:

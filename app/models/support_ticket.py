@@ -3,10 +3,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class SupportTicketStatus(str, enum.Enum):
@@ -26,7 +26,7 @@ class SupportTicket(Base):
     title: Mapped[str] = mapped_column(String(120))
     content: Mapped[str] = mapped_column(Text)
     status: Mapped[SupportTicketStatus] = mapped_column(
-        Enum(SupportTicketStatus), default=SupportTicketStatus.OPEN
+        enum_column(SupportTicketStatus), default=SupportTicketStatus.OPEN
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

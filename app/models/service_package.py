@@ -3,10 +3,10 @@
 import enum
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class PackageStatus(str, enum.Enum):
@@ -35,7 +35,7 @@ class ServicePackage(Base):
     service_month: Mapped[int] = mapped_column(Integer, default=3)
     price: Mapped[float] = mapped_column(Float, default=0.0)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[PackageStatus] = mapped_column(Enum(PackageStatus), default=PackageStatus.DRAFT)
+    status: Mapped[PackageStatus] = mapped_column(enum_column(PackageStatus), default=PackageStatus.DRAFT)
     enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -66,7 +66,7 @@ class PackageSchedule(Base):
     )
     due_date: Mapped[date] = mapped_column(Date, index=True)
     status: Mapped[PackageScheduleStatus] = mapped_column(
-        Enum(PackageScheduleStatus), default=PackageScheduleStatus.PLANNED
+        enum_column(PackageScheduleStatus), default=PackageScheduleStatus.PLANNED
     )
     order_id: Mapped[int | None] = mapped_column(ForeignKey("orders.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

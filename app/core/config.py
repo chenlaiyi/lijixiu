@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     AUTH_SECRET: str = "change-me-in-production"
     SMS_PROVIDER: str = "debug"
     SMS_DEBUG_CODE: str = "246810"
+    # 2026-10-05:调试短信通道必须显式打开。生产保持 false,
+    # 否则 /api/v1/auth/sms/request 会回显固定验证码,任何人可登录任意手机号账号。
+    ALLOW_SMS_DEBUG_ENDPOINT: bool = False
     WECHAT_MINIPROGRAM_ENV_VERSION: str = "trial"
     PUBLIC_BASE_URL: str = "https://x.iddg.cn"
     PAYMENT_ALLOW_MOCK: bool = False
@@ -34,6 +37,13 @@ class Settings(BaseSettings):
     WECHAT_REVIEW_PASSWORD: str = ""
     WECHAT_REVIEW_PHONE: str = "18800000999"
     WECHAT_REVIEW_MIN_BALANCE: float = 100.0
+
+    # 2026-10-07:管理后台账号密码登录(替代手工粘贴 token)
+    # 走 POST /api/v1/auth/admin-login,登录成功返回该手机号对应的管理员用户与 token。
+    # 账号密码明文放 .env,与 WECHAT_REVIEW_PASSWORD 的做法一致。
+    ADMIN_WEB_ACCOUNT: str = ""
+    ADMIN_WEB_PASSWORD: str = ""
+    ADMIN_WEB_PHONE: str = "18800000000"
 
     # 2026-08-09:启动时强制跑 strict env 校验。生产建议开,dev 留 false
     # 开了之后:任意 FILL_* / 弱 secret / 非 https 都会让进程 exit 1

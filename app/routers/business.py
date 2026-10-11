@@ -10,6 +10,7 @@ from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core.auth import get_current_user, is_staff, require_staff, require_staff_or_self
 from ..core.database import get_db
 from ..core.config import settings
 from ..models.business import (
@@ -21,6 +22,7 @@ from ..models.business import (
     DomesticWorker,
 )
 from ..models.order import Order
+from ..models.user import User
 from ..models.pay_order import PayProvider
 from ..models.settlement import SettlementItem, SettlementPeriod
 from ..schemas.business import (
@@ -60,12 +62,23 @@ router = APIRouter(prefix="/api/v1/business", tags=["business"])
 
 
 @router.get("/addresses", response_model=list[AddressOut])
-async def addresses(user_id: int, db: AsyncSession = Depends(get_db)):
+async def addresses(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
+):
+    require_staff_or_self(user_id, user)
     return await service.list_addresses(db, user_id)
 
 
 @router.post("/addresses", response_model=AddressOut, status_code=201)
-async def create_address(data: AddressCreate, db: AsyncSession = Depends(get_db)):
+async def create_address(
+    data: AddressCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
+):
+    if not is_staff(user) and data.user_id != user.id:
+        raise HTTPException(403, "not your address")
     try:
         return await service.create_address(db, data)
     except ValueError as exc:
@@ -73,10 +86,16 @@ async def create_address(data: AddressCreate, db: AsyncSession = Depends(get_db)
 
 
 @router.patch("/addresses/{address_id}", response_model=AddressOut)
-async def update_address(address_id: int, data: AddressUpdate, db: AsyncSession = Depends(get_db)):
+async def update_address(
+    address_id: int,
+    data: AddressUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
+):
     address = await db.get(CustomerAddress, address_id)
     if not address:
         raise HTTPException(404, "Address not found")
+    require_staff_or_self(address.user_id, user)
     return await service.update_address(db, address, data)
 
 
@@ -86,12 +105,13 @@ async def create_order_access(
     purpose: str,
     data: AccessTokenRequest,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05:仅登录用户可签发
 ):
     order = await db.get(Order, order_id)
     if not order:
         raise HTTPException(404, "Order not found")
     try:
-        token, item = await service.create_access_token(db, order, purpose, data.created_by_user_id)
+        token, item = await service.create_access_token(db, order, purpose, user.id)
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     page = "pages/proxy/access/access"
@@ -136,7 +156,13 @@ async def access_code(token: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/orders/claim", response_model=ClaimOrderOut)
-async def claim_order(data: ClaimOrderRequest, db: AsyncSession = Depends(get_db)):
+async def claim_order(
+    data: ClaimOrderRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
+):
+    if not is_staff(user) and data.user_id != user.id:
+        raise HTTPException(403, "cannot claim for another user")
     try:
         order, action = await service.claim_order(db, data.token, data.user_id, data.verification_phone)
     except ValueError as exc:
@@ -155,7 +181,13 @@ async def warranties(
     phone: str | None = None,
     include_expired: bool = False,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
 ):
+    if not is_staff(user):
+        if customer_id is not None and customer_id != user.id:
+            raise HTTPException(403, "not your warranty")
+        customer_id = user.id
+        phone = None
     try:
         return await service.list_warranties(db, customer_id, phone, include_expired)
     except ValueError as exc:
@@ -168,12 +200,22 @@ async def wages(
     employee_user_id: int | None = None,
     wage_mode: str | None = None,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
 ):
+    if not is_staff(user):
+        if employee_user_id is not None and employee_user_id != user.id:
+            raise HTTPException(403, "not your wage")
+        employee_user_id = user.id
+        store_id = None
     return await service.list_wages(db, store_id, employee_user_id, wage_mode)
 
 
 @router.post("/payroll")
-async def create_payroll(data: PayrollCreate, db: AsyncSession = Depends(get_db)):
+async def create_payroll(
+    data: PayrollCreate,
+    db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
+):
     period = await service.create_payroll(db, data)
     return {"period_id": period.id, "month": period.month, "status": period.status.value}
 
@@ -182,6 +224,7 @@ async def create_payroll(data: PayrollCreate, db: AsyncSession = Depends(get_db)
 async def list_payroll(
     store_id: int | None = None,
     db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
 ):
     periods = list((await db.execute(
         select(SettlementPeriod).order_by(SettlementPeriod.month.desc())
@@ -213,7 +256,10 @@ async def list_payroll(
 
 @router.post("/payroll/{period_id}/pay")
 async def pay_payroll(
-    period_id: int, data: PayrollPayRequest, db: AsyncSession = Depends(get_db)
+    period_id: int,
+    data: PayrollPayRequest,
+    db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
 ):
     try:
         period = await service.pay_payroll(db, period_id, data.store_id, data.manager_id)
@@ -228,18 +274,26 @@ async def workers(
     store_id: int | None = None,
     active: bool = True,
     db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_current_user),
 ):
     return await service.list_workers(db, service_type, store_id, active)
 
 
 @router.post("/domestic/workers", response_model=DomesticWorkerOut, status_code=201)
-async def create_worker(data: DomesticWorkerCreate, db: AsyncSession = Depends(get_db)):
+async def create_worker(
+    data: DomesticWorkerCreate,
+    db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
+):
     return await service.create_worker(db, data)
 
 
 @router.patch("/domestic/workers/{worker_id}", response_model=DomesticWorkerOut)
 async def update_worker(
-    worker_id: int, data: DomesticWorkerUpdate, db: AsyncSession = Depends(get_db)
+    worker_id: int,
+    data: DomesticWorkerUpdate,
+    db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
 ):
     worker = await db.get(DomesticWorker, worker_id)
     if not worker:
@@ -248,7 +302,11 @@ async def update_worker(
 
 
 @router.get("/domestic/workers/{worker_id}", response_model=DomesticWorkerOut)
-async def get_worker(worker_id: int, db: AsyncSession = Depends(get_db)):
+async def get_worker(
+    worker_id: int,
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
     worker = await db.get(DomesticWorker, worker_id)
     if not worker or not worker.active:
         raise HTTPException(404, "Worker not found")
@@ -262,12 +320,24 @@ async def demands(
     service_type: str | None = None,
     status: str | None = None,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
 ):
+    if not is_staff(user):
+        if customer_id is not None and customer_id != user.id:
+            raise HTTPException(403, "not your demand")
+        customer_id = user.id
+        store_id = None
     return await service.list_demands(db, customer_id, store_id, service_type, status)
 
 
 @router.post("/domestic/demands", response_model=DomesticDemandOut, status_code=201)
-async def create_demand(data: DomesticDemandCreate, db: AsyncSession = Depends(get_db)):
+async def create_demand(
+    data: DomesticDemandCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
+):
+    if not is_staff(user) and data.customer_id != user.id:
+        raise HTTPException(403, "not your demand")
     try:
         return await service.create_demand(db, data)
     except ValueError as exc:
@@ -281,10 +351,12 @@ async def upload_demand_media(
     duration: int | None = Form(None),
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
 ):
     demand = await db.get(DomesticDemand, demand_id)
     if not demand:
         raise HTTPException(404, "Demand not found")
+    require_staff_or_self(demand.customer_id, user)
     if media_type not in ("audio", "image"):
         raise HTTPException(400, "Only audio and image are supported")
     content = await file.read()
@@ -326,16 +398,27 @@ async def upload_demand_media(
 
 @router.patch("/domestic/demands/{demand_id}", response_model=DomesticDemandOut)
 async def update_demand(
-    demand_id: int, data: DomesticDemandUpdate, db: AsyncSession = Depends(get_db)
+    demand_id: int,
+    data: DomesticDemandUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
 ):
     demand = await db.get(DomesticDemand, demand_id)
     if not demand:
         raise HTTPException(404, "Demand not found")
+    require_staff_or_self(demand.customer_id, user)
     return await service.update_demand(db, demand, data)
 
 
 @router.get("/domestic/demands/{demand_id}/candidates", response_model=list[CandidateOut])
-async def candidates(demand_id: int, db: AsyncSession = Depends(get_db)):
+async def candidates(
+    demand_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
+):
+    demand = await db.get(DomesticDemand, demand_id)
+    if demand:
+        require_staff_or_self(demand.customer_id, user)
     rows = await db.execute(
         select(DomesticCandidate)
         .where(DomesticCandidate.demand_id == demand_id)
@@ -346,7 +429,10 @@ async def candidates(demand_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.post("/domestic/demands/{demand_id}/candidates", response_model=CandidateOut)
 async def add_candidate(
-    demand_id: int, data: CandidateCreate, db: AsyncSession = Depends(get_db)
+    demand_id: int,
+    data: CandidateCreate,
+    db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
 ):
     demand = await db.get(DomesticDemand, demand_id)
     if not demand:
@@ -359,7 +445,10 @@ async def add_candidate(
 
 @router.patch("/domestic/candidates/{candidate_id}", response_model=CandidateOut)
 async def update_candidate(
-    candidate_id: int, data: CandidateUpdate, db: AsyncSession = Depends(get_db)
+    candidate_id: int,
+    data: CandidateUpdate,
+    db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
 ):
     candidate = await db.get(DomesticCandidate, candidate_id)
     if not candidate:
@@ -369,7 +458,10 @@ async def update_candidate(
 
 @router.post("/domestic/demands/{demand_id}/contract", response_model=ContractOut)
 async def create_contract(
-    demand_id: int, data: ContractCreate, db: AsyncSession = Depends(get_db)
+    demand_id: int,
+    data: ContractCreate,
+    db: AsyncSession = Depends(get_db),
+    _staff: User = Depends(require_staff),
 ):
     demand = await db.get(DomesticDemand, demand_id)
     if not demand:
@@ -386,7 +478,13 @@ async def contracts(
     store_id: int | None = None,
     status: str | None = None,
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
 ):
+    if not is_staff(user):
+        if customer_id is not None and customer_id != user.id:
+            raise HTTPException(403, "not your contract")
+        customer_id = user.id
+        store_id = None
     stmt = select(DomesticContract)
     if customer_id:
         stmt = stmt.where(DomesticContract.customer_id == customer_id)
@@ -399,7 +497,14 @@ async def contracts(
 
 
 @router.get("/domestic/contracts/{contract_id}/stages", response_model=list[PaymentStageOut])
-async def contract_stages(contract_id: int, db: AsyncSession = Depends(get_db)):
+async def contract_stages(
+    contract_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
+):
+    contract = await db.get(DomesticContract, contract_id)
+    if contract:
+        require_staff_or_self(contract.customer_id, user)
     rows = await db.execute(
         select(DomesticPaymentStage)
         .where(DomesticPaymentStage.contract_id == contract_id)
@@ -410,8 +515,13 @@ async def contract_stages(contract_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.post("/domestic/stages/{stage_id}/payment", response_model=PayCreateResponse)
 async def pay_stage(
-    stage_id: int, data: StagePaymentRequest, db: AsyncSession = Depends(get_db)
+    stage_id: int,
+    data: StagePaymentRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
 ):
+    if not is_staff(user) and data.user_id != user.id:
+        raise HTTPException(403, "cannot pay for another user")
     stage = await db.get(DomesticPaymentStage, stage_id)
     if not stage or stage.status == "paid":
         raise HTTPException(400, "Payment stage is unavailable")
@@ -444,7 +554,10 @@ async def pay_stage(
 
 @router.post("/domestic/contracts/{contract_id}/action", response_model=ContractOut)
 async def contract_action(
-    contract_id: int, data: ContractActionRequest, db: AsyncSession = Depends(get_db)
+    contract_id: int,
+    data: ContractActionRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),  # 2026-10-05
 ):
     contract = await db.get(DomesticContract, contract_id)
     if not contract:

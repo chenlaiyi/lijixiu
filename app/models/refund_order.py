@@ -3,10 +3,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Float, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, Float, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class RefundStatus(str, enum.Enum):
@@ -28,7 +28,7 @@ class RefundOrder(Base):
     amount: Mapped[float] = mapped_column(Float)
     reason: Mapped[str | None] = mapped_column(String(100), nullable=True)
     status: Mapped[RefundStatus] = mapped_column(
-        Enum(RefundStatus), default=RefundStatus.PROCESSING, index=True
+        enum_column(RefundStatus), default=RefundStatus.PROCESSING, index=True
     )
     out_refund_no: Mapped[str | None] = mapped_column(
         String(64), nullable=True, unique=True, index=True

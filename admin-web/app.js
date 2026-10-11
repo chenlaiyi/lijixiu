@@ -2,10 +2,12 @@ const state = {
   view: "overview",
   cache: {},
   selectedServiceAreas: new Set(),
+  // 2026-10-07 multi-role:角色字典来自后端 /api/v1/users/roles/options
+  roleOptions: null,
   titles: {
     overview: ["概览", "平台运行和关键业务指标"],
     orders: ["订单", "派单、改价、状态流转和服务审核"],
-    users: ["用户", "客户、师傅账号和推广经理标记"],
+    users: ["用户", "客户/师傅账号、多角色配置和推广经理标记"],
     repairers: ["师傅", "师傅资料、接单状态和区域"],
     stores: ["门店", "服务门店、负责人和默认接单师傅"],
     regions: ["区域", "城市/区域层级和负责人"],
@@ -80,6 +82,55 @@ const roleText = {
   admin: "管理员"
 };
 
+// 2026-10-07 multi-role:业务角色字典。运行时会用 /api/v1/users/roles/options
+// 覆盖(后端是唯一真相),这里的兜底值只保证 UI 在接口异常时还能显示中文。
+const businessRoleText = {
+  customer: "客户",
+  repairer: "师傅",
+  store_manager: "店长",
+  city_manager: "城市经理",
+  promotion_manager: "业务",
+  second_receiver: "兜底",
+  tech_support: "技术支持",
+  finance: "财务",
+  platform_admin: "平台管理员"
+};
+
+const businessRoleOrder = [
+  "store_manager",
+  "city_manager",
+  "platform_admin",
+  "tech_support",
+  "finance",
+  "second_receiver",
+  "repairer",
+  "promotion_manager",
+  "customer"
+];
+
+function businessRoleLabel(value) {
+  return businessRoleText[value] || value || "-";
+}
+
+function businessRoleOptions() {
+  return businessRoleOrder.map((value) => ({ value, label: businessRoleLabel(value) }));
+}
+
+/** 一个账号拥有的全部角色(兼容只有 business_role 的老数据)。 */
+function userBusinessRoles(row) {
+  const roles = Array.isArray(row && row.business_roles) ? row.business_roles.filter(Boolean) : [];
+  if (roles.length) return roles;
+  if (row && row.business_role) return [row.business_role];
+  return [];
+}
+
+function userActiveRole(row) {
+  const active = row && row.active_business_role ? String(row.active_business_role) : "";
+  const roles = userBusinessRoles(row);
+  if (active && roles.includes(active)) return active;
+  return roles.find((item) => item !== "customer") || roles[0] || "";
+}
+
 const els = {
   content: document.querySelector("#content"),
   title: document.querySelector("#view-title"),
@@ -135,20 +186,239 @@ function setLoading(label = "加载中") {
   els.content.innerHTML = `<div class="section"><div class="empty">${label}...</div></div>`;
 }
 
+// ── 2026-10-05:后台登录态 ─────────────────────────────────────────────
+// 之前 admin-web 完全不带 Authorization 头,导致 /api/v1/admin/* 与
+// /api/v1/wallet/* 全部 401,对账告警、提现审核这些功能点开就报错。
+const TOKEN_KEY = "xiulijiu.admin.token";
+const ACTOR_KEY = "xiulijiu.admin.actor";
+let authToken = "";
+let authWarned = false;
+
+function readToken() {
+  try {
+    return window.localStorage.getItem(TOKEN_KEY) || "";
+  } catch (error) {
+    return "";
+  }
+}
+
+function writeToken(token) {
+  authToken = token || "";
+  try {
+    if (authToken) window.localStorage.setItem(TOKEN_KEY, authToken);
+    else window.localStorage.removeItem(TOKEN_KEY);
+  } catch (error) {
+    /* localStorage 不可用时退化为内存态 */
+  }
+  renderAuthActor();
+}
+
+function readActor() {
+  try {
+    const raw = window.localStorage.getItem(ACTOR_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function writeActor(actor) {
+  try {
+    if (actor) window.localStorage.setItem(ACTOR_KEY, JSON.stringify(actor));
+    else window.localStorage.removeItem(ACTOR_KEY);
+  } catch (error) {
+    /* ignore */
+  }
+  renderAuthActor();
+}
+
+function renderAuthActor() {
+  const node = document.querySelector("#auth-actor");
+  const logout = document.querySelector("#logout-btn");
+  if (!node) return;
+  const actor = readActor();
+  if (authToken && actor) {
+    node.textContent = `${actor.name || "已登录"} · ${actor.business_role || "-"}`;
+    node.classList.remove("muted");
+    if (logout) logout.hidden = false;
+  } else if (authToken) {
+    node.textContent = "已登录(未校验)";
+    node.classList.remove("muted");
+    if (logout) logout.hidden = false;
+  } else {
+    node.textContent = "未登录";
+    node.classList.add("muted");
+    if (logout) logout.hidden = true;
+  }
+}
+
+function authHeaders(extra = {}) {
+  const headers = { ...extra };
+  if (authToken) headers.Authorization = `Bearer ${authToken}`;
+  return headers;
+}
+
+function handleUnauthorized() {
+  writeToken("");
+  writeActor(null);
+  if (!authWarned) {
+    authWarned = true;
+    notify("登录已失效,请重新登录");
+  }
+  renderAuthGate();
+}
+
+async function verifyToken(token) {
+  const response = await fetch("/api/v1/auth/me", {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error(`Token 无效或已过期(${response.status})`);
+  return response.json();
+}
+
+function renderAuthGate(message = "") {
+  const logout = document.querySelector("#logout-btn");
+  if (logout) logout.hidden = true;
+  els.content.innerHTML = `
+    <section class="section auth-gate">
+      <div class="section-head">
+        <div class="section-title">
+          <h2>后台登录</h2>
+          <span>用平台管理员账号密码登录</span>
+        </div>
+      </div>
+      <div class="notice ${message ? "notice-warn" : ""}">${escapeHtml(
+        message || "请输入管理后台账号和密码"
+      )}</div>
+      <form class="form-grid" data-form="auth-login" autocomplete="on">
+        <div class="field">
+          <label for="auth-account">账号</label>
+          <input id="auth-account" name="account" type="text" autocomplete="username" placeholder="管理后台账号">
+        </div>
+        <div class="field">
+          <label for="auth-password">密码</label>
+          <input id="auth-password" name="password" type="password" autocomplete="current-password" placeholder="密码">
+        </div>
+        <button class="btn primary" type="submit">登录</button>
+      </form>
+      <details style="margin-top:14px">
+        <summary class="muted" style="cursor:pointer">改用 Token 登录(应急)</summary>
+        <form class="form-grid" data-form="auth-token" style="margin-top:10px">
+          <div class="field wide">
+            <label for="auth-token">平台管理员 Token</label>
+            <textarea id="auth-token" name="token" rows="3" placeholder="粘贴 Bearer token(不含 Bearer 前缀)"></textarea>
+          </div>
+          <button class="btn" type="submit">用 Token 登录</button>
+        </form>
+      </details>
+    </section>
+  `;
+}
+
+async function completeLogin(token, me) {
+  writeToken(token);
+  writeActor({ id: me.id, name: me.name, business_role: me.business_role });
+  authWarned = false;
+  if (me.business_role !== "platform_admin") {
+    notify(`当前角色 ${me.business_role} 非平台管理员,管理接口会返回 403`);
+  } else {
+    notify("登录成功");
+  }
+  await loadView("overview");
+}
+
+async function submitAuthTokenLogin(formEl) {
+  const formData = new FormData(formEl);
+  const token = String(formData.get("token") || "").trim().replace(/^Bearer\s+/i, "");
+  if (!token) {
+    renderAuthGate("请先填写 token");
+    return;
+  }
+  authToken = token;
+  try {
+    const me = await verifyToken(token);
+    await completeLogin(token, me);
+  } catch (error) {
+    authToken = "";
+    renderAuthGate(error.message || "登录失败");
+  }
+}
+
+async function submitAuthLogin(formEl) {
+  const formData = new FormData(formEl);
+  const account = String(formData.get("account") || "").trim();
+  const password = String(formData.get("password") || "");
+  if (!account || !password) {
+    renderAuthGate("请输入账号和密码");
+    return;
+  }
+  authToken = "";
+  try {
+    const response = await fetch("/api/v1/auth/admin-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ account, password })
+    });
+    const text = await response.text();
+    let data = null;
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        data = null;
+      }
+    }
+    if (!response.ok) {
+      const detail = data && (data.detail || data.error);
+      if (response.status === 503) {
+        throw new Error("后台登录未配置(服务器 .env 缺 ADMIN_WEB_ACCOUNT / ADMIN_WEB_PASSWORD)");
+      }
+      throw new Error(typeof detail === "string" ? detail : "账号或密码不正确");
+    }
+    if (!data || !data.token) {
+      throw new Error("登录响应异常");
+    }
+    await completeLogin(data.token, data.user);
+  } catch (error) {
+    authToken = "";
+    renderAuthGate(error.message || "登录失败");
+  }
+}
+
+function logout() {
+  writeToken("");
+  writeActor(null);
+  authWarned = false;
+  renderAuthGate("已退出登录");
+}
+
 async function api(path, options = {}) {
   const init = {
     method: options.method || "GET",
-    headers: { "Content-Type": "application/json" }
+    headers: authHeaders({ "Content-Type": "application/json" })
   };
   if (options.body !== undefined) {
     init.body = JSON.stringify(options.body);
   }
   const response = await fetch(path, init);
   const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
+  let data = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch (error) {
+      data = text;
+    }
+  }
   if (!response.ok) {
+    if (response.status === 401) {
+      handleUnauthorized();
+      throw new Error("登录已失效,请重新登录");
+    }
     const detail = data && (data.detail || data.error);
-    throw new Error(detail || `请求失败 ${response.status}`);
+    throw new Error(
+      typeof detail === "string" ? detail : detail ? JSON.stringify(detail) : `请求失败 ${response.status}`
+    );
   }
   return data;
 }
@@ -230,7 +500,9 @@ async function checkApi() {
 
 async function loadOverview() {
   const [metrics, orders, users, repairers, withdrawals, alerts, stores] = await Promise.all([
-    api("/metrics"),
+    // 2026-10-07:改走 Bearer token 的管理端点。
+    // 原来调 "/metrics",那个路径有 nginx basic auth,浏览器会弹原生账号密码框。
+    api("/api/v1/admin/metrics").catch(() => ({})),
     api("/api/v1/orders?limit=100").catch(() => []),
     api("/api/v1/users").catch(() => []),
     api("/api/v1/repairers").catch(() => []),
@@ -319,10 +591,14 @@ async function loadOrders() {
 
 async function loadUsers() {
   const users = await api("/api/v1/users");
+  state.cache.users = users;
+  if (!state.roleOptions) {
+    state.roleOptions = await api("/api/v1/users/roles/options").catch(() => null);
+  }
   const createForm = form([
     { name: "phone", label: "手机号", placeholder: "13800138000" },
     { name: "name", label: "姓名" },
-    { name: "role", label: "角色", type: "select", options: [
+    { name: "role", label: "账号类型", type: "select", options: [
       { value: "customer", label: "用户" },
       { value: "repairer", label: "师傅" },
       { value: "admin", label: "管理员" }
@@ -333,19 +609,37 @@ async function loadUsers() {
     { label: "ID", key: "id" },
     { label: "手机号", key: "phone" },
     { label: "姓名", key: "name" },
-    { label: "角色", render: (row) => badge(roleText[row.role] || row.role) },
+    { label: "账号类型", render: (row) => badge(roleText[row.role] || row.role) },
+    {
+      label: "业务角色",
+      render: (row) => {
+        const roles = userBusinessRoles(row);
+        if (!roles.length) return "-";
+        const active = userActiveRole(row);
+        const tags = roles
+          .slice()
+          .sort((a, b) => businessRoleOrder.indexOf(a) - businessRoleOrder.indexOf(b))
+          .map((value) => `${businessRoleLabel(value)}${value === active ? "＊" : ""}`)
+          .join(" / ");
+        return `<span title="＊ = 当前身份">${escapeHtml(tags)}</span>`;
+      }
+    },
+    { label: "当前身份", render: (row) => {
+      const active = userActiveRole(row);
+      return active ? badge(businessRoleLabel(active), "ok") : "-";
+    } },
     { label: "推广经理", render: (row) => row.is_promotion_manager ? badge("是", "ok") : "-" },
-    { label: "上级推广", render: (row) => row.promotion_manager_id || "-" },
     { label: "创建时间", render: (row) => fmtDate(row.created_at) },
     {
       label: "操作",
       render: (row) => `<div class="actions">
+        ${actionButton("配置角色", "user-roles", { id: row.id })}
         ${actionButton("改名", "user-name", { id: row.id, name: row.name })}
         ${actionButton(row.is_promotion_manager ? "取消推广" : "设为推广", "user-promo", { id: row.id, active: row.is_promotion_manager ? "1" : "0" })}
       </div>`
     }
   ], users, "暂无用户");
-  els.content.innerHTML = section("用户列表", "新增用户后可继续创建师傅资料", body);
+  els.content.innerHTML = section("用户列表", "「配置角色」可多选:一个账号可同时是店长+师傅+业务", body);
 }
 
 async function loadRepairers() {
@@ -889,6 +1183,76 @@ function showModal(title, html) {
   els.modal.hidden = false;
 }
 
+/**
+ * 2026-10-07 multi-role:一个账号的「关联角色」配置面板。
+ * 勾选即拥有,「当前身份」决定用户进小程序先看到哪个工作台。
+ */
+function openUserRolePicker(userId) {
+  const user = (state.cache.users || []).find((item) => Number(item.id) === Number(userId));
+  if (!user) {
+    notify(`未找到用户 #${userId},请先刷新列表`);
+    return;
+  }
+  const options = state.roleOptions && state.roleOptions.length
+    ? state.roleOptions
+    : businessRoleOptions().map((item) => ({ ...item, staff: false, workbench: item.value !== "customer" }));
+  const owned = userBusinessRoles(user);
+  const active = userActiveRole(user);
+  const checkboxes = options.map((option) => `
+    <label class="role-option">
+      <input type="checkbox" name="role" value="${escapeHtml(option.value)}" ${owned.includes(option.value) ? "checked" : ""}>
+      <span>${escapeHtml(option.label)}</span>
+      <em>${escapeHtml(option.value)}</em>
+    </label>
+  `).join("");
+  const activeOptions = options
+    .map((option) => `<option value="${escapeHtml(option.value)}" ${option.value === active ? "selected" : ""}>${escapeHtml(option.label)}</option>`)
+    .join("");
+  const ownedList = owned.map((value) => `<span class="badge">${escapeHtml(businessRoleLabel(value))}</span>`).join(" ");
+  const historyText = "历史记录在 /api/v1/users/{id}/roles 的 history 字段";
+
+  showModal(`配置角色 · ${user.name || user.phone || `#${userId}`}`, `
+    <div class="role-picker">
+      <p class="muted">当前拥有:${ownedList || "-"}${active ? ` · 当前身份 <strong>${escapeHtml(businessRoleLabel(active))}</strong>` : ""}</p>
+      <form data-role-form="${userId}">
+        <div class="role-option-grid" data-role-checkboxes>${checkboxes}</div>
+        <div class="field">
+          <label for="role-active-select">当前身份(切换工作台)</label>
+          <select id="role-active-select" name="active_business_role">${activeOptions}</select>
+        </div>
+        <div class="field wide">
+          <label for="role-remark">变更备注(写入角色变更记录)</label>
+          <input id="role-remark" name="remark" placeholder="如:兼任门店店长">
+        </div>
+        <div class="role-picker-actions">
+          <button class="btn primary" type="submit">保存角色</button>
+          <button class="btn" type="button" data-action="role-picker-close">取消</button>
+        </div>
+        <p class="muted" style="margin-top:8px">只勾选不保存不会生效;取消勾选会立即收回该角色。${escapeHtml(historyText)}。</p>
+      </form>
+    </div>
+  `);
+}
+
+async function saveUserRoles(formEl) {
+  const userId = formEl.dataset.roleForm;
+  const checked = [...formEl.querySelectorAll("input[name='role']:checked")].map((item) => item.value);
+  if (!checked.length) {
+    notify("至少保留一个角色");
+    return;
+  }
+  const activeValue = formEl.querySelector("select[name='active_business_role']")?.value || "";
+  const remark = formEl.querySelector("input[name='remark']")?.value?.trim() || null;
+  const body = { business_roles: checked, remark };
+  if (activeValue && checked.includes(activeValue)) body.active_business_role = activeValue;
+
+  const result = await api(`/api/v1/users/${userId}/roles`, { method: "PATCH", body });
+  els.modal.hidden = true;
+  notify(`已保存:${(result.business_roles || []).map(businessRoleLabel).join(" / ") || "无"}`);
+  state.roleOptions = null;
+  await loadView("users");
+}
+
 async function handleAction(button) {
   const action = button.dataset.action;
   const id = button.dataset.id;
@@ -980,6 +1344,12 @@ async function handleAction(button) {
       { label: "备注", key: "remark", wrap: true },
       { label: "时间", render: (row) => fmtDate(row.created_at) }
     ], logs, "暂无日志"));
+    return;
+  } else if (action === "user-roles") {
+    openUserRolePicker(id);
+    return;
+  } else if (action === "role-picker-close") {
+    els.modal.hidden = true;
     return;
   } else if (action === "user-name") {
     const name = await promptText("姓名", button.dataset.name);
@@ -1078,6 +1448,9 @@ document.querySelector(".nav").addEventListener("click", (event) => {
 
 document.querySelector("#refresh-btn").addEventListener("click", () => loadView());
 
+const logoutBtn = document.querySelector("#logout-btn");
+if (logoutBtn) logoutBtn.addEventListener("click", logout);
+
 els.content.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-action]");
   if (!button) return;
@@ -1091,6 +1464,15 @@ els.content.addEventListener("click", async (event) => {
 els.content.addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
+    const formName = event.target.dataset.form;
+    if (formName === "auth-login") {
+      await submitAuthLogin(event.target);
+      return;
+    }
+    if (formName === "auth-token") {
+      await submitAuthTokenLogin(event.target);
+      return;
+    }
     await handleForm(event.target);
   } catch (error) {
     notify(error.message || "保存失败");
@@ -1125,6 +1507,18 @@ document.querySelector("#modal-close").addEventListener("click", () => {
 
 els.modal.addEventListener("click", (event) => {
   if (event.target === els.modal) els.modal.hidden = true;
+});
+
+// 2026-10-07 multi-role:角色配置表单在弹窗里,不在 els.content 内,单独监听
+els.modalBody.addEventListener("submit", async (event) => {
+  const formEl = event.target.closest("[data-role-form]");
+  if (!formEl) return;
+  event.preventDefault();
+  try {
+    await saveUserRoles(formEl);
+  } catch (error) {
+    notify(error.message || "保存失败");
+  }
 });
 
 loadWallet = async function loadWalletWechat() {
@@ -1307,4 +1701,22 @@ handleAction = async function handleWechatFinanceAction(button) {
   return previousHandleAction(button);
 };
 
-loadView("overview");
+// 2026-10-05:启动时先建立登录态 —— 没有 token 直接进登录页,
+// 有 token 先 /auth/me 校验,避免用过期 token 猛打 401。
+(async function bootstrap() {
+  authToken = readToken();
+  renderAuthActor();
+  if (!authToken) {
+    renderAuthGate();
+    return;
+  }
+  try {
+    const me = await verifyToken(authToken);
+    writeActor({ id: me.id, name: me.name, business_role: me.business_role });
+    await loadView("overview");
+  } catch (error) {
+    writeToken("");
+    writeActor(null);
+    renderAuthGate(error.message || "登录已失效,请重新登录");
+  }
+})();

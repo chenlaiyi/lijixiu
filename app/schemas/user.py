@@ -12,6 +12,8 @@ class UserCreate(BaseModel):
     name: str = Field(min_length=1, max_length=50)
     role: UserRole = UserRole.CUSTOMER
     business_role: BusinessRole = BusinessRole.CUSTOMER
+    # 2026-10-07 multi-role:可一次建号就带上多个角色;留空则用 business_role。
+    business_roles: list[BusinessRole] | None = None
     avatar: str | None = None
     wechat_openid: str | None = None
     promotion_manager_id: int | None = None
@@ -25,6 +27,8 @@ class UserUpdate(BaseModel):
     promotion_manager_id: int | None = None
     is_promotion_manager: bool | None = None
     business_role: BusinessRole | None = None
+    # 2026-10-07 multi-role:整体替换角色集合(仅平台管理员可写)。
+    business_roles: list[BusinessRole] | None = None
 
 
 class UserOut(BaseModel):
@@ -33,6 +37,8 @@ class UserOut(BaseModel):
     name: str
     role: UserRole
     business_role: str
+    business_roles: list[str] = Field(default_factory=list)
+    active_business_role: str | None = None
     avatar: str | None
     has_wechat_openid: bool = False
     promotion_manager_id: int | None
@@ -48,6 +54,59 @@ class UserOut(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# 2026-10-07 multi-role:角色管理接口
+class RoleAssignmentRequest(BaseModel):
+    """整体替换某个账号拥有的业务角色集合。"""
+
+    business_roles: list[BusinessRole] = Field(min_length=1)
+    active_business_role: BusinessRole | None = None
+    remark: str | None = Field(None, max_length=200)
+
+
+class SwitchRoleRequest(BaseModel):
+    """用户自己切换当前身份,只能选自己拥有的角色。"""
+
+    business_role: BusinessRole
+    remark: str | None = Field(None, max_length=200)
+
+
+class RoleGrantOut(BaseModel):
+    id: int
+    business_role: str
+    role_label: str
+    action: str
+    source: str
+    operator_id: int | None = None
+    operator_name: str | None = None
+    remark: str | None = None
+    created_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class RoleOptionOut(BaseModel):
+    value: str
+    label: str
+    staff: bool = False
+    workbench: bool = False
+
+
+class UserRolesOut(BaseModel):
+    """GET /api/v1/users/{id}/roles —— 小程序「我的」页与后台都用它渲染。"""
+
+    user_id: int
+    phone: str
+    name: str
+    business_roles: list[str]
+    active_business_role: str
+    active_role_label: str
+    business_role: str
+    role_labels: list[str]
+    workbench_roles: list[str]
+    can_switch: bool
+    history: list[RoleGrantOut] = Field(default_factory=list)
 
 
 # 2026-08-09: 协议同意版本管理

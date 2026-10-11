@@ -1,12 +1,12 @@
-﻿"""User model."""
+"""User model."""
 
 import enum
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, func
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from .base import Base, enum_column
 
 
 class UserRole(str, enum.Enum):
@@ -27,16 +27,101 @@ class BusinessRole(str, enum.Enum):
     PLATFORM_ADMIN = "platform_admin"
 
 
+# 2026-10-07 multi-role: the 9 business roles a single account may hold at once.
+# Stored as business_role *values* (snake_case strings) inside User.business_roles.
+ALL_BUSINESS_ROLES: tuple[str, ...] = tuple(item.value for item in BusinessRole)
+
+# Role -> legacy UserRole. Used to keep `users.role` meaningful (token payload,
+# require_roles fallbacks) for accounts that hold more than one business role.
+USER_ROLE_BY_BUSINESS_ROLE: dict[str, "UserRole"] = {
+    BusinessRole.PLATFORM_ADMIN.value: UserRole.ADMIN,
+    BusinessRole.STORE_MANAGER.value: UserRole.ADMIN,
+    BusinessRole.CITY_MANAGER.value: UserRole.ADMIN,
+    BusinessRole.TECH_SUPPORT.value: UserRole.ADMIN,
+    BusinessRole.FINANCE.value: UserRole.ADMIN,
+    BusinessRole.REPAIRER.value: UserRole.REPAIRER,
+    BusinessRole.SECOND_RECEIVER.value: UserRole.REPAIRER,
+    BusinessRole.PROMOTION_MANAGER.value: UserRole.CUSTOMER,
+    BusinessRole.CUSTOMER.value: UserRole.CUSTOMER,
+}
+
+
+def normalize_business_roles(*values: object) -> list[str]:
+    """Coerce arbitrary input into a deduped, ordered list of valid roles.
+
+    Accepts BusinessRole members, "store_manager" style values and iterables of
+    either. Unknown values are dropped; the result preserves first-seen order so
+    the UI shows roles in the order the admin ticked them.
+    """
+    flat: list[object] = []
+    for value in values:
+        if value is None:
+            continue
+        if isinstance(value, (list, tuple, set, frozenset)):
+            flat.extend(value)
+        else:
+            flat.append(value)
+
+    result: list[str] = []
+    for item in flat:
+        if isinstance(item, BusinessRole):
+            candidate = item.value
+        else:
+            candidate = str(item or "").strip().lower()
+        if candidate in ALL_BUSINESS_ROLES and candidate not in result:
+            result.append(candidate)
+    return result
+
+
+def required_user_role(roles: list[str]) -> "UserRole":
+    """Pick the legacy UserRole that best represents this role set."""
+    for value in ALL_BUSINESS_ROLES:
+        if value in roles:
+            mapped = USER_ROLE_BY_BUSINESS_ROLE.get(value)
+            if mapped is not None:
+                return mapped
+    return UserRole.CUSTOMER
+
+
+class UserRoleGrant(Base):
+    """Append-only audit log of business-role assignment changes.
+
+    2026-10-07 multi-role: `users.business_roles` holds the current set; this
+    table answers "who gave this account that role, and when".
+    """
+
+    __tablename__ = "user_role_grants"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    business_role: Mapped[str] = mapped_column(String(30), index=True)
+    action: Mapped[str] = mapped_column(String(20), default="grant")  # grant/revoke/set
+    operator_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    operator_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    source: Mapped[str] = mapped_column(String(30), default="admin")  # admin/login/system
+    remark: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+
+
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     phone: Mapped[str] = mapped_column(String(20), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(50))
-    role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.CUSTOMER)
+    role: Mapped[UserRole] = mapped_column(enum_column(UserRole), default=UserRole.CUSTOMER)
+    # Legacy single role. Kept in sync with business_roles[0] so old readers
+    # (admin-web lists, profit lookup, historic scripts) keep working.
     business_role: Mapped[str] = mapped_column(
         String(30), default=BusinessRole.CUSTOMER.value, index=True
     )
+    # 2026-10-07 multi-role: every business role this account holds.
+    business_roles: Mapped[list[str]] = mapped_column(JSON, default=list)
+    # Which of the held roles the account is currently acting as. Always one of
+    # business_roles; the mini-program "我的" page lets the user switch it.
+    active_business_role: Mapped[str | None] = mapped_column(String(30), nullable=True)
     avatar: Mapped[str | None] = mapped_column(String(500), nullable=True)
     wechat_openid: Mapped[str | None] = mapped_column(
         String(128), nullable=True, unique=True, index=True

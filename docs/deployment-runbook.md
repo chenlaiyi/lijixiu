@@ -13,8 +13,8 @@
             ┌───────────┼───────────┐
             ▼                       ▼
    ┌─────────────────┐    ┌────────────────┐
-   │  backend:api    │    │  admin-web/    │  (静态)
-   │  (4 uvicorn     │    │  h5/           │
+   │  backend:api    │    │  /admin/       │  (静态 + basic auth)
+   │  (4 uvicorn     │    │  /h5/          │
    │   workers)      │    └────────────────┘
    └────────┬────────┘
             │
@@ -23,6 +23,9 @@
    │  (3306 内网)    │
    └─────────────────┘
 ```
+
+> `/admin/` 的 basic auth 只保护静态资源;管理接口还需要
+> `Authorization: Bearer <平台管理员 token>`(后台首屏会要求粘贴)。
 
 `prometheus + alertmanager + grafana` 可选,用 `docker compose --profile monitoring up -d` 启。
 
@@ -148,7 +151,7 @@ ENV=production docker compose up -d --build
 - [ ] **2.2** `curl https://x.iddg.cn/health` — `{"status":"ok"}`
 - [ ] **2.3** `docker compose exec api alembic upgrade head` — 跑迁移
 - [ ] **2.4** `docker compose exec api python scripts/seed_demo_data.py https://x.iddg.cn` — 种 demo 数据
-- [ ] **2.5** 浏览器开 `https://x.iddg.cn/admin-web/` — basic auth 弹窗,登录后看到 dashboard
+- [ ] **2.5** 浏览器开 `https://x.iddg.cn/admin/` — 先 basic auth 弹窗,再在后台登录框粘贴平台管理员 token,能看到 dashboard
 - [ ] **2.6** 跑对账:管理员 token → `POST /api/v1/admin/reconcile/run` — 应该全 OK
 - [ ] **2.7** `curl https://x.iddg.cn/metrics/prom` — Prometheus 格式输出
 - [ ] **2.8** 浏览器开 `https://x.iddg.cn/docs` — 应该要 basic auth(不能裸访问)
@@ -161,6 +164,183 @@ ENV=production docker compose up -d --build
 - [ ] **2.13** 走一笔 0.01 元真实支付:小程序下单 → 支付 → 查 `pay_orders.out_trade_no` → 看微信商户平台回执
 - [ ] **2.14** 走一笔 0.01 元真实退款
 - [ ] **2.15** 确认每日 03:00 备份 cron 在跑:`docker compose --profile backup ps`
+
+---
+
+## 2.13 安全收口部署清单(2026-10-05,必做)
+
+本次修了线上 3 个 P0 漏洞(调试短信泄露 / 71 个写接口零鉴权 / 可自提权)与 2 个 P1 缺陷,
+**线上目前仍在跑旧代码,漏洞未修补**。
+
+> ### ⚠️ 先纠正一处文档与线上的偏差
+>
+> 下面原先写的 `/opt/xiulijiu` + `docker compose` **与线上实际不符**。
+> 从生产 `GET https://x.iddg.cn/health/env` 读到的真实路径是:
+>
+> ```
+> /www/wwwroot/xiulijiu_api/releases/20260818003556/.env
+> ```
+>
+> 即**宝塔风格的 `releases/<时间戳>/` + 软链发布**,不是 docker。
+> 在确认线上进程守护方式(systemd / supervisor / 宝塔 Python 项目管理器)之前,
+> 不要照下面的 docker 命令执行。
+>
+> 另外:本机 `~/.ssh` 下没有可用私钥(只有 known_hosts),
+> 仓库与 `.env` 里也没有密码,`root` / `ubuntu` / `www` 三个账号均返回
+> `Permission denied (publickey,password)` —— **执行部署需要先拿到 SSH 凭据**。
+
+### 打包(在开发机执行,已完成)
+
+```powershell
+python scripts/pack_release.py
+# → dist/release-<UTC时间戳>.tgz(约 0.6 MB,131 个文件)
+# 默认会把包解到临时目录做「import app.main + init_db」自检
+```
+
+包内含 `app/ h5/ admin-web/ migrations/ scripts/ alembic.ini requirements.txt`,
+**不含** `.env` / `cert/` / `xiulijiu.db` / `uploads/`(这些留在服务器上)。
+
+### 部署(宝塔式发布,已于 2026-10-06 实际执行)
+
+> **线上真实结构(2026-10-06 探测确认,替换掉下面旧的 docker 描述):**
+>
+> | 项 | 值 |
+> |---|---|
+> | 主机 | `8.134.99.53`(CentOS 7,腾讯云) |
+> | 应用根 | `/www/wwwroot/xiulijiu_api` |
+> | 发布 | `releases/<YYYYmmddHHMMSS>/` + 软链 `current -> releases/...` |
+> | 守护 | **systemd 单元 `xiulijiu-api.service`**(不是宝塔 Python 项目管理器页面) |
+> | 启动 | `User=www` · `WorkingDirectory=.../current` · `venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8112` |
+> | 配置 | `shared/.env`(`current/.env` 是指向它的符号链接,发布时**不要覆盖**) |
+> | 上传目录 | `shared/uploads`(`current/uploads` 同为符号链接) |
+> | 数据库 | `shared/xiulijiu.db`(SQLite) |
+> | 虚拟环境 | `/www/wwwroot/xiulijiu_api/venv`(python 3.11.15,跨 release 复用) |
+>
+> 2026-10-06 已按此结构部署两次:
+> `current -> releases/20261006075442`(安全收口)、
+> `releases/20261006075802`(修掉师傅端工单列表 403)。
+> 备份在 `/www/wwwroot/xiulijiu_api/backups/pre-hardening-<时间戳>/`。
+
+部署脚本:仓库内 `scripts/prod_deploy.py`(paramiko 密码登录,做备份/上传/切软链/重启/冒烟):
+
+```bash
+# 密码走环境变量(不要写进命令行,避免进 shell 历史)
+export XJL_SSH_PASSWORD='...'
+python scripts/prod_deploy.py probe      # 只读探测
+python scripts/prod_deploy.py deploy --yes
+python scripts/prod_deploy.py verify
+```
+
+等价的纯手工命令:
+
+```bash
+ssh root@8.134.99.53
+APP=/www/wwwroot/xiulijiu_api
+STAMP=$(date +%Y%m%d%H%M%S)
+
+# 1) 备份
+mkdir -p $APP/backups/pre-deploy-$STAMP
+cp -a $APP/shared/.env $APP/backups/pre-deploy-$STAMP/env.bak
+cp -a $APP/shared/xiulijiu.db $APP/backups/pre-deploy-$STAMP/
+
+# 2) 关掉调试短信通道(生产必须 false)
+grep -q '^ALLOW_SMS_DEBUG_ENDPOINT=' $APP/shared/.env \
+  && sed -i 's/^ALLOW_SMS_DEBUG_ENDPOINT=.*/ALLOW_SMS_DEBUG_ENDPOINT=false/' $APP/shared/.env \
+  || echo 'ALLOW_SMS_DEBUG_ENDPOINT=false' >> $APP/shared/.env
+
+# 3) 解包新 release(在开发机执行 tar 上传,或服务器上直接解包)
+mkdir -p $APP/releases/$STAMP
+tar -xzf release-<时间戳>.tgz -C $APP/releases/$STAMP
+ln -sfn $APP/shared/.env $APP/releases/$STAMP/.env
+ln -sfn $APP/shared/uploads $APP/releases/$STAMP/uploads
+chown -R www:www $APP/releases/$STAMP
+
+# 4) 切换 + 重启
+ln -sfn $APP/releases/$STAMP $APP/current
+systemctl restart xiulijiu-api
+sleep 6 && systemctl is-active xiulijiu-api
+curl -fsS http://127.0.0.1:8112/health
+```
+
+### 旧的 docker 流程(线上未使用,仅存档)
+
+```bash
+ssh root@8.134.99.53
+cd /opt/xiulijiu
+git pull
+ENV=production ./scripts/deploy.sh
+```
+
+部署后逐项验收:
+
+- [x] **A1** `/health/env` 无 SMS 告警 —— 2026-10-06 通过
+- [x] **A2** `POST /api/v1/auth/sms/request` 返回 **503** 且无 `debug_code` —— 通过
+- [x] **A3** 无 token 访问 `/api/v1/users`、`/orders`、`/business/wages`、
+      `/business/domestic/demands`、`/support/tickets`、`/service-areas`、
+      `/finance/profit/order/1`、`/payment/list`、`/admin/alerts`、`/wallet/withdrawals`
+      全部 **401**(10/10)—— 通过
+- [x] **A4** 无 token `PATCH /api/v1/users/4` 返回 **401**;客户改 `business_role` 返回 403 —— 通过
+- [x] **A5** `GET /api/v1/finance/profit/order/1`(admin)返回 **200**(此前 500)—— 通过
+- [x] **A6** `/metrics` 的 `orders_completed=20`、`orders_pending=5` 与实际一致(此前恒为 0)—— 通过
+- [x] **A7** 管理接口正向可用:用户名单 / 提现列表 / 对账告警 / 对账日志 / 工资汇总 均 200 —— 通过
+- [x] **A8** 小程序各角色路径:客户订单+详情+日志+地址+保修+家政+服务包+钱包、
+      师傅工单列表(assigned/dispatched/servicing/bill_submitted)+收益+钱包、
+      店长订单+工资单 —— 全部 200(23/23)—— 通过
+- [ ] **A9** `node scripts/security_audit.js https://x.iddg.cn` 复跑安全头审计(安全头部分仍待做)
+- [ ] **A10** `python scripts/set_review_account.py` 生成生产审核密码
+      (生产 `.env` 目前只有 `WECHAT_REVIEW_ACCOUNT=reviewer`,`WECHAT_REVIEW_PASSWORD` 为空
+
+### 旧版本回滚
+
+```bash
+# 切回上一个 release 即可(数据层无需回滚,本轮无迁移)
+ln -sfn $APP/releases/20260818003556 $APP/current
+systemctl restart xiulijiu-api
+```
+
+---
+
+## 2.13(旧)安全收口部署清单 —— 已执行,保留作参考
+
+本次修了线上 3 个 P0 漏洞(调试短信泄露 / 71 个写接口零鉴权 / 可自提权)与 2 个 P1 缺陷,
+**已于 2026-10-06 部署并验收**。
+
+打包(在开发机执行):
+
+```powershell
+python scripts/pack_release.py
+# → dist/release-<UTC时间戳>.tgz(约 0.6 MB,133 个文件)
+# 默认会把包解到临时目录做「import app.main + init_db」自检
+```
+
+包内含 `app/ h5/ admin-web/ migrations/ scripts/ alembic.ini requirements.txt`,
+**不含** `.env` / `cert/` / `xiulijiu.db` / `uploads/`(这些留在服务器上)。
+
+以下为原始草稿(已被上面的实测流程取代):
+
+- [ ] **A1** `curl -s https://x.iddg.cn/health/env | grep -o '"SMS[^"]*"'` — 不应出现 SMS 相关告警
+- [ ] **A2** `curl -s -X POST https://x.iddg.cn/api/v1/auth/sms/request -H 'Content-Type: application/json' -d '{"phone":"18800000001"}'`
+      — 必须 **503**,且响应里**不能**出现 `debug_code`
+- [ ] **A3** 无 token 访问敏感接口必须 401(逐个确认):
+      `/api/v1/users`、`/api/v1/orders`、`/api/v1/business/wages`、
+      `/api/v1/business/domestic/demands`、`/api/v1/support/tickets`、
+      `/api/v1/service-areas`、`/api/v1/finance/profit/order/1`、`/api/v1/payment/list`
+- [ ] **A4** 不带 Authorization 的 `PATCH /api/v1/users/<自己id>` 必须 401;
+      带普通客户 token 改 `business_role` 必须 403
+- [ ] **A5** `GET /api/v1/finance/profit/order/1`(admin token)必须 **200**(此前 500)
+- [ ] **A6** `GET /metrics` 的 `orders_completed` / `orders_pending` 必须与
+      `GET /api/v1/orders?status=completed`、`?status=dispatched` 的实际条数一致
+      (修复前线上恒为 0;修复后线上应为 `completed=20`、`pending=5`)
+- [ ] **A7** 打开 `https://x.iddg.cn/admin/`,basic auth 后应看到**后台登录页**;
+      粘贴平台管理员 token 后能看到 15 个视图,「提现」与「对账告警」不再报 401
+- [ ] **A8** 小程序回归:客户登录 → 报修 → 订单列表/详情 → 支付;师傅登录 → 工单列表 → 接单
+      (本轮改了订单列表的数据范围,非 staff 只能看到自己的订单)
+- [ ] **A9** `node scripts/security_audit.js https://x.iddg.cn` 复跑安全头审计
+- [ ] **A10** 提审前用 `python scripts/set_review_account.py` 生成审核账号密码
+      (生产 `.env` 的 `WECHAT_REVIEW_PASSWORD` 目前为空,`/api/v1/auth/review-login` 返回 503)
+
+回滚:本次改动只涉及代码与一个新增环境变量,回滚直接 `git checkout <prev-commit> && ENV=production ./scripts/deploy.sh`;
+数据层没有迁移,无需 `alembic downgrade`。
 
 ---
 

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "upload": "node upload.js"
+    "upload": "node upload.js",
+    "postinstall": "python scripts/patch_miniprogram_ci.py"
   },
   "devDependencies": {
     "miniprogram-ci": "^2.1.31"

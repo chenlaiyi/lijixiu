@@ -5,6 +5,7 @@ on:
     branches: [main, develop]
     paths:
       - 'miniprogram/**'
+      - 'tests/test_multi_role_miniprogram.js'
       - 'package.json'
       - 'package-lock.json'
       - 'upload.js'
@@ -21,18 +22,21 @@ on:
         required: false
         type: string
         default: 'CI build'
-      env_version:
-        description: 'WeChat env version'
-        required: true
-        type: choice
-        default: 'trial'
-        options:
-          - trial
-          - release
-          - develop
 
 # 必需 secret:
 #   - WX_PRIVATE_KEY: miniprogram-ci 私钥(完整 PEM 内容)
+#
+# 注意:miniprogram-ci 的 ci.upload 只能产出「开发版本」。
+# 这里曾经有个 env_version(trial/release/develop)输入,但 ci.upload 的
+# 参数表里根本没有 envVersion 字段(miniprogram-ci 2.1.31 实测:整个包的
+# dist/@types/ci/upload.d.ts 与 preview.d.ts 都没有 envVersion),upload.js
+# 也从未读取它 —— 选了 trial 也照样只是开发版本,却让人误以为体验版已发布,
+# 已于 2026-10-07 移除。
+#
+# 体验版仍需人工两步(微信未开放接口,开发者工具 CLI 也无版本管理命令):
+#   1. 管理 → 版本管理 → 开发版本 → 选中刚上传的版本 → 选为体验版
+#   2. 同一页面「提交审核」
+# 详见 docs/wechat-review-guide.md / docs/wechat-devtools-cli.md。
 
 jobs:
   upload:
@@ -49,6 +53,13 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+
+      - name: Role utility tests
+        # 2026-10-07:多角色取值/入口/老缓存兼容,纯 JS 无外部依赖
+        run: |
+          node tests/test_multi_role_miniprogram.js
+          node --check miniprogram/utils/role.js
+          echo "✅ 多角色工具用例通过"
 
       - name: Write miniprogram-ci key
         run: |
@@ -85,11 +96,11 @@ jobs:
           APPID: wx2273201e59e280bc
           VERSION: ${{ github.event.inputs.version }}
           DESC: ${{ github.event.inputs.desc }}
-          ENV_VERSION: ${{ github.event.inputs.env_version }}
         run: |
           node upload.js
-          echo "✅ 上传完成: $APPID $VERSION ($ENV_VERSION)"
+          echo "✅ 上传完成: $APPID $VERSION"
           echo "📦 描述: $DESC"
+          echo "::notice title=仍是开发版本::ci.upload 只能产出开发版本;体验版需人工到公众平台「管理 → 版本管理 → 开发版本 → 选为体验版」,再提交审核。"
 
       - name: Cleanup key
         if: always()

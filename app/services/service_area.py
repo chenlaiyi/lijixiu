@@ -15,6 +15,7 @@ from ..models.service_area import (
 from ..models.store import Store, StoreStatus
 from ..models.user import BusinessRole, User
 from ..schemas.service_area import BulkAssignmentRequest, BulkClearRequest
+from . import role as role_service
 
 _DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "xiamen_service_areas.json"
 
@@ -225,7 +226,7 @@ async def _validate_assignment_targets(db: AsyncSession, data: BulkAssignmentReq
             BusinessRole.CITY_MANAGER.value,
             BusinessRole.PLATFORM_ADMIN.value,
         }
-        if not manager or manager.business_role not in allowed:
+        if not role_service.has_any_role(manager, allowed):
             raise ValueError("负责人必须是店长、城市经理或平台管理员")
 
 
