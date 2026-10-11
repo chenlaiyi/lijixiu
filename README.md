@@ -2,10 +2,13 @@
 
 上门维修 O2O 平台 — **单小程序多角色** + H5 + 管理后台,后端 FastAPI。
 
-> 当前阶段:**安全收口已完成,待部署**(2026-10-05)。
-> 本轮修掉了线上三个 P0 鉴权漏洞(调试短信泄露、71 个写接口零鉴权、可自提权),
-> 并修复了分润 500 与 `/metrics` 口径错误。详见 [docs/security-hardening-2026-10.md](docs/security-hardening-2026-10.md)
-> 与 [docs/progress.md](docs/progress.md)。
+> 当前阶段:**多角色已开发完成、待部署**(2026-10-07)。
+> 上一轮安全收口(调试短信泄露、71 个写接口零鉴权、可自提权三个 P0,以及分润 500
+> 与 `/metrics` 口径)已修复、**已于 2026-10-06 部署到线上**并完成 A1–A8 验收;
+> 2026-10-07 的「一个账号多角色」尚未上线。详见
+> [docs/security-hardening-2026-10.md](docs/security-hardening-2026-10.md)、
+> [docs/multi-role-2026-10.md](docs/multi-role-2026-10.md) 与
+> [docs/progress.md](docs/progress.md)。
 
 ---
 
@@ -21,7 +24,11 @@
 3. **所有业务接口需要登录**
    全量用户/订单/支付/工资/家政/客服/服务区域等接口已加鉴权,客户端必须带 token;
    客户只能看到自己的数据,内部数据仅平台内部角色可见。
-4. 本次改动**尚未部署**。部署清单见 [docs/deployment-runbook.md](docs/deployment-runbook.md) § 2.13。
+4. 这几条**已于 2026-10-06 部署到线上**(releases `20261006075442` / `20261006075802`),
+   验收项 A1–A8 全部通过;仍待办:A9 安全头审计复跑、A10 生产审核账号密码。
+   部署记录见 [docs/deployment-runbook.md](docs/deployment-runbook.md) § 2.13。
+5. **2026-10-07 的多角色改动尚未部署**:线上实测 `GET /api/v1/users/roles/options`
+   仍返回 404(线上进程 uptime 也早于该轮开发),部署步骤同上。
 
 ---
 
@@ -264,11 +271,13 @@ npm run upload
 ## 当前进度与阻塞
 
 ✅ 已完成:后端 API 体系 / 31 个小程序页面 / 微信支付 V3 / H5+Admin 挂载 / 全链路测试 / demo 种子
-✅ 2026-10-05:鉴权全量收口 + 枚举口径修复 + admin-web 登录态(见下表)
-🔧 待办:**把本轮修复部署到线上**(`https://x.iddg.cn` 仍在跑旧代码,漏洞未修补)
+✅ 2026-10-05:~10-06:鉴权全量收口 + 枚举口径修复 + admin-web 登录态,**已部署上线并验收 A1–A8**
+✅ 2026-10-07:一个账号多角色(拥有并集放行 + 当前身份切换),后端/小程序/后台/文档齐备
+🔧 待办:**把 2026-10-07 的多角色改动部署到线上**(线上实测 `/users/roles/options` 仍 404)
+📦 仓库:两轮改动已提交为 `a0a992e`(安全收口)与 `4a3330a`(多角色),tag 见 `git tag`
 🚧 阻塞:**设计稿对位验证**(P1)— 详见 [docs/design-qa.md](docs/design-qa.md),需微信开发者工具登录后截图
 
-### 本轮验证结果(2026-10-05)
+### 本轮验证结果(2026-10-05 ~ 10-07,2026-10-12 在提交快照上复跑)
 
 | 验证项 | 结果 |
 |---|---|
@@ -278,13 +287,17 @@ npm run upload
 | 管理后台端到端冒烟(登录态 + 15 视图 + 退出) | 23/23 通过 ✅ |
 | 分润接口(历史枚举名) | 500 → 200 ✅ |
 | `/metrics` 口径(枚举大小写) | 已对齐实际数据 ✅ |
-| 回归测试 | 125/125 通过(105 独立用例 + 18 pytest + 2) ✅ |
+| 回归测试(test_auth_admin / order_authz / role_boundaries / reconcile_balance) | 79/79 通过 ✅ |
+| 多角色(接口 + 老库迁移 + 小程序) | 37 + 29 + 12 通过 ✅ |
+| pytest(env 校验 + health) | 25/25 通过 ✅ |
+| 线上版本抽查(2026-10-12) | `/api/v1/users` 401 · `/finance/profit/order/1` 401 · `/users/roles/options` **404** |
 
 ---
 
 ## 文档索引
 
-- [docs/security-hardening-2026-10.md](docs/security-hardening-2026-10.md) — **本轮安全收口记录(必读)**
+- [docs/security-hardening-2026-10.md](docs/security-hardening-2026-10.md) — 安全收口记录(2026-10-05,已部署)
+- [docs/multi-role-2026-10.md](docs/multi-role-2026-10.md) — 一个账号多角色(2026-10-07,待部署)
 - [docs/progress.md](docs/progress.md) — 阶段性开发进度
 - [docs/deployment-runbook.md](docs/deployment-runbook.md) — 部署手册(含本轮部署清单)
 - [docs/wechat-review-guide.md](docs/wechat-review-guide.md) — 微信小程序审核说明
@@ -297,6 +310,11 @@ npm run upload
 - [docs/logging.md](docs/logging.md) — 结构化日志接入
 - [docs/legal/README.md](docs/legal/README.md) — 法务材料接入(用户协议 / 隐私政策 / ICP 备案)
 - [docs/production-readiness.md](docs/production-readiness.md) — 商用就绪体检报告
+- [docs/region-architecture-2026-10.md](docs/region-architecture-2026-10.md) — 区域架构与数据重置(2026-10-07)
+- [docs/admin-login-2026-10.md](docs/admin-login-2026-10.md) — 管理后台账号密码登录(2026-10-07)
+- [docs/credential-rotation-2026-10.md](docs/credential-rotation-2026-10.md) — 生产凭据轮换记录(2026-10-07)
+- [docs/full-flow-test-sop.md](docs/full-flow-test-sop.md) — 全流程手工测试 SOP
+- [docs/wechat-devtools-cli.md](docs/wechat-devtools-cli.md) — 微信开发者工具 CLI 用法
 - [docs/alerts-fix-plan.md](docs/alerts-fix-plan.md) — 告警修复方案与 bug 根因
 - [deploy/README.md](deploy/README.md) — 部署指南(Docker / nginx / SSL)
 - [API 文档(Swagger)](https://x.iddg.cn/docs) — 线上 API 自动文档

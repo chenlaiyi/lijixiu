@@ -5,11 +5,16 @@
 
 ## 当前状态(2026-10)
 
-**安全收口已完成、待部署;多角色已实现。** 后端 API、31 个小程序页面、
+**安全收口已部署并验收;多角色已实现、待部署。** 后端 API、31 个小程序页面、
 15 个管理后台视图、H5 工作台都已成型。
 
-线上 `https://x.iddg.cn` **仍在跑旧代码**(uptime ≈ 48 天未重启),
-本轮修复必须走一遍 [deployment-runbook.md](deployment-runbook.md) § 2.13 才生效。
+线上 `https://x.iddg.cn` **实测(2026-10-12)跑的是 2026-10-06 的安全收口版**:
+`/api/v1/users` → 401、`/api/v1/finance/profit/order/1` → 401(旧代码分别是 200 / 500),
+而 `GET /api/v1/users/roles/options` → **404** —— 说明 2026-10-07 的多角色还没上线。
+多角色上线步骤见 [deployment-runbook.md](deployment-runbook.md) § 2.13(仍待办 A9 安全头审计、A10 审核账号密码)。
+
+仓库侧:两轮改动已于 2026-10-12 提交为 `a0a992e`(安全收口)与 `4a3330a`(多角色),
+此前 8/18 之后的所有工作都只存在于本地工作区。
 
 ---
 
@@ -116,13 +121,20 @@
 ## 待办(TODO)
 
 ### 🔴 P0 — 部署(唯一阻塞项)
-1. 按 [deployment-runbook.md](deployment-runbook.md) § 2.13 把本轮安全修复部署到线上
-   (线上漏洞在部署前依然可利用)
+1. 按 [deployment-runbook.md](deployment-runbook.md) § 2.13 把 **2026-10-07 的多角色**改动
+   部署到线上(安全收口那轮已于 10-06 上线;多角色线上实测仍是 404)
+
+### 🟢 已闭环(2026-10-12)
+- 两轮工作入库:安全收口 → `a0a992e`,多角色 → `4a3330a`(此前 8/18 之后全部改动仅存在于本地)
+- 订正本文与 README 里「线上仍在跑旧代码」的过时口径,改为实测结论
+- 回归复跑:79/79(auth_admin / order_authz / role_boundaries / reconcile_balance)
+  + 37/29/12(多角色后端/迁移/小程序)+ 25(pytest)= 全部通过
 
 ### 🟠 P1
 2. 生成审核账号密码(`scripts/set_review_account.py`)后重新走微信提审
 3. design-qa 小程序端截图(需微信开发者工具扫码登录,见 [design-qa.md](design-qa.md))
-4. 生产 nginx 侧核对 `/docs`、`/metrics` 的 basic auth(线上实测仍可裸访问)
+4. 生产 nginx 侧核对 `/docs`、`/metrics` 的 basic auth —— 2026-10-12 实测已收紧
+   (`/docs` `/redoc` `/openapi.json` `/metrics` 均 401),待正式归档关闭
 
 ### 🟡 P2
 5. admin-web 文案中英混排(`loadWallet` / `loadFinance` 两个视图是英文,其余中文)
@@ -176,3 +188,8 @@ alembic 初始迁移(22/22);微信支付诊断与容错硬化(9/9)。
 
 ### 8/20 ~ 9/30 — 无代码改动
 期间只做过线上排查(用户 21 工单、nginx 日志、告警核对),未产生提交。
+
+### 10/12 — 版本管理归位
+把 8/18 之后积压的全部改动分成两个提交入库并推送:`a0a992e` 安全收口(含 10-05 ~ 10-07
+的后端实现)、`4a3330a` 多角色(前端 + 文档 + 测试),并订正 README/progress 里
+「线上仍跑旧代码」的过时说法。此前 GitHub 上只有 8/18 的两个提交。
