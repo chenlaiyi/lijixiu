@@ -21,7 +21,13 @@
           <text class="account-hint-desc">{{accountHint.desc}}</text>
         </view>
       </view>
-      <button wx:if="{{showWorkbench}}" class="account-hint-btn profile-action-btn" bindtap="goWorkbench" hover-class="button-hover">
+      <button wx:if="{{showRoleSwitch}}" class="account-hint-btn profile-action-btn role-switch-btn" bindtap="switchRole" loading="{{switchingRole}}" hover-class="button-hover">
+        <view class="mini-action-content">
+          <image class="mini-action-icon" src="/assets/ui/profile-user.png" mode="aspectFit" />
+          <text>切换身份（{{roleCount}}）</text>
+        </view>
+      </button>
+      <button wx:elif="{{showWorkbench}}" class="account-hint-btn profile-action-btn" bindtap="goWorkbench" hover-class="button-hover">
         <view class="mini-action-content">
           <image class="mini-action-icon" src="{{workbenchIcon}}" mode="aspectFit" />
           <text>{{accountHint.actionText}}</text>
@@ -33,6 +39,16 @@
           <text>{{accountHint.actionText}}</text>
         </view>
       </button>
+    </view>
+
+    <!-- 多角色账号:当前身份可切换(角色由平台在后台配置) -->
+    <view wx:if="{{showRoleSwitch}}" class="role-switch-row" bindtap="switchRole" hover-class="tap-feedback-active">
+      <view class="role-switch-copy">
+        <text class="role-switch-title">当前身份</text>
+        <text class="role-switch-desc">点这里切换工作台</text>
+      </view>
+      <text class="role-switch-value">{{roleLabel}}</text>
+      <image class="arrow-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
     </view>
 
     <view wx:if="{{showWallet}}" class="wallet-summary-row">
@@ -77,6 +93,14 @@
   <view class="menu-list">
     <view class="menu-item tap-feedback" bindtap="goPersonalInfo" hover-class="tap-feedback-active">
       <view class="menu-main"><view class="menu-icon-wrap"><image class="menu-icon" src="/assets/ui/profile-user.png" mode="aspectFit" /></view><text>个人信息</text></view>
+      <image class="arrow-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
+    </view>
+    <view wx:if="{{showRoleSwitch}}" class="menu-item tap-feedback" bindtap="switchRole" hover-class="tap-feedback-active">
+      <view class="menu-main">
+        <view class="menu-icon-wrap"><image class="menu-icon" src="/assets/ui/profile-user.png" mode="aspectFit" /></view>
+        <text>切换身份</text>
+        <text class="menu-badge">{{roleCount}} 个角色</text>
+      </view>
       <image class="arrow-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
     </view>
     <view class="menu-item tap-feedback" bindtap="goSettings" hover-class="tap-feedback-active">

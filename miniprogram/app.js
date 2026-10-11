@@ -3,6 +3,7 @@
  * 单小程序多角色：登录后根据 user.role 切换用户端/师傅端
  */
 const api = require('./utils/api');
+const role = require('./utils/role');
 
 App({
   globalData: {
@@ -20,7 +21,7 @@ App({
     if (token && cachedUser) {
       this.globalData.token = token;
       this.globalData.userInfo = cachedUser;
-      this.globalData.role = cachedUser.business_role || cachedUser.role;
+      this.globalData.role = role.getBusinessRole(cachedUser);
       api.setToken(token);
     }
   },
@@ -35,7 +36,7 @@ App({
 
     this.globalData.token = token;
     this.globalData.userInfo = user;
-    this.globalData.role = user.business_role || user.role;
+    this.globalData.role = role.getBusinessRole(user);
 
     wx.setStorageSync('token', token);
     wx.setStorageSync('userInfo', user);

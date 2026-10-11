@@ -118,6 +118,18 @@
   word-break: break-all;
 }
 
+/* 2026-10-07 multi-role:多角色账号可在此切换当前身份 */
+.role-switch-link {
+  color: #087443;
+  font-weight: 900;
+  text-decoration: underline;
+}
+
+.field-value-note {
+  color: #667085;
+  font-size: 23rpx;
+}
+
 .account-alert {
   display: flex;
   align-items: flex-start;

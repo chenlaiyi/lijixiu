@@ -7,40 +7,6 @@ function formatMoney(value) {
   return Number(value || 0).toFixed(2);
 }
 
-function roleLabel(userRole) {
-  const map = {
-    customer: '客户',
-    repairer: '师傅',
-    store: '店长',
-    city: '城市',
-    promotion: '推广',
-    second: '兜底',
-    admin: '平台',
-    store_manager: '店长',
-    city_manager: '城市',
-    promotion_manager: '推广',
-    second_receiver: '兜底',
-    tech_support: '技术支持',
-    finance: '财务',
-    platform_admin: '平台',
-  };
-  return map[userRole] || '客户';
-}
-
-function workbenchLabel(businessRole) {
-  const map = {
-    repairer: '师傅工作台',
-    second_receiver: '兜底工单',
-    store_manager: '门店工作台',
-    city_manager: '城市工作台',
-    promotion_manager: '推广工作台',
-    tech_support: '服务保障工作台',
-    finance: '财务工作台',
-    platform_admin: '平台工作台',
-  };
-  return map[businessRole] || '工作台';
-}
-
 function workbenchIcon(businessRole) {
   const map = {
     repairer: '/assets/ui/repairer.png',
@@ -125,6 +91,9 @@ Page({
     userName: '未设置',
     phoneText: '未绑定手机号',
     roleLabel: '客户',
+    roleCount: 1,
+    showRoleSwitch: false,
+    switchingRole: false,
     walletLoading: false,
     walletError: false,
     wallet: {
@@ -149,21 +118,28 @@ Page({
     share.enable();
     const userInfo = wx.getStorageSync('userInfo');
     const businessRole = role.getBusinessRole(userInfo || {});
-    const walletRoles = ['repairer', 'second_receiver', 'store_manager', 'city_manager', 'promotion_manager'];
+    const businessRoles = role.getBusinessRoles(userInfo || {});
+    // 多角色:身份可切换时按钮文案用「切换身份」,并显示全部角色标签
+    const showRoleSwitch = Boolean(userInfo) && businessRoles.length > 1;
+    // 钱包只对能产生收益的角色有意义(师傅 / 兜底)
+    const walletRoles = ['repairer', 'second_receiver'];
+    const showWallet = Boolean(userInfo) && role.hasAnyBusinessRole(userInfo, walletRoles);
     this.setData({
       ready: true,
       userInfo,
       userName: userInfo && userInfo.name ? userInfo.name : '未设置',
       phoneText: userInfo && userInfo.phone ? userInfo.phone : '未绑定手机号',
-      roleLabel: roleLabel(businessRole),
-      showWallet: Boolean(userInfo && walletRoles.includes(businessRole)),
-      showCustomerServices: Boolean(userInfo && businessRole === 'customer'),
-      showWorkbench: Boolean(userInfo && businessRole !== 'customer'),
-      workbenchLabel: workbenchLabel(businessRole),
+      roleLabel: role.roleText(userInfo || {}),
+      roleCount: businessRoles.length,
+      showRoleSwitch,
+      showWallet,
+      showCustomerServices: businessRoles.indexOf('customer') >= 0,
+      showWorkbench: Boolean(userInfo) && businessRole !== 'customer',
+      workbenchLabel: role.workbenchLabel(businessRole),
       workbenchIcon: workbenchIcon(businessRole),
       accountHint: accountHint(businessRole),
     });
-    if (userInfo && walletRoles.includes(businessRole)) this.loadWallet(userInfo.id);
+    if (showWallet && userInfo && userInfo.id) this.loadWallet(userInfo.id);
   },
 
   async loadWallet(userId) {
@@ -199,33 +175,74 @@ Page({
     this.loadWallet(userInfo.id);
   },
 
-  /** 切换为师傅身份 */
-  switchToRepairer() {
-    const app = getApp();
-    app.globalData.role = 'repairer';
-    // 更新 storage 中的 role
-    const userInfo = wx.getStorageSync('userInfo');
-    if (userInfo) {
-      userInfo.role = 'repairer';
-      wx.setStorageSync('userInfo', userInfo);
+  /**
+   * 切换当前身份(多角色账号)。
+   *
+   * 全局生效:切换后首页/底部导航/工作台都按新身份走 —— 所以直接跳新身份
+   * 的入口页,而不是只更新一个标签。选择范围仅限后端配好的关联角色。
+   */
+  switchRole() {
+    const userInfo = wx.getStorageSync('userInfo') || {};
+    const options = role.roleOptions(userInfo);
+    if (options.length < 2) {
+      wx.showToast({ title: '当前账号只有一个角色', icon: 'none' });
+      return;
     }
-    wx.redirectTo({ url: role.getEntryPath(userInfo || { role: 'repairer' }) });
+    if (this.data.switchingRole) return;
+
+    wx.showActionSheet({
+      itemList: options.map((item) => (item.active ? `${item.label}（当前）` : item.label)),
+      success: (res) => {
+        const picked = options[res.tapIndex];
+        if (!picked || picked.active) return;
+        this.applyRoleSwitch(picked.value);
+      },
+      fail: () => {},
+    });
+  },
+
+  async applyRoleSwitch(roleValue) {
+    const userInfo = wx.getStorageSync('userInfo') || {};
+    if (!userInfo.id) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      return;
+    }
+    this.setData({ switchingRole: true });
+    wx.showLoading({ title: '切换中', mask: true });
+    try {
+      const api = require('../../../utils/api');
+      const latest = await api.post(`/api/v1/users/${userInfo.id}/switch-active-role`, {
+        business_role: roleValue,
+      });
+      const merged = Object.assign({}, userInfo, latest, {
+        business_roles: latest.business_roles || userInfo.business_roles,
+        active_business_role: latest.active_business_role || roleValue,
+        business_role: latest.business_role || userInfo.business_role,
+      });
+      wx.setStorageSync('userInfo', merged);
+      const app = getApp();
+      if (app && app.globalData) {
+        app.globalData.userInfo = merged;
+        app.globalData.role = role.getBusinessRole(merged);
+      }
+      wx.hideLoading();
+      wx.showToast({ title: `已切换为${role.roleLabel(roleValue)}`, icon: 'none' });
+      const url = role.getEntryPathForRole(roleValue);
+      setTimeout(() => {
+        wx.redirectTo({ url, fail: () => wx.reLaunch({ url }) });
+      }, 400);
+    } catch (error) {
+      wx.hideLoading();
+      wx.showToast({ title: error.message || '切换失败', icon: 'none' });
+    } finally {
+      this.setData({ switchingRole: false });
+    }
   },
 
   goWorkbench() {
     const userInfo = wx.getStorageSync('userInfo');
-    wx.redirectTo({ url: role.getEntryPath(userInfo || {}) });
-  },
-
-  switchToAdmin() {
-    const app = getApp();
-    app.globalData.role = 'admin';
-    const userInfo = wx.getStorageSync('userInfo');
-    if (userInfo) {
-      userInfo.role = 'admin';
-      wx.setStorageSync('userInfo', userInfo);
-    }
-    wx.redirectTo({ url: role.getEntryPath(userInfo || { role: 'admin' }) });
+    const url = role.getEntryPath(userInfo || {});
+    wx.redirectTo({ url, fail: () => wx.reLaunch({ url }) });
   },
 
   /** 查看我的钱包 */

@@ -84,7 +84,12 @@ page {
     radial-gradient(circle at 80% 90%, rgba(0, 0, 0, 0.16) 0, transparent 50%);
 }
 
-.login-hero > * { position: relative; z-index: 1; }
+/* 微信 WXSS 编译器不接受通配选择器(`.login-hero > *` 会报
+   `error at token '*'`),这里显式列出 4 个直接子节点类名。 */
+.login-hero-top,
+.login-hero-body,
+.login-stats,
+.hero-chip { position: relative; z-index: 1; }
 
 .login-hero-top {
   display: flex;

@@ -12,7 +12,7 @@
   <view class="account-section">
     <view class="section-heading">
       <text class="section-title">基本信息</text>
-      <text class="section-desc">姓名可修改，账号身份由平台管理</text>
+      <text class="section-desc">姓名可修改，账号角色由平台在后台配置</text>
     </view>
 
     <view class="form-row">
@@ -27,9 +27,17 @@
       <text class="field-label">账号角色</text>
       <text class="field-value">{{roleText}}</text>
     </view>
+    <view wx:if="{{canSwitchRole}}" class="info-row">
+      <text class="field-label">当前身份</text>
+      <text class="field-value role-switch-link" bindtap="switchRole">切换（{{roleCount}} 个角色）</text>
+    </view>
     <view class="info-row">
       <text class="field-label">账号编号</text>
       <text class="field-value">{{accountIdText}}</text>
+    </view>
+    <view wx:if="{{canSwitchRole}}" class="info-row">
+      <text class="field-label">角色说明</text>
+      <text class="field-value field-value-note">切换后首页、底部导航和工作台都按该身份显示</text>
     </view>
   </view>
 

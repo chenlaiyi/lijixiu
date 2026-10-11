@@ -1,21 +1,6 @@
 const api = require('../../../utils/api');
 const role = require('../../../utils/role');
 
-function roleLabel(value) {
-  const labels = {
-    customer: '客户',
-    repairer: '师傅',
-    second_receiver: '兜底师傅',
-    store_manager: '店长',
-    city_manager: '城市经理',
-    promotion_manager: '推广经理',
-    tech_support: '技术支持',
-    finance: '财务',
-    platform_admin: '管理员',
-  };
-  return labels[value] || '用户';
-}
-
 function maskPhone(phone) {
   const value = String(phone || '');
   if (value.length < 7) return value || '未绑定';
@@ -30,6 +15,9 @@ Page({
     name: '',
     phoneText: '未绑定',
     roleText: '用户',
+    roleListText: '',
+    roleCount: 1,
+    canSwitchRole: false,
     accountIdText: '-',
     errorText: '',
   },
@@ -45,13 +33,59 @@ Page({
   },
 
   applyUser(user) {
+    const options = role.roleOptions(user);
     this.setData({
       userInfo: user,
       name: user.name || '',
       phoneText: maskPhone(user.phone),
-      roleText: roleLabel(role.getBusinessRole(user)),
+      // 多角色:账号角色一行显示全部关联角色,当前身份单独标注
+      roleText: options.map((item) => (item.active ? `${item.label}（当前）` : item.label)).join(' · ') || '客户',
+      roleListText: role.roleText(user),
+      roleCount: options.length,
+      canSwitchRole: options.length > 1,
       accountIdText: user.id ? String(user.id) : '-',
       loading: false,
+    });
+  },
+
+  /** 多角色账号:直接在这里切换当前身份 */
+  switchRole() {
+    const user = this.data.userInfo || wx.getStorageSync('userInfo') || {};
+    const options = role.roleOptions(user);
+    if (options.length < 2) {
+      wx.showToast({ title: '当前账号只有一个角色', icon: 'none' });
+      return;
+    }
+    wx.showActionSheet({
+      itemList: options.map((item) => (item.active ? `${item.label}（当前）` : item.label)),
+      success: async (res) => {
+        const picked = options[res.tapIndex];
+        if (!picked || picked.active) return;
+        wx.showLoading({ title: '切换中', mask: true });
+        try {
+          const latest = await api.post(`/api/v1/users/${user.id}/switch-active-role`, {
+            business_role: picked.value,
+          });
+          const merged = Object.assign({}, user, latest, {
+            business_roles: latest.business_roles || user.business_roles,
+            active_business_role: latest.active_business_role || picked.value,
+            business_role: latest.business_role || user.business_role,
+          });
+          wx.setStorageSync('userInfo', merged);
+          const app = getApp();
+          if (app && app.globalData) {
+            app.globalData.userInfo = merged;
+            app.globalData.role = role.getBusinessRole(merged);
+          }
+          wx.hideLoading();
+          this.applyUser(merged);
+          wx.showToast({ title: `已切换为${role.roleLabel(picked.value)}`, icon: 'none' });
+        } catch (error) {
+          wx.hideLoading();
+          wx.showToast({ title: error.message || '切换失败', icon: 'none' });
+        }
+      },
+      fail: () => {},
     });
   },
 
