@@ -80,7 +80,7 @@ Page({
         safeGet('/api/v1/stores', [], '门店'),
         safeGet('/api/v1/repairers?limit=100', [], '师傅'),
       ]);
-      const store = stores.find(item => item.manager_id === userInfo.id) || stores[0] || null;
+      const store = stores.find(item => String(item.manager_id) === String(userInfo.id)) || null;
       const orders = store ? await safeGet(`/api/v1/orders?store_id=${store.id}&limit=100`, [], '订单') : [];
       const billMap = {};
       await Promise.all(orders
@@ -103,7 +103,10 @@ Page({
         repairers,
         repairerOptions,
         stats,
-        workflowHint: this.buildWorkflowHint(formatted, stats),
+        workflowHint: store ? this.buildWorkflowHint(formatted, stats) : {
+          title: '未绑定门店',
+          desc: '请联系管理员核对门店负责人账号',
+        },
         loadFailed: criticalFailed,
         loadWarningText: !criticalFailed && failures.length ? '部分数据加载失败' : '',
         loading: false,
