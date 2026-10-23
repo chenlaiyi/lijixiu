@@ -47,11 +47,20 @@ function harness(user, stores) {
   assert(owned.calls.includes('/api/v1/orders?store_id=3&limit=100'));
 
   // An unbound account must never query the newest, unrelated store.
-  const unbound = harness({ id: 99 }, [{ id: 4, manager_id: 21 }]);
+  const unbound = harness(
+    { id: 17, business_roles: ['city_manager', 'store_manager'] },
+    [{ id: 7, manager_id: 18 }, { id: 3, manager_id: 7 }],
+  );
   await unbound.page.loadData();
   assert.strictEqual(unbound.page.data.store, null);
   assert.strictEqual(unbound.page.data.workflowHint.title, '未绑定门店');
   assert(!unbound.calls.some(url => url.startsWith('/api/v1/orders?')));
+
+  // Before more branches opened, the same unbound manager must not see store 3 either.
+  const oldList = harness({ id: 17 }, [{ id: 3, manager_id: 7 }]);
+  await oldList.page.loadData();
+  assert.strictEqual(oldList.page.data.store, null);
+  assert(!oldList.calls.some(url => url.startsWith('/api/v1/orders?')));
 
   // Pull-down refresh must fetch a newly arrived order, then stop the spinner.
   const config = JSON.parse(fs.readFileSync(sourcePath.replace(/\.js$/, '.json'), 'utf8'));
