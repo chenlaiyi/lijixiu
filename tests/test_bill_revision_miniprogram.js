@@ -68,5 +68,16 @@ function page(file, api, user) {
   assert.strictEqual(customer.data.amount, '6.00');
   assert(customer.data.payErrorText.includes('价格已更新'));
   assert.strictEqual(posts.length, previousPostCount);
+  const jobs = page('pages/repairer/jobs/jobs.js', {
+    async get(url) {
+      if (url.includes('/repairers')) return [{ id: 2, user_id: 10 }];
+      if (url.includes('status=wait_payment')) return [{ ...order }];
+      return [];
+    },
+  }, { id: 10 });
+  jobs.data.userInfo = { id: 10 };
+  await jobs.loadJobs();
+  assert.strictEqual(jobs.data.workOrders[0].id, 6);
+  assert(jobs.data.workOrders[0].statusText.includes('可修改'));
   console.log('PASS: technician revision, owner/paid guards, latest payment amount and stale-screen protection');
 })().catch(error => { console.error(error); process.exitCode = 1; });

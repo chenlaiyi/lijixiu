@@ -49,14 +49,15 @@ Page({
         });
         return;
       }
-      const [assigned, dispatched, servicing, billSubmitted] = await Promise.all([
+      const [assigned, dispatched, servicing, billSubmitted, waitPayment] = await Promise.all([
         api.get(`/api/v1/orders?assigned_repairer_id=${repairer.id}&status=assigned&limit=100`).catch(() => []),
         api.get(`/api/v1/orders?assigned_repairer_id=${repairer.id}&status=dispatched&limit=100`).catch(() => []),
         api.get(`/api/v1/orders?repairer_id=${repairer.id}&status=servicing&limit=100`).catch(() => []),
         api.get(`/api/v1/orders?repairer_id=${repairer.id}&status=bill_submitted&limit=100`).catch(() => []),
+        api.get(`/api/v1/orders?repairer_id=${repairer.id}&status=wait_payment&limit=100`).catch(() => []),
       ]);
       const pendingOrders = [...assigned, ...dispatched].map(item => this.formatOrder(item));
-      const workingOrders = [...servicing, ...billSubmitted].map(item => this.formatOrder(item));
+      const workingOrders = [...servicing, ...billSubmitted, ...waitPayment].map(item => this.formatOrder(item));
       this.setData({
         repairer,
         orders: pendingOrders,
@@ -93,6 +94,7 @@ Page({
     const statusMap = {
       assigned: '待接单', dispatched: '待接单', repairer_accepted: '已接单',
       accepted: '已接单', servicing: '服务中', bill_submitted: '待确认',
+      wait_payment: '待支付，可修改服务单',
     };
     const categoryMap = {
       appliance: '家电维修', plumbing: '水路管道', electrical: '电路照明',
