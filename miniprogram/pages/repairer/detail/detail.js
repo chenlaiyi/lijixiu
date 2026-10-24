@@ -137,6 +137,9 @@ Page({
     orderId: null,
     serviceItems: defaultServiceItems(null),
     billTotal: '128.00',
+    canReviseBill: false,
+    editingBill: false,
+    billRevision: null,
     billReadiness: buildBillReadiness(defaultServiceItems(null), '30', ''),
     warrantyDays: '30',
     warrantyErrorText: '',
@@ -220,7 +223,11 @@ Page({
         order.repairer_id === currentRepairer.id || order.assigned_repairer_id === currentRepairer.id
       ));
       const canStart = order ? isOrderRepairer && ['accepted', 'repairer_accepted'].includes(order.status) : false;
-      const canComplete = order ? isOrderRepairer && order.status === 'servicing' : false;
+      const canReviseBill = Boolean(order && isOrderRepairer &&
+        ['wait_payment', 'bill_submitted'].includes(order.status) && Number(order.paid_amount || 0) === 0);
+      const canComplete = Boolean(order && isOrderRepairer &&
+        (['servicing', 'in_progress', 'bill_returned'].includes(order.status) ||
+          (canReviseBill && this.data.editingBill)));
       const canPay = order ? order.status === 'wait_payment' && currentUser.id === order.customer_id : false;
       const viewData = {
         order: order || null,
@@ -228,6 +235,8 @@ Page({
         mediaSummaryText: mediaSummaryText(mediaList),
         canStart,
         canComplete,
+        canReviseBill,
+        editingBill: canReviseBill && this.data.editingBill,
         canPay,
         detailHint: this.buildDetailHint(order, { canStart, canComplete, canPay, isOrderRepairer }),
         loading: false,
@@ -250,6 +259,7 @@ Page({
         errorText: e.message || '加载失败',
         canStart: false,
         canComplete: false,
+        canReviseBill: false,
         canPay: false,
       });
     }
@@ -449,7 +459,42 @@ Page({
 
   onConfirmationNoteInput(e) { this.setData({ confirmationNote: e.detail.value }); },
 
-  /** 提交服务单，等待客户/门店确认 */
+  async beginBillRevision() {
+    if (!this.data.canReviseBill) return;
+    try {
+      const bill = await api.get(`/api/v1/orders/${this.data.orderId}/service-bill/latest`);
+      const parsed = JSON.parse(bill.items_json || '[]');
+      if (!Array.isArray(parsed) || !parsed.length) throw new Error('服务明细无效');
+      const serviceItems = parsed.map(item => ({
+        name: item.name || '', qty: String(item.quantity ?? item.qty ?? 1),
+        price: toMoney(item.unit_price ?? item.price ?? 0),
+        amount: toMoney(item.subtotal ?? item.amount ?? 0), errorText: '',
+      }));
+      let media = {};
+      try { media = JSON.parse(bill.media_json || '{}'); } catch (_) { /* Legacy media. */ }
+      const warrantyDays = String(bill.warranty_days ?? 0);
+      const serviceRemark = media.remark || '';
+      const methodIndex = Math.max(0, this.data.confirmationMethods.findIndex(item => item.value === bill.confirmation_method));
+      this.setData({
+        editingBill: true, canComplete: true, billRevision: bill.revision,
+        serviceItems, warrantyDays, serviceRemark, billTotal: sumItems(serviceItems),
+        confirmationMethodIndex: methodIndex,
+        confirmationMethod: this.data.confirmationMethods[methodIndex].value,
+        confirmationNote: bill.confirmation_note || '',
+        warrantyErrorText: '', serviceInitialized: true,
+        billReadiness: buildBillReadiness(serviceItems, warrantyDays, serviceRemark),
+      });
+    } catch (e) {
+      wx.showToast({ title: e.message || '服务单加载失败', icon: 'none' });
+    }
+  },
+
+  cancelBillRevision() {
+    this.setData({ editingBill: false, canComplete: false, serviceInitialized: false });
+    this.loadOrder();
+  },
+
+  /** 提交服务单，未付款时可保留旧版并重新提交。 */
   async completeService(e) {
     const saveAsDraft = Boolean(e && e.currentTarget && e.currentTarget.dataset.draft);
     try {
@@ -501,6 +546,7 @@ Page({
         throw new Error('未找到服务档案');
       }
       await api.post(`/api/v1/orders/${this.data.orderId}/service-bill`, {
+        expected_revision: this.data.editingBill ? this.data.billRevision : undefined,
         repairer_id: repairerId,
         title: '上门维修服务单',
         items_json: JSON.stringify(items),
@@ -516,6 +562,7 @@ Page({
       });
       wx.hideLoading();
       wx.showToast({ title: saveAsDraft ? '草稿已保存' : '服务单已提交', icon: 'success' });
+      this.setData({ editingBill: false, serviceInitialized: false });
       this.loadOrder();
     } catch (e) {
       wx.hideLoading();

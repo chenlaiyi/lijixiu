@@ -67,6 +67,9 @@
     </view>
   </view>
 
+  <button wx:if="{{canReviseBill && !editingBill}}" class="action-btn secondary" bindtap="beginBillRevision" hover-class="button-hover">
+    <text>修改服务单</text>
+  </button>
   <view class="bill-card" wx:if="{{canComplete}}">
     <view class="bill-head">
       <view class="bill-title-wrap">
@@ -139,14 +142,15 @@
       <picker range="{{confirmationMethods}}" range-key="label" value="{{confirmationMethodIndex}}" bindchange="onConfirmationMethodChange"><view>{{confirmationMethods[confirmationMethodIndex].label}}</view></picker>
     </view>
     <textarea class="remark-input" placeholder="记录确认时间、沟通对象或补充说明" value="{{confirmationNote}}" bindinput="onConfirmationNoteInput" />
-    <button class="action-btn secondary" data-draft="true" bindtap="completeService" hover-class="button-hover">
+      <button wx:if="{{!editingBill}}" class="action-btn secondary" data-draft="true" bindtap="completeService" hover-class="button-hover">
       <image class="action-icon" src="/assets/ui/bill-file.png" mode="aspectFit" /><text>保存草稿</text>
     </button>
     <button class="action-btn primary" bindtap="completeService" hover-class="button-hover">
       <image class="action-icon" src="/assets/ui/bill-check.png" mode="aspectFit" />
-      <text>提交服务单</text>
+      <text>{{editingBill ? '重新提交服务单' : '提交服务单'}}</text>
     </button>
-  </view>
+      <button wx:if="{{editingBill}}" class="action-btn secondary" bindtap="cancelBillRevision"><text>取消修改</text></button>
+    </view>
 
   <view class="actions">
     <button wx:if="{{canStart}}"

@@ -64,10 +64,7 @@ Page({
       }
       const bill = await api.get(`/api/v1/orders/${this.data.orderId}/service-bill/latest`).catch(() => null);
       const billItems = this.parseBillItems(bill);
-      const totalAmount = Math.max(
-        Number(order.price || 0),
-        Number((bill && bill.amount) || 0),
-      );
+      const totalAmount = Number(order.price || 0);
       const amount = Math.max(0, totalAmount - Number(order.paid_amount || 0)).toFixed(2);
       const user = wx.getStorageSync('userInfo') || {};
       this.setData({
@@ -122,6 +119,12 @@ Page({
     }
     this.setData({ paying: true, payErrorText: '' });
     try {
+      await this.loadOrder();
+      if (this.data.errorText || !this.data.order) throw new Error('订单加载失败，请重试');
+      if (Math.abs(Number(this.data.amount) - amount) > 0.005) {
+        this.setData({ payErrorText: '服务价格已更新，请核对最新明细和金额后再次支付' });
+        return;
+      }
       await this.ensureWechatPayReady();
       const loginRes = await callWx('login');
       const payer = wx.getStorageSync('userInfo') || {};

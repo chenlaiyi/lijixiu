@@ -545,6 +545,11 @@ def query_transaction(out_trade_no: str) -> dict[str, Any]:
     return _wechat_request("GET", f"/v3/pay/transactions/out-trade-no/{encoded}?{query}")
 
 
+def close_transaction(out_trade_no: str) -> None:
+    encoded = quote(out_trade_no, safe="")
+    _wechat_request("POST", f"/v3/pay/transactions/out-trade-no/{encoded}/close", {"mchid": mch_id()})
+
+
 def create_refund(
     pay_order: PayOrder,
     out_refund_no: str,

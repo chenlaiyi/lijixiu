@@ -8,6 +8,7 @@ from ..models.service_bill import ServiceBillStatus
 
 
 class ServiceBillCreate(BaseModel):
+    expected_revision: int | None = Field(default=None, ge=0)
     repairer_id: int
     title: str = "服务项目单据"
     items_json: str = "[]"

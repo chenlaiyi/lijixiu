@@ -20,6 +20,7 @@ from ..schemas.payment import PayCreateRequest, RefundCreateRequest
 from ..core.config import settings
 from . import safety
 from . import wechat_pay
+from .order_lock import lock_order
 from .payment_provider import PaymentIntent, get_provider
 
 WECHAT_PREPAY_REUSE_WINDOW = timedelta(minutes=110)
@@ -57,9 +58,7 @@ def _can_reuse_wechat_prepay(pay_order: PayOrder, payer_openid: str | None) -> b
 async def create_payment(db: AsyncSession, data: PayCreateRequest) -> PayOrder:
     if data.provider == PayProvider.MOCK and not settings.PAYMENT_ALLOW_MOCK:
         raise ValueError("模拟支付已关闭，请使用微信支付")
-    order = await db.get(Order, data.order_id)
-    if not order:
-        raise ValueError("Order not found")
+    order = await lock_order(db, data.order_id)
     if order.status == OrderStatus.BILL_SUBMITTED:
         from .service_bill import confirm_bill, get_latest_bill
 
@@ -67,7 +66,7 @@ async def create_payment(db: AsyncSession, data: PayCreateRequest) -> PayOrder:
         if not bill:
             raise ValueError("Service bill not found")
         await confirm_bill(db, order, bill)
-        await db.refresh(order)
+        order = await lock_order(db, order.id)
     if order.status != OrderStatus.WAIT_PAYMENT:
         raise ValueError(f"Order status is {order.status.value}, expected wait_payment")
     payer = await db.get(User, data.user_id)
@@ -93,6 +92,8 @@ async def create_payment(db: AsyncSession, data: PayCreateRequest) -> PayOrder:
     )
     existing = existing_result.scalar_one_or_none()
     if existing:
+        if abs(existing.amount - data.amount) >= 0.005:
+            raise ValueError("支付金额已更新，请重新获取支付信息")
         prepay_expired = (
             existing.provider == PayProvider.WECHAT
             and existing.prepay_id
@@ -130,6 +131,12 @@ async def create_payment_intent(
     pay_order: PayOrder,
     data: PayCreateRequest,
 ) -> PaymentIntent:
+    order = await lock_order(db, pay_order.order_id)
+    await db.refresh(pay_order)
+    if (pay_order.status != PayStatus.PENDING or order.status != OrderStatus.WAIT_PAYMENT
+            or abs(pay_order.amount - (order.price - (order.paid_amount or 0))) > 0.01
+            and order.source not in (OrderSource.MATERNITY, OrderSource.NANNY)):
+        raise ValueError("订单价格或支付状态已更新，请刷新后支付")
     payer_openid = data.payer_openid
     if pay_order.provider == PayProvider.WECHAT and data.js_code:
         payer_openid = wechat_pay.exchange_js_code(data.js_code)
@@ -226,8 +233,13 @@ async def mark_payment_paid(
     remark: str,
     notify_payload: dict | None = None,
 ) -> PayOrder:
+    order = await lock_order(db, pay_order.order_id)
+    await db.refresh(pay_order)
     if pay_order.status == PayStatus.PAID:
         return pay_order
+    if pay_order.status == PayStatus.FAILED and pay_order.notify_payload:
+        if json.loads(pay_order.notify_payload).get("stage") == "service_bill_revision":
+            raise ValueError("此支付单已因服务单修改而关闭")
 
     pay_order.status = PayStatus.PAID
     pay_order.paid_at = datetime.now(timezone.utc)

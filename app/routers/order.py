@@ -368,6 +368,9 @@ async def submit_service_bill(
     if not order:
         raise HTTPException(404, "订单不存在")
     await _require_order_visible(db, order, user)
+    own_repairer_id = await _own_repairer_id(db, user)
+    if own_repairer_id != data.repairer_id:
+        raise HTTPException(403, "仅服务师傅本人可以提交服务单")
     try:
         return await bill_service.submit_bill(db, order, data)
     except ValueError as e:
