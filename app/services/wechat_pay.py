@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
@@ -251,6 +251,8 @@ def _wechat_request(method: str, canonical_url: str, payload: dict[str, Any] | N
     except HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="ignore")
         raise WeChatPayError(f"WeChat Pay request failed ({exc.code}): {detail}") from exc
+    except (URLError, TimeoutError) as exc:
+        raise WeChatPayError(f"WeChat Pay network request failed: {exc}") from exc
 
 
 def _decrypt_resource_bytes(resource: dict[str, Any]) -> bytes:

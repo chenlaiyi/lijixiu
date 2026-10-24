@@ -9,11 +9,18 @@ class AddressCreate(BaseModel):
     user_id: int
     contact_name: str = Field(min_length=1, max_length=50)
     contact_phone: str = Field(min_length=7, max_length=20)
-    service_address_id: int
+    service_address_id: int | None = None
+    service_area_id: int | None = None
+    estate: str | None = Field(default=None, max_length=160)
+    door_number: str | None = Field(default=None, max_length=240)
     is_default: bool = False
 
 
 class AddressUpdate(BaseModel):
+    service_address_id: int | None = None
+    service_area_id: int | None = None
+    estate: str | None = Field(default=None, max_length=160)
+    door_number: str | None = Field(default=None, max_length=240)
     contact_name: str | None = Field(default=None, min_length=1, max_length=50)
     contact_phone: str | None = Field(default=None, min_length=7, max_length=20)
     is_default: bool | None = None
@@ -21,6 +28,8 @@ class AddressUpdate(BaseModel):
 
 
 class AddressOut(AddressCreate):
+    city: str = ""
+    district: str = ""
     id: int
     region_id: int | None
     address: str

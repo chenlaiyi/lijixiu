@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.auth import require_admin
+from ..core.auth import require_admin, require_roles
 from ..core.database import get_db, engine
 from ..core.logging import get_audit_logger, get_security_logger
 from ..models.alert_event import AlertEvent, AlertType
@@ -40,7 +40,7 @@ async def _existing_reconcile_alert(db: AsyncSession, wallet_id: int) -> AlertEv
 async def run_reconciliation(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(require_admin),  # 2026-08-09 加鉴权
+    admin: User = Depends(require_roles("platform_admin", "finance")),  # 2026-08-09 加鉴权
 ):
     audit_log.info(
         "对账触发",
@@ -97,7 +97,7 @@ async def run_reconciliation(
 async def get_reconciliation_logs(
     limit: int = Query(50, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
-    _admin: User = Depends(require_admin),  # 2026-08-09 加鉴权
+    _admin: User = Depends(require_roles("platform_admin", "finance")),  # 2026-08-09 加鉴权
 ):
     logs = await safety.get_last_reconciliation(db, limit)
     return [
@@ -137,7 +137,7 @@ async def get_alerts(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
-    _admin: User = Depends(require_admin),  # 2026-08-09 加鉴权
+    _admin: User = Depends(require_roles("platform_admin", "finance")),  # 2026-08-09 加鉴权
 ):
     items = await alerts.list_alerts(db, type, resolved, skip, limit)
     return [
@@ -154,7 +154,7 @@ async def get_alerts(
 async def resolve_alert(
     alert_id: int,
     db: AsyncSession = Depends(get_db),
-    _admin: User = Depends(require_admin),  # 2026-08-09 加鉴权
+    _admin: User = Depends(require_roles("platform_admin", "finance")),  # 2026-08-09 加鉴权
 ):
     a = await alerts.resolve_alert(db, alert_id)
     if not a:

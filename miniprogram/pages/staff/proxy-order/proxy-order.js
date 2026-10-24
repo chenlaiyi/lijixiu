@@ -266,103 +266,18 @@ Page({
     });
   },
 
-  async loadOptions(options = {}) {
-    this.setData({ optionsLoading: true, optionsFailed: false });
-    try {
-      const [regions, stores, serviceAddresses] = await Promise.all([
-        api.get('/api/v1/regions'),
-        api.get('/api/v1/stores'),
-        api.get('/api/v1/stores/addresses', { enabled: true }),
-      ]);
-      const userInfo = wx.getStorageSync('userInfo') || {};
-      const businessRole = role.getBusinessRole(userInfo);
-      let store = null;
-      if (options.storeId) {
-        store = stores.find(item => String(item.id) === String(options.storeId));
-      }
-      if (!store && businessRole === 'store_manager') {
-        store = stores.find(item => item.manager_id === userInfo.id);
-      }
-      if (!store && stores.length === 1) {
-        store = stores[0];
-      }
-      const region = (store && regions.find(item => item.id === store.region_id))
-        || (options.regionId && regions.find(item => String(item.id) === String(options.regionId)))
-        || regions[0]
-        || { id: 1, name: '默认服务区域' };
-      const storeOptions = [{ id: null, name: '自动匹配' }].concat(stores);
-      const selectedAddressIndex = Math.max(0, serviceAddresses.findIndex(item => String(item.id) === String(options.addressId || '')));
-      const selectedAddress = serviceAddresses[selectedAddressIndex];
-      if (selectedAddress) {
-        store = stores.find(item => item.id === selectedAddress.store_id) || store;
-      }
-      const regionIndex = Math.max(0, regions.findIndex(item => item.id === region.id));
-      const storeIndex = store ? Math.max(1, storeOptions.findIndex(item => item.id === store.id)) : 0;
-
-      this.setData({
-        regions,
-        stores,
-        storeOptions,
-        serviceAddresses,
-        serviceAddressIndex: selectedAddressIndex,
-        addressBookId: selectedAddress ? selectedAddress.id : 0,
-        addressCode: selectedAddress ? selectedAddress.address_code : '',
-        address: selectedAddress ? selectedAddress.full_address : '',
-        regionIndex,
-        storeIndex,
-        regionId: selectedAddress ? selectedAddress.region_id : (region.id || 1),
-        storeId: selectedAddress ? selectedAddress.store_id : (store ? store.id : null),
-        currentRegionName: selectedAddress ? `${selectedAddress.district || ''}${selectedAddress.street || ''}` : (region.name || '默认服务区域'),
-        currentStoreName: store ? store.name : '地址归属门店',
-        optionsLoading: false,
-        optionsFailed: !serviceAddresses.length,
-      });
-    } catch (e) {
-      this.setData({
-        regionId: 1,
-        currentRegionName: '默认服务区域',
-        currentStoreName: '自动匹配',
-        optionsLoading: false,
-        optionsFailed: true,
-      });
-    }
+  async loadOptions() {
+    this.setData({ optionsLoading: false, optionsFailed: false });
   },
 
-  onFieldFocus(e) {
-    this.setData({ focusField: e.currentTarget.dataset.field || '' });
-  },
-
-  onFieldBlur() {
-    this.setData({ focusField: '' });
-  },
-
-  onNameInput(e) {
-    this.setData({ customerName: e.detail.value });
-  },
-
-  onCustomerPhoneInput(e) {
-    const oldPhone = this.data.customerPhone;
-    const customerPhone = normalizePhone(e.detail.value);
-    const contactPhone = (!this.data.contactPhone || this.data.contactPhone === oldPhone)
-      ? customerPhone
-      : this.data.contactPhone;
-    const validationErrors = { ...this.data.validationErrors, customerPhone: '' };
-    this.setData({ customerPhone, contactPhone, validationErrors });
-  },
-
-  onContactPhoneInput(e) {
-    this.setData({ contactPhone: normalizePhone(e.detail.value) });
-  },
-
-  onDescInput(e) {
-    const description = e.detail.value;
-    const validationErrors = { ...this.data.validationErrors };
-    if (description.trim() || this.data.mediaList.length) validationErrors.description = '';
-    this.setData({
-      description,
-      validationErrors,
-      mediaStats: buildMediaStats(this.data.mediaList, description),
-    });
+  onAddressFieldsChange(e) {
+    const value = e.detail;
+    this.setData({ addressFieldsValue: value, serviceAreaId: value.service_area_id,
+      estate: value.estate, doorNumber: value.door_number, address: value.address,
+      regionId: value.region_id, storeId: value.store_id,
+      currentRegionName: value.city ? `${value.city}/${value.district}` : '未选择城市/区域',
+      currentStoreName: value.store_name || '请选择小区',
+      'validationErrors.address': '', optionsFailed: false });
   },
 
   onServiceAddressChange(e) {
@@ -630,7 +545,7 @@ Page({
     if (!this.data.description.trim() && this.data.mediaList.length === 0) {
       validationErrors.description = '填描述或加素材';
     }
-    if (!this.data.addressBookId || !this.data.address.trim()) validationErrors.address = '请选择平台已开通的标准地址';
+    if (!this.data.serviceAreaId || !this.data.estate || !this.data.doorNumber) validationErrors.address = '请选择城市/区域和小区，填写门牌号';
 
     this.setData({ validationErrors });
     return !validationErrors.customerPhone && !validationErrors.description && !validationErrors.address;
@@ -652,7 +567,9 @@ Page({
         customer_id: customer.id,
         region_id: this.data.regionId || 1,
         store_id: this.data.storeId || undefined,
-        address_book_id: this.data.addressBookId,
+        service_area_id: this.data.serviceAreaId,
+        estate: this.data.estate,
+        door_number: this.data.doorNumber,
         category: this.data.category || 'other',
         description: this.data.description.trim() || '已由工作人员上传现场素材',
         address: this.data.address.trim(),

@@ -17,6 +17,7 @@ from ..models.store import (
     StoreStatus,
 )
 from ..models.user import BusinessRole, User
+from .address_format import clean, door_number, full_address as format_address
 from ..schemas.store import (
     AreaOpenRequestCreate,
     StoreAddressCreate,
@@ -25,7 +26,6 @@ from ..schemas.store import (
     StoreStaffCreate,
     StoreUpdate,
 )
-from . import role as role_service
 
 
 async def create_store(db: AsyncSession, data: StoreCreate) -> Store:
@@ -33,11 +33,11 @@ async def create_store(db: AsyncSession, data: StoreCreate) -> Store:
     db.add(store)
     manager = await db.get(User, data.manager_id)
     if manager:
-        role_service.grant_business_role(manager, BusinessRole.STORE_MANAGER.value)
+        manager.grant_business_role(BusinessRole.STORE_MANAGER.value)
     if data.city_manager_id:
         city_manager = await db.get(User, data.city_manager_id)
         if city_manager:
-            role_service.grant_business_role(city_manager, BusinessRole.CITY_MANAGER.value)
+            city_manager.grant_business_role(BusinessRole.CITY_MANAGER.value)
     await db.commit()
     await db.refresh(store)
     return store
@@ -64,14 +64,16 @@ async def list_stores(db: AsyncSession, region_id: int | None = None) -> list[St
 async def update_store(db: AsyncSession, store: Store, data: StoreUpdate) -> Store:
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(store, key, value)
+    if data.enabled is True and data.status is None:
+        store.status = StoreStatus.ACTIVE
     if data.manager_id:
         manager = await db.get(User, data.manager_id)
         if manager:
-            role_service.grant_business_role(manager, BusinessRole.STORE_MANAGER.value)
+            manager.grant_business_role(BusinessRole.STORE_MANAGER.value)
     if data.city_manager_id:
         city_manager = await db.get(User, data.city_manager_id)
         if city_manager:
-            role_service.grant_business_role(city_manager, BusinessRole.CITY_MANAGER.value)
+            city_manager.grant_business_role(BusinessRole.CITY_MANAGER.value)
     await db.commit()
     await db.refresh(store)
     return store
@@ -87,7 +89,7 @@ async def add_store_staff(db: AsyncSession, store_id: int, data: StoreStaffCreat
             StoreStaffRole.TECHNICIAN: BusinessRole.REPAIRER.value,
             StoreStaffRole.SECOND_RECEIVER: BusinessRole.SECOND_RECEIVER.value,
         }
-        role_service.grant_business_role(user, role_map[data.role])
+        user.grant_business_role(role_map[data.role])
     await db.commit()
     await db.refresh(staff)
     return staff
@@ -115,7 +117,7 @@ def _address_identity(parts: list[str]) -> tuple[str, str, str]:
     return full_address, canonical_key, address_code
 
 
-async def create_address(db: AsyncSession, data: StoreAddressCreate) -> StoreAddress:
+async def create_address(db: AsyncSession, data: StoreAddressCreate, *, customer_address: bool = False) -> StoreAddress:
     area = await db.get(ServiceArea, data.service_area_id)
     if not area or not area.active:
         raise ValueError("请选择有效的厦门标准服务区域")
@@ -150,29 +152,30 @@ async def create_address(db: AsyncSession, data: StoreAddressCreate) -> StoreAdd
         BusinessRole.SECOND_RECEIVER.value,
         BusinessRole.PROMOTION_MANAGER.value,
     }
-    if not role_service.has_any_role(creator, allowed_roles):
+    if not creator or (not customer_address and not set(creator.business_roles) & allowed_roles):
         raise ValueError("仅平台、城市、门店、师傅或推广人员可以建立标准地址")
-    owner_id = data.business_owner_user_id or (assignment.manager_id if assignment else None)
+    owner_id = data.business_owner_user_id or store.manager_id
     if owner_id and not await db.get(User, owner_id):
         raise ValueError("地址业务负责人不存在")
 
-    full_address, canonical_key, address_code = _address_identity([
-        area.city,
-        area.district,
-        area.street,
-        area.name,
-        data.estate,
-        data.building,
-        data.unit,
-        data.room,
-    ])
+    door = door_number(data.door_number, data.building, data.unit, data.room)
+    full_address = format_address(area.city, area.district, data.estate, door)
+    _, canonical_key, address_code = _address_identity([area.city, area.district, data.estate, door])
     duplicate = (
         await db.execute(
             select(StoreAddress).where(StoreAddress.canonical_key == canonical_key)
         )
     ).scalar_one_or_none()
+    if not duplicate:
+        candidates = (await db.execute(select(StoreAddress).where(
+            StoreAddress.service_area_id == area.id, StoreAddress.estate == clean(data.estate)
+        ))).scalars().all()
+        duplicate = next((item for item in candidates if door_number(
+            item.door_number, item.building, item.unit, item.room) == door), None)
     if duplicate:
-        raise ValueError(f"该标准地址已存在，地址编号：{duplicate.address_code}")
+        if not duplicate.enabled:
+            raise ValueError("该地址已停用，请联系平台")
+        return duplicate
 
     address = StoreAddress(
         store_id=store.id,
@@ -186,6 +189,7 @@ async def create_address(db: AsyncSession, data: StoreAddressCreate) -> StoreAdd
         street=area.street,
         community=area.name,
         estate=_clean_address_part(data.estate),
+        door_number=door,
         building=_clean_address_part(data.building),
         unit=_clean_address_part(data.unit),
         room=_clean_address_part(data.room),
@@ -247,6 +251,11 @@ async def update_address(
     if "business_owner_user_id" in values and values["business_owner_user_id"]:
         if not await db.get(User, values["business_owner_user_id"]):
             raise ValueError("地址业务负责人不存在")
+    if "estate" in values or "door_number" in values:
+        address.estate = clean(values.get("estate", address.estate))
+        address.door_number = door_number(values.get("door_number", address.door_number), address.building, address.unit, address.room)
+        address.full_address = format_address(address.city, address.district, address.estate, address.door_number)
+        _, address.canonical_key, address.address_code = _address_identity([address.city,address.district,address.estate,address.door_number])
     for key in ("business_owner_user_id", "detail_hint", "enabled"):
         if key in values:
             setattr(address, key, values[key])

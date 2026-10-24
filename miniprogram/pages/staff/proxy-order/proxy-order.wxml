@@ -101,23 +101,7 @@
         </picker>
       </view>
 
-      <view class="field-item {{validationErrors.address ? 'error' : ''}}">
-        <view class="label-row">
-          <image class="label-icon" src="/assets/ui/address.png" mode="aspectFit" />
-          <text class="label">标准地址</text>
-          <text class="label-note">唯一归属</text>
-        </view>
-        <picker mode="selector" range="{{serviceAddresses}}" range-key="full_address" value="{{serviceAddressIndex}}" bindchange="onServiceAddressChange">
-          <view class="picker-value address-picker-value tap-feedback" hover-class="tap-feedback-active">
-            <view class="address-picker-copy">
-              <text class="address-picker-main">{{address || '请选择平台已开通地址'}}</text>
-              <text wx:if="{{addressCode}}" class="address-picker-code">{{addressCode}}</text>
-            </view>
-            <image class="picker-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
-          </view>
-        </picker>
-        <text wx:if="{{validationErrors.address}}" class="field-tip error">{{validationErrors.address}}</text>
-      </view>
+      <view class="field-item"><address-fields value="{{addressFieldsValue}}" bindchange="onAddressFieldsChange" /><text wx:if="{{validationErrors.address}}" class="field-tip error">{{validationErrors.address}}</text></view>
     </view>
 
     <view class="field-item {{validationErrors.description ? 'error' : ''}}">

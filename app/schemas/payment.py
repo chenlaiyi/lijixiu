@@ -1,10 +1,11 @@
 """支付 Schema"""
 
 from datetime import datetime
+from decimal import Decimal
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from ..models.pay_order import PayProvider, PayStatus
 from ..models.refund_order import RefundStatus
@@ -17,6 +18,13 @@ class PayCreateRequest(BaseModel):
     provider: PayProvider = PayProvider.WECHAT
     js_code: str | None = None
     payer_openid: str | None = None
+
+    @field_validator("amount")
+    @classmethod
+    def validate_amount(cls, value: float) -> float:
+        if not Decimal(str(value)).is_finite() or Decimal(str(value)) * 100 != int(Decimal(str(value)) * 100):
+            raise ValueError("amount must be an exact number of cents")
+        return value
 
 
 class PayCreateResponse(BaseModel):
@@ -57,6 +65,11 @@ class RefundCreateRequest(BaseModel):
     amount: float = Field(gt=0)
     reason: str | None = Field(default=None, max_length=100)
     operator_id: int | None = None
+
+    @field_validator("amount")
+    @classmethod
+    def validate_amount(cls, value: float) -> float:
+        return PayCreateRequest.validate_amount(value)
 
 
 class RefundOut(BaseModel):

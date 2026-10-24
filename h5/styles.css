@@ -1422,3 +1422,14 @@ td::before {
     width: 100%;
   }
 }
+
+.role-repairer,.role-second_receiver {--accent:#7c3ab5;--accent-strong:#652a96;--accent-soft:#f2eafa;--primary:#7c3ab5;}
+.role-store_manager {--accent:#b5444d;--accent-strong:#94333d;--accent-soft:#fcecef;--primary:#b5444d;}
+.role-promotion_manager {--accent:#bc572b;--accent-strong:#97441f;--accent-soft:#fff0e6;--primary:#bc572b;}
+.role-repairer button.primary,.role-second_receiver button.primary {background:#7c3ab5;}
+.role-store_manager button.primary {background:#b5444d;}
+.role-promotion_manager button.primary {background:#bc572b;}
+.role-repairer .role-chip {background:#f2eafa;color:#652a96;}.role-store_manager .role-chip{background:#fcecef;color:#94333d;}.role-promotion_manager .role-chip{background:#fff0e6;color:#97441f;}
+.role-switcher {display:flex;flex-direction:column;gap:8px;font-size:14px;margin-bottom:12px;}
+
+.role-repairer,.role-second_receiver{--brand:#7431a8;--brand-strong:#652a96;--brand-soft:#f2eafa;}.role-store_manager{--brand:#a73b45;--brand-strong:#94333d;--brand-soft:#fcecef;}.role-promotion_manager{--brand:#aa4c24;--brand-strong:#97441f;--brand-soft:#fff0e6;}

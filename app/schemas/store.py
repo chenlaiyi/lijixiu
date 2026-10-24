@@ -64,15 +64,18 @@ class StoreAddressCreate(BaseModel):
     service_area_id: int
     store_id: int | None = None
     estate: str = Field(min_length=1, max_length=160)
-    building: str = Field(min_length=1, max_length=80)
+    door_number: str | None = Field(default=None, max_length=240)
+    building: str = Field(default="", max_length=80)
     unit: str = Field(default="", max_length=80)
-    room: str = Field(min_length=1, max_length=80)
+    room: str = Field(default="", max_length=80)
     business_owner_user_id: int | None = None
     created_by_user_id: int
     detail_hint: str | None = None
 
 
 class StoreAddressUpdate(BaseModel):
+    estate: str | None = Field(default=None, min_length=1, max_length=160)
+    door_number: str | None = Field(default=None, min_length=1, max_length=240)
     store_id: int | None = None
     business_owner_user_id: int | None = None
     detail_hint: str | None = None
@@ -92,6 +95,7 @@ class StoreAddressOut(BaseModel):
     street: str
     community: str
     estate: str
+    door_number: str | None = None
     building: str
     unit: str
     room: str

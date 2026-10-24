@@ -9,6 +9,7 @@ class WechatLoginRequest(BaseModel):
     phone: str | None = None
     name: str | None = None
     role: str | None = None
+    referral_code: str | None = Field(default=None, max_length=32)
 
 
 class WechatPhoneLoginRequest(BaseModel):
@@ -16,6 +17,7 @@ class WechatPhoneLoginRequest(BaseModel):
     wx_code: str | None = Field(default=None, description="wx.login code")
     name: str | None = None
     role: str | None = None
+    referral_code: str | None = Field(default=None, max_length=32)
 
 
 class WechatLoginResponse(BaseModel):
@@ -30,6 +32,8 @@ class ReviewLoginRequest(BaseModel):
 
 
 class AdminLoginRequest(BaseModel):
+    wx_code: str | None = None
+    referral_code: str | None = Field(default=None, max_length=32)
     """管理后台账号密码登录(2026-10-07)。
 
     凭据来自 .env 的 ADMIN_WEB_ACCOUNT / ADMIN_WEB_PASSWORD,
@@ -49,3 +53,4 @@ class SmsLoginRequest(BaseModel):
     code: str = Field(min_length=4, max_length=8)
     name: str | None = Field(default=None, max_length=50)
     wx_code: str | None = None
+    referral_code: str | None = Field(default=None, max_length=32)

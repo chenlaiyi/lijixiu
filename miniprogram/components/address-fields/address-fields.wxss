@@ -1,0 +1,1 @@
+.address-fields{display:flex;flex-direction:column;gap:14rpx;padding:12rpx 0}.label{font-size:28rpx;font-weight:600;color:#172331}.field{box-sizing:border-box;width:100%;min-height:88rpx;padding:22rpx;background:#f4f6f8;border-radius:14rpx;font-size:28rpx}.choice{padding:12rpx 4rpx;color:#168b7b;font-size:26rpx}.tip{font-size:24rpx;color:#687583}

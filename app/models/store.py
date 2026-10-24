@@ -110,6 +110,7 @@ class StoreAddress(Base):
     building: Mapped[str] = mapped_column(
         String(80), default="", comment="Building number"
     )
+    door_number: Mapped[str | None] = mapped_column(String(240), nullable=True)
     unit: Mapped[str] = mapped_column(
         String(80), default="", comment="Unit number"
     )

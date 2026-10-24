@@ -21,6 +21,9 @@ class WalletOut(BaseModel):
 
 
 class LedgerOut(BaseModel):
+    display_label: str = "资金流水"
+    service_address: str | None = None
+    order_id: int | None = None
     id: int
     wallet_id: int
     user_id: int

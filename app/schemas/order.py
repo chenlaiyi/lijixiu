@@ -12,6 +12,12 @@ class OrderCreate(BaseModel):
     region_id: int
     store_id: int | None = None
     address_book_id: int | None = None
+    service_area_id: int | None = None
+    estate: str | None = Field(default=None, max_length=160)
+    door_number: str | None = Field(default=None, max_length=240)
+    building: str | None = Field(default=None, max_length=80)
+    unit: str | None = Field(default=None, max_length=80)
+    room: str | None = Field(default=None, max_length=80)
     respect_service_area: bool = True
     category: OrderCategory = OrderCategory.OTHER
     description: str = Field(min_length=1, max_length=2000)
@@ -89,6 +95,11 @@ class OrderOut(BaseModel):
     store_id: int | None
     source: OrderSource
     region_id: int
+    estate: str | None
+    door_number: str | None = None
+    building: str | None
+    unit: str | None
+    room: str | None
     address_book_id: int | None
     address_code_snapshot: str | None
     address_owner_user_id: int | None

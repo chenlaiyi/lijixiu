@@ -89,7 +89,7 @@ tabs.store_manager = [
 ];
 tabs.city_manager = [
   ["overview", "城市概览"], ["adminOrders", "订单"], ["adminStores", "门店"],
-  ["domestic", "家政服务"], ["adminFinance", "财务"], ["adminAlerts", "风险"],
+  ["domestic", "家政服务"], ["adminFinance", "财务"],
 ];
 tabs.promotion_manager = [
   ["proxyOrders", "代客下单"], ["orders", "关联订单"], ["earnings", "推广收益"],
@@ -109,7 +109,8 @@ const state = {
 };
 
 function currentRole() {
-  return state.user?.business_role || state.user?.role || "customer";
+  const allowed = state.user?.business_roles || [state.user?.business_role || state.user?.role || 'customer'];
+  return allowed.includes(state.viewRole) ? state.viewRole : allowed[0];
 }
 
 function currentTabs() {
@@ -306,7 +307,10 @@ async function loadBusiness(tab) {
     Object.assign(state.cache, { wages, payroll });
   }
   if (tab === "warranties") state.cache.warranties = await safeList(`/api/v1/business/warranties?customer_id=${state.user.id}`);
-  if (tab === "addresses") state.cache.addresses = await safeList(`/api/v1/business/addresses?user_id=${state.user.id}`);
+  if (tab === "addresses") {
+    [state.cache.addresses, state.cache.addressAreas] = await Promise.all([
+      api(`/api/v1/business/addresses?user_id=${state.user.id}`), api('/api/v1/service-areas/customer-options')]);
+  }
   if (tab === "earnings") await loadWallet(state.user.id);
 }
 
@@ -323,7 +327,7 @@ async function loadCustomer(tab) {
   if (tab === "home") {
     const [orders, serviceAddresses] = await Promise.all([
       safeList(`/api/v1/orders?customer_id=${state.user.id}&limit=5`),
-      safeList("/api/v1/stores/addresses?enabled=true"),
+      safeList("/api/v1/service-areas/customer-options"),
     ]);
     state.cache.customerRecentOrders = orders;
     state.cache.serviceAddresses = serviceAddresses;
@@ -363,8 +367,8 @@ async function loadRepairer(tab) {
   if (tab === "jobs") {
     const repairer = state.cache.myRepairer;
     const [assigned, dispatched] = await Promise.all([
-      safeList(`/api/v1/orders?assigned_repairer_id=${repairer?.id || 0}&status=assigned&limit=50`),
-      safeList(`/api/v1/orders?assigned_repairer_id=${repairer?.id || 0}&status=dispatched&limit=50`),
+      safeList(`/api/v1/orders?assigned_repairer_id=${repairer?.id || state.user.id}&status=assigned&limit=50`),
+      safeList(`/api/v1/orders?assigned_repairer_id=${repairer?.id || state.user.id}&status=dispatched&limit=50`),
     ]);
     state.cache.availableJobs = [...assigned, ...dispatched];
   }
@@ -372,7 +376,7 @@ async function loadRepairer(tab) {
     const repairer = state.cache.myRepairer;
     const statuses = ["repairer_accepted", "accepted", "servicing", "bill_submitted", "bill_returned", "wait_payment", "paid"];
     const groups = await Promise.all(
-      statuses.map((s) => safeList(`/api/v1/orders?repairer_id=${repairer?.id || 0}&status=${s}&limit=50`)),
+      statuses.map((s) => safeList(`/api/v1/orders?repairer_id=${repairer?.id || state.user.id}&status=${s}&limit=50`)),
     );
     state.cache.myJobs = groups.flat();
   }
@@ -388,11 +392,11 @@ async function loadRepairer(tab) {
 async function loadAdmin(tab) {
   if (tab === "overview") {
     const [metrics, orders, users, repairers, alerts] = await Promise.all([
-      api("/metrics").catch(() => ({})),
+      currentRole() === "platform_admin" ? api("/api/v1/admin/metrics") : Promise.resolve({}),
       safeList("/api/v1/orders?limit=10"),
       safeList("/api/v1/users?limit=10"),
       safeList("/api/v1/repairers?limit=10"),
-      safeList("/api/v1/admin/alerts?resolved=false&limit=10"),
+      ["platform_admin", "finance"].includes(currentRole()) ? api("/api/v1/admin/alerts?resolved=false&limit=10") : Promise.resolve([]),
     ]);
     Object.assign(state.cache, { metrics, adminOrders: orders, users, repairers, alerts });
   }
@@ -438,7 +442,7 @@ async function loadAdmin(tab) {
     const [payments, withdrawals, logs] = await Promise.all([
       safeList("/api/v1/payment/list?limit=100"),
       safeList("/api/v1/wallet/withdrawals?limit=100"),
-      safeList("/api/v1/admin/reconcile/logs?limit=30"),
+      ["platform_admin", "finance"].includes(currentRole()) ? api("/api/v1/admin/reconcile/logs?limit=30") : Promise.resolve([]),
     ]);
     Object.assign(state.cache, { payments, withdrawals, reconcileLogs: logs });
   }
@@ -491,43 +495,28 @@ function renderLogin() {
               <div class="brand-mark"><img src="./assets/logo-mark.png" alt="立即修"></div>
               <div>
                 <h1>立即修</h1>
-                <p>厦门 · 上门维修领导品牌</p>
+                <p>上门维修服务</p>
               </div>
             </div>
           </div>
 
           <div class="login-brand-hero">
-            <h2>厦门的家,<span class="hl">一个电话</span><br/>30 分钟就有师傅上门</h2>
+            <h2>厦门的家,<span class="hl">一个电话</span><br/>预约师傅上门服务</h2>
             <p class="login-brand-sub">
               家电 · 水电 · 门窗 · 家具 · 管道疏通 · 家电清洗,
-              <br/>明码标价 · 持证师傅 · 原厂配件 · 7 天质保。
+              <br/>服务留痕 · 费用确认 · 售后保障。
             </p>
-          </div>
-
-          <div class="login-stats" role="list">
-            <div class="login-stat" role="listitem">
-              <strong>30<small>分钟</small></strong>
-              <span>平均响应时间</span>
-            </div>
-            <div class="login-stat" role="listitem">
-              <strong>168<small>+位</small></strong>
-              <span>认证师傅</span>
-            </div>
-            <div class="login-stat" role="listitem">
-              <strong>4.98<small>/5</small></strong>
-              <span>客户好评</span>
-            </div>
           </div>
 
           <ul class="login-trust" aria-label="服务承诺">
             <li><span class="dot"></span>明码标价,无任何隐形消费</li>
-            <li><span class="dot"></span>百万平台责任险,维修更安心</li>
-            <li><span class="dot"></span>原厂配件,7 天无理由返修</li>
+            <li><span class="dot"></span>费用确认后支付</li>
+            <li><span class="dot"></span>保修规则随服务单确认</li>
             <li><span class="dot"></span>全程留痕,服务节点实时通知</li>
           </ul>
 
           <div class="login-brand-foot">
-            <span class="login-brand-chip">已为 <em>2,800+</em> 厦门家庭解决维修难题</span>
+            <span class="login-brand-chip">预约上门维修 · 服务过程可追溯</span>
           </div>
         </aside>
 
@@ -543,87 +532,13 @@ function renderLogin() {
             </div>
           </div>
 
-          <div class="login-tabs" role="tablist">
-            <button type="button" class="login-tab active" data-login-tab="phone" role="tab" aria-selected="true">
-              <span class="ico" aria-hidden="true">📱</span>手机号登录
-            </button>
-            <button type="button" class="login-tab" data-login-tab="wechat" role="tab" aria-selected="false">
-              <span class="ico" aria-hidden="true">💬</span>微信一键登录
-            </button>
-          </div>
-
-          <form data-form="login" class="login-form" data-login-mode="phone">
-            <input type="hidden" name="role" value="customer" />
-
-            <!-- 手机号登录面板 -->
-            <div class="login-pane" data-login-pane="phone">
-              <div class="field">
-                <label>手机号</label>
-                <div class="input-wrap">
-                  <span class="input-prefix">+86</span>
-                  <input name="phone" inputmode="tel" autocomplete="tel" maxlength="20" value="13800138000" required />
-                </div>
-              </div>
-              <div class="field">
-                <label>姓名</label>
-                <div class="input-wrap">
-                  <input name="name" autocomplete="name" maxlength="50" value="测试用户" required />
-                </div>
-              </div>
-              <div class="field">
-                <label>验证码</label>
-                <div class="input-wrap">
-                  <input name="sms_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="请输入短信验证码" required />
-                  <button type="button" class="input-action" data-action="requestSms">获取验证码</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- 微信登录面板 -->
-            <div class="login-pane" data-login-pane="wechat" hidden>
-              <div class="wechat-card">
-                <div class="wechat-illu" aria-hidden="true">
-                  <div class="wechat-illu-bg"></div>
-                  <div class="wechat-illu-icon">💬</div>
-                </div>
-                <h4>微信扫码 / 授权登录</h4>
-                <p>使用微信扫一扫,2 秒进入工作台</p>
-                <button type="button" class="wechat-btn" data-action="wechatLogin" disabled>
-                  <span class="wx-ico" aria-hidden="true">🟢</span>
-                  微信一键登录(开发中)
-                </button>
-                <span class="wechat-hint">线上环境配置微信开放平台参数后即可启用</span>
-              </div>
-            </div>
-
-            <label class="agreement-check">
-              <input type="checkbox" name="agreed_terms" required />
-              <span>我已阅读并同意
-                <a href="./legal/user-agreement.html" target="_blank" rel="noopener">《用户服务协议》</a>
-                和
-                <a href="./legal/privacy-policy.html" target="_blank" rel="noopener">《隐私政策》</a>
-              </span>
-            </label>
-
-            <button class="primary login-submit" type="submit">进入工作台</button>
+          <form data-form="login" class="login-form">
+            <div class="field"><label for="login-account">账号 / 手机号</label><div class="input-wrap"><input id="login-account" name="account" autocomplete="username" placeholder="请输入账号或手机号" required /></div></div>
+            <div class="field"><label for="login-password">密码</label><div class="input-wrap"><input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="请输入密码" required /></div></div>
+            <button class="primary login-submit" type="submit">登录</button>
+            <p class="muted">新用户请在立即修微信小程序中授权手机号注册。</p>
+            <p><a href="./legal/user-agreement.html" target="_blank" rel="noopener">用户服务协议</a> · <a href="./legal/privacy-policy.html" target="_blank" rel="noopener">隐私政策</a></p>
           </form>
-
-          <div class="login-divider"><span>没有账号?直接体验</span></div>
-
-          <div class="demo-strip" role="group" aria-label="演示角色">
-            <button type="button" data-demo-login="18800000001|演示客户|customer">
-              <span class="demo-emoji" aria-hidden="true">👤</span>
-              <span class="demo-text"><strong>客户</strong><small>下单 · 评价</small></span>
-            </button>
-            <button type="button" data-demo-login="18800000002|演示师傅张工|repairer">
-              <span class="demo-emoji" aria-hidden="true">🛠️</span>
-              <span class="demo-text"><strong>师傅</strong><small>接单 · 提交</small></span>
-            </button>
-            <button type="button" data-demo-login="18800000000|演示管理员|admin">
-              <span class="demo-emoji" aria-hidden="true">⚙️</span>
-              <span class="demo-text"><strong>管理</strong><small>运营 · 财务</small></span>
-            </button>
-          </div>
         </section>
       </section>
     </main>
@@ -700,7 +615,8 @@ function mobileNav(items) {
 }
 
 function roleSwitchHtml(compact = false) {
-  return "";
+  const allowed=state.user.business_roles || [state.user.business_role];
+  return allowed.length>1 ? `<label class="role-switcher">切换身份<select data-action="switchViewRole">${allowed.map(r=>`<option value="${r}" ${currentRole()===r ? 'selected' : ''}>${escapeHtml(roleText[r] || r)}</option>`).join('')}</select></label>` : '';
 }
 
 function renderContent(role) {
@@ -746,14 +662,7 @@ function customerHome() {
           </div>
           <form class="form-grid" data-form="createOrder" style="margin-top:16px">
             <input type="hidden" name="category" value="${state.selectedCategory}" />
-            <div class="field wide">
-              <label>标准上门地址</label>
-              <select name="address_book_id" required>
-                <option value="">请选择平台已开通地址</option>
-                ${serviceAddresses.map((item) => `<option value="${item.id}">${escapeHtml(item.full_address)} · ${escapeHtml(item.address_code)}</option>`).join("")}
-              </select>
-              <span class="small">订单区域、门店和业务归属由唯一地址编号确定</span>
-            </div>
+            ${AddressFields.render(serviceAddresses)}
             <div class="field wide">
               <label>问题描述</label>
               <textarea name="description" maxlength="2000" required placeholder="例如：厨房水龙头持续漏水，需要尽快上门"></textarea>
@@ -767,7 +676,8 @@ function customerHome() {
               <input name="scheduled_time" type="datetime-local" />
             </div>
             <div class="wide">
-              <button class="primary" type="submit" ${serviceAddresses.length ? "" : "disabled"}>${serviceAddresses.length ? "提交订单" : "暂无已开通地址"}</button>
+              <button class="primary" type="submit" ${serviceAddresses.length ? "" : "disabled"}>提交订单</button>
+              ${serviceAddresses.length ? "" : `<p class="small">当前暂无已开通城市/区域，请联系平台。</p>`}
             </div>
           </form>
         </section>
@@ -1246,11 +1156,16 @@ function warrantiesPanel() {
 
 function addressesPanel() {
   const items = state.cache.addresses || [];
-  return `
-    <div class="grid two">
-      <section class="panel"><h3 class="card-title">新增地址</h3><form class="form-grid" data-form="createAddress" style="margin-top:16px"><div class="field"><label>联系人</label><input name="contact_name" value="${escapeHtml(state.user.name)}" required></div><div class="field"><label>手机号</label><input name="contact_phone" value="${escapeHtml(state.user.phone)}" required></div><div class="field wide"><label>详细地址</label><input name="address" required></div><label class="check"><input type="checkbox" name="is_default" value="true">设为默认</label><button class="primary" type="submit">保存地址</button></form></section>
-      <section class="panel"><h3 class="card-title">我的地址簿</h3>${items.length ? table(["联系人", "电话", "地址", "默认"], items.map((a) => [a.contact_name, a.contact_phone, escapeHtml(a.address), a.is_default ? "是" : "否"])) : empty("暂无地址", false)}</section>
-    </div>`;
+  return `<section class="panel"><h3 class="card-title">地址簿</h3>
+    <form class="form-grid" data-form="createAddress">
+      <div class="field"><label>联系人</label><input name="contact_name" required value="${escapeHtml(state.user.name || '')}" /></div>
+      <div class="field"><label>联系电话</label><input name="contact_phone" required value="${escapeHtml(state.user.phone || '')}" /></div>
+      ${AddressFields.render(state.cache.addressAreas || [])}
+      <label><input type="checkbox" name="is_default" />设为默认</label>
+      <button class="primary" type="submit">保存地址</button>
+    </form>
+    ${items.length ? table(['城市/区域','小区','门牌号','联系人'], items.map(item => [escapeHtml(`${item.city}/${item.district}`),escapeHtml(item.estate),escapeHtml(item.door_number),escapeHtml(item.contact_name)])) : empty('暂无保存地址',false)}
+  </section>`;
 }
 
 function renderAdmin() {
@@ -1287,8 +1202,8 @@ function adminOverview() {
       <section class="panel">
         <h3 class="card-title">运营概况</h3>
         <div class="grid two" style="margin-top:14px">
-          <div class="metric"><span class="muted">用户样本</span><strong>${users.length}</strong></div>
-          <div class="metric"><span class="muted">师傅样本</span><strong>${repairers.length}</strong></div>
+          <div class="metric"><span class="muted">用户</span><strong>${users.length}</strong></div>
+          <div class="metric"><span class="muted">师傅</span><strong>${repairers.length}</strong></div>
         </div>
       </section>
     </div>
@@ -1302,7 +1217,7 @@ function adminOrders() {
     <div class="toolbar">
       <div>
         <h3 class="card-title">订单管理</h3>
-        <p class="small">派单、改价、服务单确认、门店审核和取消</p>
+        <p class="small">${["platform_admin", "store_manager"].includes(currentRole()) ? "派单、服务单确认和门店审核" : "查看订单及服务进度"}</p>
       </div>
     </div>
     ${
@@ -1325,17 +1240,18 @@ function adminOrders() {
 }
 
 function adminOrderActions(order, repairers) {
+  if (!["platform_admin", "store_manager"].includes(currentRole())) return "只读";
   const repairerOptions = repairers.map((r) => `<option value="${r.id}">#${r.id} ${escapeHtml(r.skills)}</option>`).join("");
   return `
     <div class="actions">
-      <button class="secondary" data-action="storeAccept" data-id="${order.id}">门店接单</button>
-      <button class="secondary" data-action="autoDispatch" data-id="${order.id}">自动派单</button>
-      <form data-form="assignOrder" style="display:flex;gap:8px">
+      ${["created", "store_pending"].includes(order.status) ? `<button class="secondary" data-action="storeAccept" data-id="${order.id}">门店接单</button>` : ""}
+      ${["created", "store_pending", "store_accepted", "assigned", "dispatched"].includes(order.status) ? `<button class="secondary" data-action="autoDispatch" data-id="${order.id}">自动派单</button>` : ""}
+      <form data-form="assignOrder" style="${["created", "store_pending", "store_accepted", "assigned", "dispatched"].includes(order.status) ? "display:flex;gap:8px" : "display:none"}">
         <input type="hidden" name="order_id" value="${order.id}" />
         <select name="repairer_id" required style="min-width:120px">${repairerOptions}</select>
         <button class="ghost" type="submit">指派</button>
       </form>
-      <button class="secondary" data-action="adminPrice" data-id="${order.id}">改价</button>
+      ${!["paid", "paid_pending_review", "store_reviewed", "completed", "cancelled"].includes(order.status) ? `<button class="secondary" data-action="adminPrice" data-id="${order.id}">改价</button>` : ""}
       ${order.status === "bill_submitted" ? `<button class="secondary" data-action="confirmBill" data-id="${order.id}">确认服务单</button>` : ""}
       ${["paid", "paid_pending_review"].includes(order.status) ? `<button class="secondary" data-action="storeReview" data-id="${order.id}">门店审核</button>` : ""}
       ${!["completed", "cancelled"].includes(order.status) ? `<button class="danger" data-action="cancelOrder" data-id="${order.id}">取消</button>` : ""}
@@ -1347,23 +1263,7 @@ function adminUsers() {
   const users = state.cache.users || [];
   return `
     <div class="split">
-      <section class="panel">
-        <h3 class="card-title">新增用户</h3>
-        <form class="form-grid" data-form="createUser" style="margin-top:14px">
-          <div class="field"><label>手机号</label><input name="phone" required /></div>
-          <div class="field"><label>姓名</label><input name="name" required /></div>
-          <div class="field">
-            <label>角色</label>
-            <select name="role">
-              <option value="customer">客户</option>
-              <option value="repairer">师傅</option>
-              <option value="admin">管理员</option>
-            </select>
-          </div>
-          <label class="small"><input type="checkbox" name="is_promotion_manager" /> 推广经理</label>
-          <button class="primary" type="submit">创建用户</button>
-        </form>
-      </section>
+      <p class="muted">新用户通过微信手机号注册；账号管理请进入管理后台。</p>
       <section class="panel">
         <h3 class="card-title">用户列表</h3>
         ${users.length ? table(["编号", "姓名", "手机号", "角色", "推广经理"], users.map((u) => [u.id, escapeHtml(u.name), escapeHtml(u.phone), roleText[u.role] || u.role, u.is_promotion_manager ? "是" : "否"])) : empty("暂无用户", false)}
@@ -1416,7 +1316,7 @@ function adminStores() {
         <h3 class="card-title">新增区域</h3>
         <form class="form-grid" data-form="createRegion" style="margin-top:14px">
           <div class="field"><label>区域名称</label><input name="name" required /></div>
-          <div class="field"><label>层级</label><select name="level"><option value="1">省/大区</option><option value="2">城市</option><option value="3">区县</option></select></div>
+          <div class="field"><label>层级</label><select name="level"><option value="1">一级：城市</option><option value="2">二级：区县</option></select></div>
           <button class="primary" type="submit">创建区域</button>
         </form>
       </section>
@@ -1438,7 +1338,7 @@ function adminStores() {
     </section>
     <section class="panel" style="margin-top:16px">
       <h3 class="card-title">服务地址</h3>
-      ${addresses.length ? table(["编号", "门店", "城市", "小区", "提示", "启用"], addresses.map((a) => [a.id, a.store_id, escapeHtml(a.city), escapeHtml(a.community), escapeHtml(a.detail_hint || ""), a.enabled ? "是" : "否"])) : empty("暂无服务地址", false)}
+      ${addresses.length ? table(["编号", "门店", "城市", "小区", "提示", "启用"], addresses.map((a) => [a.id, a.store_id, escapeHtml(a.city), escapeHtml(a.estate), escapeHtml(a.detail_hint || ""), a.enabled ? "是" : "否"])) : empty("暂无服务地址", false)}
     </section>
   `;
 }
@@ -1448,7 +1348,7 @@ function adminPackages() {
   const customerPackages = state.cache.customerPackages || [];
   const schedules = state.cache.schedules || [];
   return `
-    <div class="split">
+    <div class="split" style="${currentRole() === "platform_admin" ? "" : "display:none"}">
       <section class="panel">
         <h3 class="card-title">新增套餐</h3>
         <form class="form-grid" data-form="createPackage" style="margin-top:14px">
@@ -1490,7 +1390,7 @@ function adminFinance() {
         <p class="small">支付、提现、分润和对账</p>
       </div>
       <div class="actions">
-        <button class="primary" data-action="runReconcile">运行对账</button>
+        ${["platform_admin", "finance"].includes(currentRole()) ? `<button class="primary" data-action="runReconcile">运行对账</button>` : ""}
         <button class="secondary" data-action="queryProfit">查询订单分润</button>
       </div>
     </div>
@@ -1510,7 +1410,7 @@ function adminFinance() {
 }
 
 function withdrawalActions(w) {
-  if (w.status !== "pending") return "-";
+  if (w.status !== "pending" || currentRole() !== "platform_admin") return "-";
   return `
     <div class="actions">
       <button class="secondary" data-action="reviewWithdraw" data-id="${w.id}" data-review="approve">通过</button>
@@ -1610,19 +1510,7 @@ document.addEventListener("click", async (event) => {
     return;
   }
 
-  const demoBtn = event.target.closest("[data-demo-login]");
-  if (demoBtn) {
-    const [phone, name, role] = demoBtn.dataset.demoLogin.split("|");
-    const form = demoBtn.closest("form");
-    form.elements.phone.value = phone;
-    form.elements.name.value = name;
-    form.elements.role.value = role;
-    const res = await api("/api/v1/auth/wechat-login", { method: "POST", body: { code: `${phone}:${name}:${role}` } });
-    saveSession(res.token, res.user);
-    toast("登录成功");
-    await refresh();
-    return;
-  }
+
 
   const loginTabBtn = event.target.closest("[data-login-tab]");
   if (loginTabBtn) {
@@ -1700,6 +1588,7 @@ document.addEventListener("click", async (event) => {
 document.addEventListener("change", async (event) => {
   const select = event.target.closest('select[data-action="switchViewRole"]');
   if (!select) return;
+  if (!(state.user.business_roles || [state.user.business_role]).includes(select.value)) return;
   state.viewRole = select.value;
   state.tab = "";
   localStorage.setItem("h5_view_role", state.viewRole);
@@ -1720,13 +1609,8 @@ document.addEventListener("submit", async (event) => {
 
 async function handleForm(type, data) {
   if (type === "login") {
-    if (!data.agreed_terms) {
-      toast("请先同意《用户服务协议》和《隐私政策》");
-      return;
-    }
-    const res = await api("/api/v1/auth/sms/login", {
-      method: "POST",
-      body: { phone: data.phone, code: data.sms_code, name: data.name },
+    const res = await api("/api/v1/auth/password-login", {
+      method: "POST", body: { account: data.account, password: data.password },
     });
     saveSession(res.token, res.user);
     toast("登录成功");
@@ -1734,20 +1618,20 @@ async function handleForm(type, data) {
   }
 
   if (type === "createOrder") {
-    const serviceAddress = (state.cache.serviceAddresses || []).find(
-      (item) => item.id === Number(data.address_book_id),
-    );
-    if (!serviceAddress) throw new Error("请选择平台已开通的标准地址");
+    const addressFields = AddressFields.resolve(state.cache.serviceAddresses || [], data);
+    const serviceAddress = (state.cache.serviceAddresses || []).find(item => item.id === addressFields.service_area_id);
+    if (!serviceAddress) throw new Error("请选择已开通的服务社区");
     await api("/api/v1/orders", {
       method: "POST",
       body: {
         customer_id: state.user.id,
         region_id: serviceAddress.region_id,
         store_id: serviceAddress.store_id,
-        address_book_id: serviceAddress.id,
+        service_area_id: serviceAddress.id,
+        ...addressFields,
         category: data.category,
         description: data.description,
-        address: serviceAddress.full_address,
+        address: [serviceAddress.city, serviceAddress.district, addressFields.estate, addressFields.door_number].filter(Boolean).join(" "),
         contact_phone: data.contact_phone,
         scheduled_time: data.scheduled_time ? new Date(data.scheduled_time).toISOString() : null,
       },
@@ -1970,7 +1854,7 @@ async function handleForm(type, data) {
         user_id: state.user.id,
         contact_name: data.contact_name,
         contact_phone: data.contact_phone,
-        address: data.address,
+        ...AddressFields.resolve(state.cache.addressAreas || [], data),
         is_default: Boolean(data.is_default),
       },
     });
@@ -1983,7 +1867,7 @@ async function payOrder(orderId, amount) {
     toast("订单金额为 0，暂不能支付", "error");
     return;
   }
-  toast("请在微信小程序内完成微信支付", "error");
+  toast("请在立即修微信小程序中打开该订单完成支付");
 }
 
 async function rateOrder(orderId) {

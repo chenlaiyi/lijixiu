@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite+aiosqlite:///./xiulijiu.db"
     UPLOAD_DIR: str = "uploads"
     DEBUG: bool = True
+    ALLOW_DEMO_LOGIN: bool = False
     AUTH_SECRET: str = "change-me-in-production"
     SMS_PROVIDER: str = "debug"
     SMS_DEBUG_CODE: str = "246810"

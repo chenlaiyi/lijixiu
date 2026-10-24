@@ -19,7 +19,7 @@ from .service_package import (
 from .settlement import SettlementItem, SettlementItemType, SettlementPeriod, SettlementStatus
 from .store import AreaOpenRequest, Store, StoreAddress, StoreStaff, StoreStaffRole, StoreStatus
 from .support_ticket import SupportReply, SupportTicket, SupportTicketStatus
-from .user import BusinessRole, User, UserRole, UserRoleGrant
+from .user import BusinessRole, User, UserRole
 from .business import (
     CustomerAddress,
     DomesticCandidate,
@@ -36,7 +36,7 @@ from .wallet import Wallet
 from .withdrawal import Withdrawal, WithdrawalStatus
 
 __all__ = [
-    "User", "UserRole", "BusinessRole", "UserRoleGrant", "Repairer", "Region",
+    "User", "UserRole", "BusinessRole", "Repairer", "Region",
     "Order", "OrderStatus", "OrderCategory",
     "OrderLog", "OperatorType",
     "ProfitShare", "ProfitRole", "ProfitStatus",
@@ -59,3 +59,5 @@ __all__ = [
     "ServicePackage", "CustomerPackage", "PackageSchedule",
     "PackageStatus", "PackageScheduleStatus",
 ]
+
+from .user import UserRoleGrant

@@ -59,7 +59,7 @@ async def bulk_assign(
     _admin: User = Depends(require_admin),  # 2026-10-05
 ):
     try:
-        return await service.bulk_assign_service_areas(db, data)
+        return await service.bulk_assign_service_areas(db, data.model_copy(update={"operator_user_id": _admin.id}))
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
 
@@ -70,7 +70,7 @@ async def bulk_clear(
     db: AsyncSession = Depends(get_db),
     _admin: User = Depends(require_admin),  # 2026-10-05
 ):
-    return await service.bulk_clear_service_areas(db, data)
+    return await service.bulk_clear_service_areas(db, data.model_copy(update={"operator_user_id": _admin.id}))
 
 
 @router.get("/assignment-logs", response_model=list[AssignmentLogOut])
@@ -81,3 +81,8 @@ async def logs(
     _admin: User = Depends(require_admin),  # 2026-10-05:分配审计日志仅管理员
 ):
     return await service.assignment_logs(db, service_area_id, limit)
+
+
+@router.get("/customer-options")
+async def customer_options(db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+    return await service.customer_options(db)

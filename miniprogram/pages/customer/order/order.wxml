@@ -64,21 +64,8 @@
       </view>
     </view>
 
-    <view class="form-item {{validationErrors.address ? 'error' : ''}}">
-      <view class="label-row">
-        <image class="label-icon" src="/assets/ui/address.png" mode="aspectFit" />
-        <text class="label">标准上门地址</text>
-        <text class="label-note">唯一归属</text>
-      </view>
-      <picker mode="selector" range="{{serviceAddresses}}" range-key="full_address" value="{{serviceAddressIndex}}" bindchange="onServiceAddressChange">
-        <view class="picker-value address-picker-value tap-feedback" hover-class="tap-feedback-active">
-          <view class="address-picker-copy">
-            <text class="address-picker-main">{{address || '请选择平台已开通地址'}}</text>
-            <text wx:if="{{addressCode}}" class="address-picker-code">{{addressCode}}</text>
-          </view>
-          <image class="picker-icon" src="/assets/ui/chevron-right.png" mode="aspectFit" />
-        </view>
-      </picker>
+    <view class="form-item">
+      <address-fields value="{{addressFieldsValue}}" bindchange="onAddressFieldsChange" />
       <text wx:if="{{validationErrors.address}}" class="field-tip error">{{validationErrors.address}}</text>
     </view>
 
@@ -97,7 +84,7 @@
     </view>
     <text wx:if="{{optionsLoading}}" class="field-tip">匹配中</text>
     <view wx:if="{{optionsFailed}}" class="field-tip warning options-failed">
-      <text>暂无已开通标准地址，请联系平台补充地址库</text>
+      <text>请先选择城市/区域和小区</text>
       <button class="options-retry" bindtap="loadOptions" hover-class="button-hover">重试</button>
     </view>
   </view>

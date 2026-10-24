@@ -40,7 +40,8 @@
     "navigationBarTextStyle": "black"
   },
   "usingComponents": {
-    "role-tabbar": "/components/role-tabbar/role-tabbar"
+    "role-tabbar": "/components/role-tabbar/role-tabbar",
+    "address-fields": "/components/address-fields/address-fields"
   },
   "permission": {
     "scope.record": {

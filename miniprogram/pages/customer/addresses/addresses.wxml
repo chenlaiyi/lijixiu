@@ -7,7 +7,7 @@
     <button class="empty-action" bindtap="load" hover-class="button-hover">重试</button>
   </view>
   <view wx:elif="{{list.length === 0}}" class="empty-state">
-    <text>还没有保存标准服务地址</text>
+    <text>还没有保存服务地址</text>
     <button class="empty-action" bindtap="openAdd" hover-class="button-hover">新增地址</button>
   </view>
   <view wx:else class="address-list">
@@ -21,13 +21,7 @@
       <text class="sheet-title">{{editingId ? '编辑地址' : '新增地址'}}</text>
       <view class="field"><text>联系人</text><input value="{{form.contactName}}" data-field="contactName" bindinput="input" /></view>
       <view class="field"><text>手机号</text><input type="number" value="{{form.contactPhone}}" data-field="contactPhone" bindinput="input" /></view>
-      <view class="field vertical">
-        <text>标准服务地址</text>
-        <picker disabled="{{editingId > 0}}" mode="selector" range="{{serviceAddresses}}" range-key="full_address" value="{{form.serviceAddressIndex}}" bindchange="selectServiceAddress">
-          <view class="address-picker">{{form.address || '请选择平台已开通地址'}}</view>
-        </picker>
-        <text class="immutable-tip">地址正文和唯一编号不可修改，联系人电话可以更新</text>
-      </view>
+      <address-fields value="{{addressValue}}" bindchange="addressChange" />
       <view class="field"><text>设为默认</text><switch color="#087443" checked="{{form.isDefault}}" bindchange="switchDefault" /></view>
       <button class="save-button" bindtap="save" loading="{{saving}}">保存地址</button>
     </view>

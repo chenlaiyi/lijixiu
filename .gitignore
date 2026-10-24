@@ -69,6 +69,8 @@ uploads/
 /tmp/
 test-results/
 playwright-report/
+.playwright-cli/
+output/playwright/
 # 2026-10-07:多角色回归测试在工程内建临时库(沙箱下系统 temp 不可写)
 .tmp-test-*/
 # 2026-10-12:DSH 沙箱权限修复的备份/回滚记录(本机专用,勿提交)

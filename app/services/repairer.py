@@ -51,3 +51,20 @@ async def update_repairer(
     await db.commit()
     await db.refresh(repairer)
     return repairer
+
+
+async def ensure_role_profiles(db: AsyncSession, user=None):
+    """Provision only missing repairer profiles, never fabricate qualifications."""
+    from ..models.user import User
+    users = [user] if user else (await db.execute(select(User))).scalars().all()
+    count = 0
+    for item in users:
+        if not item.is_active or 'repairer' not in item.business_roles:
+            continue
+        if await get_repairer_by_user(db, item.id):
+            continue
+        db.add(Repairer(user_id=item.id, skills='待完善', status='offline',
+            intro='请完善技能和服务区域后再接单'))
+        await db.flush()
+        count += 1
+    return count

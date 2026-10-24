@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.auth import get_current_user, require_staff
+from ..core.auth import get_current_user, require_staff, require_admin
 from ..core.database import get_db
 from ..models.user import User
 from ..schemas.region import RegionCreate, RegionOut, RegionUpdate
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/v1/regions", tags=["区域管理"])
 async def create_region(
     data: RegionCreate,
     db: AsyncSession = Depends(get_db),
-    _staff: User = Depends(require_staff),  # 2026-10-05
+    _staff: User = Depends(require_admin),  # 2026-10-05
 ):
     if data.parent_id:
         parent = await region_service.get_region(db, data.parent_id)
@@ -61,7 +61,7 @@ async def update_region(
     region_id: int,
     data: RegionUpdate,
     db: AsyncSession = Depends(get_db),
-    _staff: User = Depends(require_staff),  # 2026-10-05
+    _staff: User = Depends(require_admin),  # 2026-10-05
 ):
     """修改区域（设置负责人等）"""
     r = await region_service.get_region(db, region_id)

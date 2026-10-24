@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.auth import get_current_user, require_staff
+from ..core.auth import get_current_user, require_staff, require_admin, require_roles
 from ..core.database import get_db
 from ..models.user import User
 from ..schemas.store import (
@@ -27,7 +27,7 @@ router = APIRouter(prefix="/api/v1/stores", tags=["stores"])
 async def create_store(
     data: StoreCreate,
     db: AsyncSession = Depends(get_db),
-    _staff: User = Depends(require_staff),
+    _staff: User = Depends(require_admin),
 ):
     return await store_service.create_store(db, data)
 
@@ -46,7 +46,7 @@ async def update_store(
     store_id: int,
     data: StoreUpdate,
     db: AsyncSession = Depends(get_db),
-    _staff: User = Depends(require_staff),
+    _staff: User = Depends(require_roles("platform_admin", "store_manager")),
 ):
     store = await store_service.get_store(db, store_id)
     if not store:
@@ -59,7 +59,7 @@ async def add_staff(
     store_id: int,
     data: StoreStaffCreate,
     db: AsyncSession = Depends(get_db),
-    _staff: User = Depends(require_staff),
+    _staff: User = Depends(require_roles("platform_admin", "store_manager")),
 ):
     store = await store_service.get_store(db, store_id)
     if not store:
@@ -80,10 +80,10 @@ async def list_staff(
 async def create_address(
     data: StoreAddressCreate,
     db: AsyncSession = Depends(get_db),
-    _staff: User = Depends(require_staff),
+    _staff: User = Depends(require_roles("platform_admin", "store_manager")),
 ):
     try:
-        return await store_service.create_address(db, data)
+        return await store_service.create_address(db, data.model_copy(update={"created_by_user_id": _staff.id}))
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
 
@@ -108,7 +108,7 @@ async def update_address(
     address_id: int,
     data: StoreAddressUpdate,
     db: AsyncSession = Depends(get_db),
-    _staff: User = Depends(require_staff),
+    _staff: User = Depends(require_roles("platform_admin", "store_manager")),
 ):
     address = await store_service.find_address(db, address_id)
     if not address:

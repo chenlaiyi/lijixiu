@@ -14,7 +14,8 @@ from ..models.store import Store, StoreStaff, StoreStaffRole, StoreStatus
 from ..models.user import User
 from ..schemas.order import OrderCreate, OrderUpdate
 from .store import find_active_store_by_region, find_address
-from .service_area import match_service_area
+from .address_format import clean, door_number, full_address as format_address
+from .service_area import match_service_area, resolve_open_area
 
 
 def _canonical_status(status: OrderStatus) -> OrderStatus:
@@ -120,7 +121,7 @@ async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
         OrderSource.AFTER_SALES,
     }
     service_address = None
-    if data.source in controlled_sources:
+    if data.source in controlled_sources and not data.service_area_id:
         if not data.address_book_id:
             raise ValueError("请选择地址库中的标准上门地址，联系电话不能代替地址归属")
         service_address = await find_address(db, data.address_book_id)
@@ -135,9 +136,7 @@ async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
             data.customer_phone_snapshot or data.contact_phone or customer.phone
         )
         payload["customer_address_snapshot"] = data.customer_address_snapshot or data.address
-        payload["referrer_user_id"] = data.referrer_user_id
-        if payload["referrer_user_id"] is None:
-            payload["referrer_user_id"] = customer.promotion_manager_id
+        payload["referrer_user_id"] = customer.referrer_user_id
         payload["channel_manager_id_snapshot"] = data.channel_manager_id_snapshot
     if data.is_proxy_order:
         payload["claim_status"] = "unclaimed"
@@ -148,7 +147,17 @@ async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
     matched_area = None
     area_assignment = None
     store = None
-    if service_address:
+    if data.service_area_id:
+        matched_area, area_assignment, store = await resolve_open_area(db, data.service_area_id)
+        door = door_number(data.door_number, data.building, data.unit, data.room)
+        full_address = format_address(matched_area.city, matched_area.district, data.estate, door)
+        payload.update(estate=clean(data.estate), door_number=door,
+                       building=data.building, unit=data.unit, room=data.room)
+        payload.update(address=full_address, customer_address_snapshot=full_address,
+            region_id=store.region_id, store_id=store.id, address_book_id=None,
+            address_code_snapshot=matched_area.code, address_owner_user_id=store.manager_id,
+            channel_manager_id_snapshot=store.manager_id)
+    elif service_address:
         matched_area = (
             await db.get(ServiceArea, service_address.service_area_id)
             if service_address.service_area_id else None
@@ -162,14 +171,15 @@ async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
                 )
             )
         ).scalar_one_or_none()
-        store = await db.get(Store, service_address.store_id)
-        if not store or not store.enabled or store.status != StoreStatus.ACTIVE:
-            raise ValueError("标准地址对应的接单门店未启用")
+        matched_area, area_assignment, store = await resolve_open_area(db, service_address.service_area_id)
+        door = door_number(service_address.door_number, service_address.building, service_address.unit, service_address.room)
+        normalized_address = format_address(matched_area.city, matched_area.district, service_address.estate, door)
         payload.update({
-            "address": service_address.full_address,
-            "customer_address_snapshot": service_address.full_address,
-            "region_id": service_address.region_id,
-            "store_id": service_address.store_id,
+            "address": normalized_address,
+            "customer_address_snapshot": normalized_address,
+            "estate": service_address.estate, "door_number": door,
+            "region_id": store.region_id,
+            "store_id": store.id,
             "address_code_snapshot": service_address.address_code,
             "address_owner_user_id": service_address.business_owner_user_id,
             "channel_manager_id_snapshot": (
@@ -192,7 +202,7 @@ async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
         payload["service_area_name_snapshot"] = matched_area.name
     if area_assignment:
         payload["service_area_assignment_id"] = area_assignment.id
-        payload["service_area_manager_id"] = area_assignment.manager_id
+        payload["service_area_manager_id"] = store.manager_id if store else area_assignment.manager_id
 
     if store:
         payload["store_id"] = store.id

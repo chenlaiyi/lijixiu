@@ -341,7 +341,48 @@ async def get_ledger(
         stmt = stmt.where(Ledger.type == ledger_type)
     stmt = stmt.order_by(Ledger.id.desc()).offset(skip).limit(limit)
     result = await db.execute(stmt)
-    return list(result.scalars().all())
+    rows = list(result.scalars().all())
+    from ..models.order import Order
+    from ..models.profit_share import ProfitShare
+    share_ids = {r.reference_id for r in rows if r.reference_type == "profit_share" and r.reference_id}
+    shares = {}
+    if share_ids:
+        shares = {p.id: p for p in (await db.execute(select(ProfitShare).where(ProfitShare.id.in_(share_ids)))).scalars()}
+    order_ids = {p.order_id for p in shares.values()}
+    order_ids.update(r.reference_id for r in rows if r.reference_type == "order" and r.reference_id)
+    orders = {}
+    if order_ids:
+        orders = {o.id: o for o in (await db.execute(select(Order).where(Order.id.in_(order_ids)))).scalars()}
+    labels = {
+        "order_income": "订单收入", "profit_settlement": "收益结算",
+        "technician_wage": "师傅工资", "monthly_wage_payment": "月薪发放",
+        "refund_clawback": "退款扣回", "manual_adjust": "人工调整",
+        "withdrawal": "提现支出", "withdrawal_complete": "提现完成",
+        "withdrawal_reject": "提现退回", "ledger_freeze": "资金冻结",
+        "ledger_unfreeze": "资金解冻",
+    }
+    profit_labels = {
+        "store_revenue": "门店收入", "store_manager_commission": "店长佣金",
+        "city_manager_commission": "城市经理佣金", "channel_manager_commission": "推广经理佣金",
+        "tech_support": "技术服务收益", "referral_reward": "推荐奖励",
+        "proxy_assist_reward": "代客下单奖励", "technician_wage": "师傅工资",
+        "pass_through": "代收款", "platform_retained": "平台收益",
+    }
+    output = []
+    for row in rows:
+        share = shares.get(row.reference_id) if row.reference_type == "profit_share" else None
+        order_id = share.order_id if share else (row.reference_id if row.reference_type == "order" else None)
+        order = orders.get(order_id)
+        label = profit_labels.get(share.role_type.value, "收益结算") if share else labels.get(row.type.value, "资金流水")
+        if row.reference_type == "withdrawal" and row.type == LedgerType.LEDGER_FREEZE:
+            label = "提现申请（资金冻结）"
+        output.append({
+            **{column.name: getattr(row, column.name) for column in Ledger.__table__.columns},
+            "display_label": label,
+            "service_address": (order.address or order.customer_address_snapshot) if order else None,
+            "order_id": order_id,
+        })
+    return output
 
 
 async def list_withdrawals(

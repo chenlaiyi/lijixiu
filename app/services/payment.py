@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,7 +16,7 @@ from ..models.refund_order import RefundOrder, RefundStatus
 from ..models.service_bill import ServiceBillStatus
 from ..models.user import User
 from ..models.wallet import Wallet
-from ..models.ledger import LedgerType
+from ..models.ledger import Ledger, LedgerType
 from ..schemas.payment import PayCreateRequest, RefundCreateRequest
 from ..core.config import settings
 from . import safety
@@ -56,6 +57,8 @@ def _can_reuse_wechat_prepay(pay_order: PayOrder, payer_openid: str | None) -> b
 
 
 async def create_payment(db: AsyncSession, data: PayCreateRequest) -> PayOrder:
+    if data.provider == PayProvider.ALIPAY:
+        raise ValueError("Alipay is not integrated")
     if data.provider == PayProvider.MOCK and not settings.PAYMENT_ALLOW_MOCK:
         raise ValueError("模拟支付已关闭，请使用微信支付")
     order = await lock_order(db, data.order_id)
@@ -137,27 +140,32 @@ async def create_payment_intent(
             or abs(pay_order.amount - (order.price - (order.paid_amount or 0))) > 0.01
             and order.source not in (OrderSource.MATERNITY, OrderSource.NANNY)):
         raise ValueError("订单价格或支付状态已更新，请刷新后支付")
-    payer_openid = data.payer_openid
-    if pay_order.provider == PayProvider.WECHAT and data.js_code:
-        payer_openid = wechat_pay.exchange_js_code(data.js_code)
-
-    if _can_reuse_wechat_prepay(pay_order, payer_openid):
-        return PaymentIntent(
-            pay_url=f"wechat://pay/{pay_order.id}",
-            payment_params=wechat_pay.build_jsapi_payment_params(pay_order.prepay_id),
-            prepay_id=pay_order.prepay_id,
-            payer_openid=pay_order.payer_openid,
-        )
-
-    provider = get_provider(pay_order.provider.value)
     try:
+        payer_openid = data.payer_openid
+        if pay_order.provider == PayProvider.WECHAT and data.js_code:
+            payer_openid = wechat_pay.exchange_js_code(data.js_code)
+            payer = await db.get(User, pay_order.user_id)
+            if payer and payer.wechat_openid and payer.wechat_openid != payer_openid:
+                raise ValueError("WeChat login does not match the paying user")
+            if pay_order.prepay_id and pay_order.payer_openid != payer_openid:
+                raise ValueError("Pending WeChat payment belongs to a different payer")
+
+        if _can_reuse_wechat_prepay(pay_order, payer_openid):
+            return PaymentIntent(
+                pay_url=f"wechat://pay/{pay_order.id}",
+                payment_params=wechat_pay.build_jsapi_payment_params(pay_order.prepay_id),
+                prepay_id=pay_order.prepay_id,
+                payer_openid=pay_order.payer_openid,
+            )
+
+        provider = get_provider(pay_order.provider.value)
         intent = await provider.create_payment(
             pay_order,
             payer_openid=payer_openid,
             js_code=None if payer_openid else data.js_code,
         )
     except Exception as exc:
-        if pay_order.status == PayStatus.PENDING:
+        if pay_order.status == PayStatus.PENDING and not pay_order.prepay_id:
             pay_order.status = PayStatus.FAILED
             pay_order.notify_payload = json.dumps(
                 {
@@ -198,6 +206,8 @@ async def handle_callback(
     pay_order = await db.get(PayOrder, pay_order_id)
     if not pay_order:
         raise ValueError(f"Pay order not found: #{pay_order_id}")
+    if pay_order.provider != PayProvider.MOCK or not settings.PAYMENT_ALLOW_MOCK:
+        raise ValueError("Manual callback is available only for mock payments")
     if pay_order.status == PayStatus.PAID:
         await _mark_idempotency_done(db, key)
         return pay_order
@@ -241,17 +251,14 @@ async def mark_payment_paid(
         if json.loads(pay_order.notify_payload).get("stage") == "service_bill_revision":
             raise ValueError("此支付单已因服务单修改而关闭")
 
+    if order.status != OrderStatus.WAIT_PAYMENT:
+        raise ValueError("当前订单状态不能确认支付")
+
     pay_order.status = PayStatus.PAID
     pay_order.paid_at = datetime.now(timezone.utc)
     pay_order.transaction_id = transaction_id
     if notify_payload is not None:
         pay_order.notify_payload = json.dumps(notify_payload, ensure_ascii=False)
-
-    order = await db.get(Order, pay_order.order_id)
-    if not order:
-        raise ValueError(f"Business order not found: #{pay_order.order_id}")
-    if order.status != OrderStatus.WAIT_PAYMENT:
-        raise ValueError(f"Order status is {order.status.value}, expected wait_payment")
 
     order.paid_amount = round((order.paid_amount or 0) + pay_order.amount, 2)
     order.latest_payer_user_id = pay_order.user_id
@@ -313,6 +320,29 @@ async def mark_payment_paid(
     return pay_order
 
 
+def _cents(amount: float) -> int:
+    return int(Decimal(str(amount)) * 100)
+
+
+def _validate_wechat_payment(pay_order: PayOrder, payload: dict) -> None:
+    if payload.get("out_trade_no") != pay_order.out_trade_no:
+        raise ValueError("WeChat payment order number mismatch")
+    if payload.get("appid") != settings.WECHAT_PAY_APPID or payload.get("mchid") != wechat_pay.mch_id():
+        raise ValueError("WeChat payment merchant identity mismatch")
+    if not payload.get("transaction_id"):
+        raise ValueError("WeChat payment transaction_id missing")
+    if pay_order.transaction_id and payload["transaction_id"] != pay_order.transaction_id:
+        raise ValueError("WeChat payment transaction_id mismatch")
+    amount = payload.get("amount") or {}
+    if amount.get("total") != _cents(pay_order.amount):
+        raise ValueError("WeChat payment amount mismatch")
+    if amount.get("currency", "CNY") != "CNY":
+        raise ValueError("WeChat payment currency mismatch")
+    payer = payload.get("payer") or {}
+    if pay_order.payer_openid and payer.get("openid") != pay_order.payer_openid:
+        raise ValueError("WeChat payment payer mismatch")
+
+
 async def handle_wechat_notification(
     db: AsyncSession,
     headers: dict[str, str],
@@ -327,37 +357,25 @@ async def handle_wechat_notification(
     pay_order = result.scalar_one_or_none()
     if not pay_order:
         raise ValueError(f"Pay order not found by out_trade_no: {out_trade_no}")
-
-    key = make_key("wechat_payment_notify", pay_order.id)
-    ok, existing = await safety.acquire_idempotency_key(db, key)
-    if not ok:
-        if existing and existing.status == "done":
-            return pay_order
-        raise safety.SafetyError(f"WeChat payment notify is already processing: {key}")
+    if payload.get("appid") != settings.WECHAT_PAY_APPID or payload.get("mchid") != wechat_pay.mch_id():
+        raise ValueError("WeChat payment merchant identity mismatch")
 
     trade_state = payload.get("trade_state")
     if trade_state != "SUCCESS":
         pay_order.notify_payload = json.dumps(payload, ensure_ascii=False)
-        if trade_state in {"CLOSED", "REVOKED", "PAYERROR"}:
+        if pay_order.status == PayStatus.PENDING and trade_state in {"CLOSED", "REVOKED", "PAYERROR"}:
             pay_order.status = PayStatus.FAILED
         await db.commit()
-        raise ValueError(f"WeChat payment not successful: {trade_state}")
+        return pay_order
 
-    amount = payload.get("amount") or {}
-    payer_total = int(amount.get("payer_total") or amount.get("total") or 0)
-    expected = int(round(float(pay_order.amount) * 100))
-    if payer_total != expected:
-        raise ValueError(f"WeChat payment amount mismatch: expected={expected}, actual={payer_total}")
-
-    paid = await mark_payment_paid(
+    _validate_wechat_payment(pay_order, payload)
+    return await mark_payment_paid(
         db,
         pay_order,
         transaction_id=payload.get("transaction_id"),
         remark=f"wechat payment notify: {out_trade_no}",
         notify_payload=payload,
     )
-    await _mark_idempotency_done(db, key)
-    return paid
 
 
 async def sync_wechat_payment(db: AsyncSession, pay_order_id: int) -> PayOrder:
@@ -368,13 +386,14 @@ async def sync_wechat_payment(db: AsyncSession, pay_order_id: int) -> PayOrder:
         raise ValueError("Only WeChat payment can be synced")
     if not pay_order.out_trade_no:
         raise ValueError("Pay order missing out_trade_no")
-    if pay_order.status == PayStatus.PAID:
+    if pay_order.status in {PayStatus.PAID, PayStatus.PARTIALLY_REFUNDED, PayStatus.REFUNDED}:
         return pay_order
 
     payload = wechat_pay.query_transaction(pay_order.out_trade_no)
     trade_state = payload.get("trade_state")
     pay_order.notify_payload = json.dumps(payload, ensure_ascii=False)
     if trade_state == "SUCCESS":
+        _validate_wechat_payment(pay_order, payload)
         return await mark_payment_paid(
             db,
             pay_order,
@@ -412,39 +431,71 @@ def _refund_status(value: str | None) -> RefundStatus:
     return RefundStatus.PROCESSING
 
 
+async def _validate_wechat_refund(db: AsyncSession, refund: RefundOrder, payload: dict) -> None:
+    pay_order = await db.get(PayOrder, refund.pay_order_id)
+    if not pay_order:
+        raise ValueError("Refund payment not found")
+    if payload.get("out_refund_no") != refund.out_refund_no:
+        raise ValueError("WeChat refund number mismatch")
+    if payload.get("out_trade_no") != pay_order.out_trade_no:
+        raise ValueError("WeChat refund payment number mismatch")
+    if payload.get("mchid") and payload["mchid"] != wechat_pay.mch_id():
+        raise ValueError("WeChat refund merchant mismatch")
+    if pay_order.transaction_id and payload.get("transaction_id") != pay_order.transaction_id:
+        raise ValueError("WeChat refund transaction mismatch")
+    amount = payload.get("amount") or {}
+    if amount.get("refund") != _cents(refund.amount) or amount.get("total") != _cents(pay_order.amount):
+        raise ValueError("WeChat refund amount mismatch")
+    if not (payload.get("status") or payload.get("refund_status")):
+        raise ValueError("WeChat refund status missing")
+
+
 async def _apply_refund_payload(
     db: AsyncSession,
     refund: RefundOrder,
     payload: dict,
 ) -> RefundOrder:
+    refund = (await db.execute(
+        select(RefundOrder).where(RefundOrder.id == refund.id)
+        .with_for_update().execution_options(populate_existing=True)
+    )).scalar_one()
+    await _validate_wechat_refund(db, refund, payload)
     status = _refund_status(payload.get("status") or payload.get("refund_status"))
+    if refund.status == RefundStatus.SUCCESS and status != RefundStatus.SUCCESS:
+        return refund
     refund.status = status
     refund.refund_id = payload.get("refund_id") or refund.refund_id
     refund.notify_payload = json.dumps(payload, ensure_ascii=False)
     first_success = status == RefundStatus.SUCCESS and refund.success_at is None
     if first_success:
         refund.success_at = datetime.now(timezone.utc)
+    if status == RefundStatus.SUCCESS:
+        await _apply_refund_clawback(db, refund, first_success=first_success)
     await db.commit()
     await db.refresh(refund)
     await _refresh_payment_refund_status(db, refund.pay_order_id)
-    if first_success:
-        await _apply_refund_clawback(db, refund)
+    if status == RefundStatus.SUCCESS:
+        pay_order = await db.get(PayOrder, refund.pay_order_id)
+        if pay_order and pay_order.status == PayStatus.REFUNDED:
+            stage = (await db.execute(
+                select(DomesticPaymentStage).where(DomesticPaymentStage.pay_order_id == pay_order.id)
+            )).scalar_one_or_none()
+            if stage and stage.status != "refunded":
+                stage.status = "refunded"
+                await db.commit()
     return refund
 
 
-async def _apply_refund_clawback(db: AsyncSession, refund: RefundOrder) -> None:
-    order = await db.get(Order, refund.order_id)
+async def _apply_refund_clawback(db: AsyncSession, refund: RefundOrder, *, first_success: bool) -> None:
+    order = (await db.execute(
+        select(Order).where(Order.id == refund.order_id)
+        .with_for_update().execution_options(populate_existing=True)
+    )).scalar_one_or_none()
     pay_order = await db.get(PayOrder, refund.pay_order_id)
     if not order or not pay_order:
         return
-    order.paid_amount = max(0.0, round((order.paid_amount or 0) - refund.amount, 2))
-    stage = (
-        await db.execute(
-            select(DomesticPaymentStage).where(DomesticPaymentStage.pay_order_id == pay_order.id)
-        )
-    ).scalar_one_or_none()
-    if stage and pay_order.status == PayStatus.REFUNDED:
-        stage.status = "refunded"
+    if first_success:
+        order.paid_amount = max(0.0, round((order.paid_amount or 0) - refund.amount, 2))
 
     shares = list((await db.execute(
         select(ProfitShare).where(
@@ -453,28 +504,33 @@ async def _apply_refund_clawback(db: AsyncSession, refund: RefundOrder) -> None:
             ProfitShare.user_id.is_not(None),
         )
     )).scalars().all())
-    if not shares or order.price <= 0:
-        await db.commit()
-        return
-    ratio = min(1.0, refund.amount / order.price)
-    debits = [(share, round(share.amount * ratio, 2)) for share in shares]
-    for share, amount in debits:
-        if amount <= 0 or not share.user_id:
-            continue
+    ratio = min(1.0, refund.amount / order.price) if order.price > 0 else 0
+    debits: dict[int, float] = {}
+    for share in shares:
+        share_debit = round(share.amount * ratio, 2)
+        debits[share.user_id] = round(debits.get(share.user_id, 0) + share_debit, 2)
+    existing_debits = set((await db.execute(
+        select(Ledger.user_id).where(
+            Ledger.reference_type == "refund_order",
+            Ledger.reference_id == refund.id,
+            Ledger.type == LedgerType.REFUND_CLAWBACK,
+        )
+    )).scalars().all())
+    pending = {user_id: amount for user_id, amount in debits.items()
+               if amount > 0 and user_id not in existing_debits}
+    for user_id, amount in pending.items():
         wallet = (
-            await db.execute(select(Wallet).where(Wallet.user_id == share.user_id))
+            await db.execute(select(Wallet).where(Wallet.user_id == user_id))
         ).scalar_one_or_none()
         if not wallet or wallet.available_balance + 0.01 < amount:
             order.risk_review_required = True
             order.settlement_status = "clawback_required"
             await db.commit()
             return
-    for share, amount in debits:
-        if amount <= 0 or not share.user_id:
-            continue
+    for user_id, amount in pending.items():
         await safety.safe_debit(
             db,
-            share.user_id,
+            user_id,
             amount,
             LedgerType.REFUND_CLAWBACK,
             ref_type="refund_order",
@@ -579,6 +635,10 @@ async def _find_refundable_pay_order(
 
 async def create_refund(db: AsyncSession, data: RefundCreateRequest) -> RefundOrder:
     pay_order = await _find_refundable_pay_order(db, data)
+    pay_order = (await db.execute(
+        select(PayOrder).where(PayOrder.id == pay_order.id)
+        .with_for_update().execution_options(populate_existing=True)
+    )).scalar_one()
     if pay_order.provider != PayProvider.WECHAT:
         raise ValueError("Only WeChat payments can be refunded")
     if pay_order.status not in (PayStatus.PAID, PayStatus.PARTIALLY_REFUNDED):
@@ -609,11 +669,17 @@ async def create_refund(db: AsyncSession, data: RefundCreateRequest) -> RefundOr
 
     try:
         result = wechat_pay.create_refund(pay_order, refund.out_refund_no, refund.amount, refund.reason)
-    except Exception as exc:
-        refund.status = RefundStatus.FAILED
-        refund.notify_payload = json.dumps({"error": str(exc)}, ensure_ascii=False)
+    except wechat_pay.WeChatPayError as exc:
+        # An HTTP failure may happen after WeChat accepts the request. Keep the
+        # refund reserved until a query establishes its final state.
+        refund.notify_payload = json.dumps({"submit_error": str(exc)[:500]}, ensure_ascii=False)
         await db.commit()
-        raise
+        try:
+            payload = wechat_pay.query_refund(refund.out_refund_no)
+        except wechat_pay.WeChatPayError:
+            raise wechat_pay.WeChatPayError("Refund result unknown; sync this refund before retrying") from exc
+        await _apply_refund_payload(db, refund, payload)
+        return refund
 
     await _apply_refund_payload(db, refund, result.payload)
     if refund.status == RefundStatus.PROCESSING and data.amount + 0.01 >= pay_order.amount:

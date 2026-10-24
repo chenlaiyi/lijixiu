@@ -29,6 +29,7 @@ from .routers import (
     order,
     payment,
     region,
+    referral,
     repairer,
     service_package,
     service_area,
@@ -95,6 +96,9 @@ async def lifespan(app: FastAPI):
     await init_db()
     async with async_session() as db:
         await sync_xiamen_service_areas(db)
+        from .services.repairer import ensure_role_profiles
+        await ensure_role_profiles(db)
+        await db.commit()
     task = asyncio.create_task(_timeout_reassign_loop())
     yield
     task.cancel()
@@ -120,6 +124,7 @@ app.mount("/uploads", StaticFiles(directory=_UPLOAD_DIR), name="uploads")
 app.include_router(auth.router)
 app.include_router(business.router)
 app.include_router(user.router)
+app.include_router(referral.router)
 app.include_router(repairer.router)
 app.include_router(order.router)
 app.include_router(region.router)

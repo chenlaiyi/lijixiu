@@ -15,7 +15,6 @@ from ..models.service_area import (
 from ..models.store import Store, StoreStatus
 from ..models.user import BusinessRole, User
 from ..schemas.service_area import BulkAssignmentRequest, BulkClearRequest
-from . import role as role_service
 
 _DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "xiamen_service_areas.json"
 
@@ -145,7 +144,7 @@ async def list_service_areas(
     for area, assignment, state in rows[skip: skip + limit]:
         primary = stores.get(assignment.primary_store_id) if assignment else None
         backup = stores.get(assignment.backup_store_id) if assignment else None
-        manager = users.get(assignment.manager_id) if assignment else None
+        manager = users.get(primary.manager_id) if primary else None
         items.append({
             "id": area.id,
             "code": area.code,
@@ -161,7 +160,7 @@ async def list_service_areas(
             "primary_store_name": primary.name if primary else None,
             "backup_store_id": assignment.backup_store_id if assignment else None,
             "backup_store_name": backup.name if backup else None,
-            "manager_id": assignment.manager_id if assignment else None,
+            "manager_id": primary.manager_id if primary else None,
             "manager_name": manager.name if manager else None,
             "assignment_status": state,
             "effective_from": assignment.effective_from if assignment else None,
@@ -226,13 +225,17 @@ async def _validate_assignment_targets(db: AsyncSession, data: BulkAssignmentReq
             BusinessRole.CITY_MANAGER.value,
             BusinessRole.PLATFORM_ADMIN.value,
         }
-        if not role_service.has_any_role(manager, allowed):
+        if not manager or not set(manager.business_roles) & allowed:
             raise ValueError("负责人必须是店长、城市经理或平台管理员")
 
 
 async def bulk_assign_service_areas(
     db: AsyncSession, data: BulkAssignmentRequest
 ) -> dict:
+    if not data.primary_store_id:
+        raise ValueError("请选择主服务门店")
+    primary_store = await db.get(Store, data.primary_store_id) if data.primary_store_id else None
+    data = data.model_copy(update={"manager_id": primary_store.manager_id if primary_store else None})
     await _validate_assignment_targets(db, data)
     areas = {
         item.id: item
@@ -293,6 +296,9 @@ async def bulk_assign_service_areas(
                 key: (getattr(assignment, key) if getattr(assignment, key) is not None else value)
                 for key, value in values.items()
             }
+        effective_store = await db.get(Store, values["primary_store_id"]) if values["primary_store_id"] else None
+        values["manager_id"] = effective_store.manager_id if effective_store else None
+        values["updated_by_user_id"] = data.operator_user_id
         after = {
             key: (value.isoformat() if isinstance(value, datetime) else value)
             for key, value in values.items()
@@ -443,3 +449,46 @@ async def match_service_area(
                 store = candidate
                 break
     return area, assignment, store
+
+
+async def resolve_open_area(db, area_id):
+    area = await db.get(ServiceArea, area_id)
+    assignment = (await db.execute(select(ServiceAreaAssignment).where(
+        ServiceAreaAssignment.service_area_id == area_id))).scalar_one_or_none()
+    if not area or not area.active or not assignment:
+        raise ValueError("所选社区尚未开通服务")
+    if assignment.effective_from:
+        effective = assignment.effective_from
+        if effective.tzinfo is None:
+            effective = effective.replace(tzinfo=timezone.utc)
+        if effective > datetime.now(timezone.utc):
+            raise ValueError("所选社区服务尚未生效")
+    for store_id in (assignment.primary_store_id, assignment.backup_store_id):
+        store = await db.get(Store, store_id) if store_id else None
+        if store and store.enabled and store.status == StoreStatus.ACTIVE:
+            return area, assignment, store
+    raise ValueError("所选社区的服务门店暂未开通")
+
+
+async def customer_options(db):
+    from ..models.store import StoreAddress
+    from ..models.order import Order
+    areas = (await db.execute(select(ServiceArea).join(ServiceAreaAssignment,
+        ServiceAreaAssignment.service_area_id == ServiceArea.id).where(ServiceArea.active == True))).scalars().all()
+    result = []
+    for area in areas:
+        try:
+            _, assignment, store = await resolve_open_area(db, area.id)
+        except ValueError:
+            continue
+        estates = sorted(set((await db.execute(select(StoreAddress.estate).where(
+            StoreAddress.service_area_id == area.id, StoreAddress.enabled == True,
+            StoreAddress.estate != ""))).scalars().all()))
+        ordered_estates = (await db.execute(select(Order.estate).where(
+            Order.service_area_id == area.id, Order.estate.is_not(None), Order.estate != ""))).scalars().all()
+        estates = sorted(set(estates + list(ordered_estates)))
+        result.append(dict(id=area.id, service_area_id=area.id, name=area.name,
+            label=f"{area.district} / {area.street} / {area.name}",
+            province=area.province, city=area.city, district=area.district, street=area.street,
+            store_id=store.id, store_name=store.name, region_id=store.region_id, estates=estates))
+    return result

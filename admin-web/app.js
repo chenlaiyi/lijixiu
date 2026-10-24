@@ -2,12 +2,11 @@ const state = {
   view: "overview",
   cache: {},
   selectedServiceAreas: new Set(),
-  // 2026-10-07 multi-role:角色字典来自后端 /api/v1/users/roles/options
-  roleOptions: null,
+  addressLibraryOpen: false,
   titles: {
     overview: ["概览", "平台运行和关键业务指标"],
     orders: ["订单", "派单、改价、状态流转和服务审核"],
-    users: ["用户", "客户/师傅账号、多角色配置和推广经理标记"],
+    users: ["用户", "客户、师傅账号和推广经理标记"],
     repairers: ["师傅", "师傅资料、接单状态和区域"],
     stores: ["门店", "服务门店、负责人和默认接单师傅"],
     regions: ["区域", "城市/区域层级和负责人"],
@@ -24,6 +23,7 @@ const state = {
 };
 
 const statusText = {
+  draft:"未开通", active:"已开通", suspended:"已暂停", closed:"已关闭",
   created: "待派单",
   store_pending: "门店待接",
   store_accepted: "门店已接",
@@ -81,55 +81,6 @@ const roleText = {
   repairer: "师傅",
   admin: "管理员"
 };
-
-// 2026-10-07 multi-role:业务角色字典。运行时会用 /api/v1/users/roles/options
-// 覆盖(后端是唯一真相),这里的兜底值只保证 UI 在接口异常时还能显示中文。
-const businessRoleText = {
-  customer: "客户",
-  repairer: "师傅",
-  store_manager: "店长",
-  city_manager: "城市经理",
-  promotion_manager: "业务",
-  second_receiver: "兜底",
-  tech_support: "技术支持",
-  finance: "财务",
-  platform_admin: "平台管理员"
-};
-
-const businessRoleOrder = [
-  "store_manager",
-  "city_manager",
-  "platform_admin",
-  "tech_support",
-  "finance",
-  "second_receiver",
-  "repairer",
-  "promotion_manager",
-  "customer"
-];
-
-function businessRoleLabel(value) {
-  return businessRoleText[value] || value || "-";
-}
-
-function businessRoleOptions() {
-  return businessRoleOrder.map((value) => ({ value, label: businessRoleLabel(value) }));
-}
-
-/** 一个账号拥有的全部角色(兼容只有 business_role 的老数据)。 */
-function userBusinessRoles(row) {
-  const roles = Array.isArray(row && row.business_roles) ? row.business_roles.filter(Boolean) : [];
-  if (roles.length) return roles;
-  if (row && row.business_role) return [row.business_role];
-  return [];
-}
-
-function userActiveRole(row) {
-  const active = row && row.active_business_role ? String(row.active_business_role) : "";
-  const roles = userBusinessRoles(row);
-  if (active && roles.includes(active)) return active;
-  return roles.find((item) => item !== "customer") || roles[0] || "";
-}
 
 const els = {
   content: document.querySelector("#content"),
@@ -238,7 +189,7 @@ function renderAuthActor() {
   if (!node) return;
   const actor = readActor();
   if (authToken && actor) {
-    node.textContent = `${actor.name || "已登录"} · ${actor.business_role || "-"}`;
+    node.textContent = `${actor.name || '已登录'} · ${({platform_admin:'平台管理员',store_manager:'店长',city_manager:'城市经理',repairer:'师傅',second_receiver:'二接师傅',customer:'客户',promotion_manager:'推广经理',finance:'财务',tech_support:'客服'})[actor.business_role] || actor.business_role || '-'}`;
     node.classList.remove("muted");
     if (logout) logout.hidden = false;
   } else if (authToken) {
@@ -461,21 +412,66 @@ function section(title, subtitle, body, toolbar = "") {
   `;
 }
 
+function choiceField(name, label, options, hint, required = false) {
+  return {name, label, type: 'search', options, hint, placeholder: '输入名称或手机号搜索后选择', required};
+}
+function userChoices(users, roles) {
+  return users.filter(u => u.is_active && (u.business_roles || [u.business_role]).some(r => roles.includes(r))).map(u => ({value:u.id,label:`${u.name} · ${u.phone}`}));
+}
+function regionChoices(regions, all = regions) {
+  return regions.map(r => ({value:r.id,label:`${all.find(p => p.id === r.parent_id)?.name ? all.find(p => p.id === r.parent_id).name + ' / ' : ''}${r.name}`}));
+}
+async function allUsers() {
+  const rows = [];
+  for (let skip = 0; ; skip += 100) {
+    const page = await api(`/api/v1/users?limit=100&skip=${skip}`);
+    rows.push(...page); if (page.length < 100) return rows;
+  }
+}
+let regionFormData = {regions:[], filters:{districts:[]}};
+function updateRegionChoices(resetName = true) {
+  const f = document.querySelector('[data-form="create-region"]'); if (!f) return;
+  const level = Number(f.elements.level.value);
+  const parent = f.elements.parent_id;
+  const candidates = regionFormData.regions.filter(r => r.level === level - 1);
+  parent.disabled = level === 1; parent.required = level > 1;
+  document.getElementById(parent.getAttribute('list')).innerHTML = regionChoices(candidates, regionFormData.regions).map(o => `<option value="${escapeHtml(o.label)}" data-value="${o.value}"></option>`).join('');
+  if (!candidates.some(r => regionChoices([r])[0].label === parent.value) && !Array.from(document.getElementById(parent.getAttribute('list')).options).some(o => o.value === parent.value)) parent.value = '';
+  const chosen = Array.from(document.getElementById(parent.getAttribute('list')).options).find(o => o.value === parent.value);
+  const parentRegion = regionFormData.regions.find(r => r.id === Number(chosen?.dataset.value));
+  const geo = regionFormData.filters;
+  let names = level === 1 ? [geo.city || '厦门市'] : [];
+  if (level === 2 && parentRegion?.name === geo.city) names = geo.districts.map(d => d.name);
+  document.getElementById('create-region-name-list').innerHTML = names.map(name => `<option value="${escapeHtml(name)}"></option>`).join('');
+  if (resetName) f.elements.name.value = '';
+  f.elements.name.placeholder = level === 1 ? '例如：厦门市' : '例如：海沧区，先选择上级城市';
+}
+document.addEventListener('change', e => {
+  if (e.target.closest('[data-form="create-region"]') && ['level','parent_id'].includes(e.target.name)) updateRegionChoices();
+});
+document.addEventListener('input', e => {
+  if (e.target.matches('[data-choice]')) e.target.setCustomValidity('');
+  if (e.target.closest('[data-form="create-region"]') && e.target.name === 'parent_id') updateRegionChoices();
+});
 function form(fields, action, submitText = "保存") {
   const controls = fields.map((field) => {
     const id = `${action}-${field.name}`;
+    const hint = `<small class="field-hint" id="${id}-hint">${escapeHtml(field.hint || field.placeholder || '请填写' + field.label)}</small>`;
+    if (field.type === 'search') {
+      return `<div class="field"><label for="${id}">${escapeHtml(field.label)}</label><input id="${id}" name="${field.name}" list="${id}-list" data-choice autocomplete="off" placeholder="${escapeHtml(field.placeholder)}" aria-describedby="${id}-hint" ${field.required ? 'required' : ''}><datalist id="${id}-list">${field.options.map(o => `<option value="${escapeHtml(o.label)}" data-value="${o.value}"></option>`).join('')}</datalist>${hint}</div>`;
+    }
     if (field.type === "select") {
       const opts = (field.options || []).map((option) => {
         const value = typeof option === "string" ? option : option.value;
         const label = typeof option === "string" ? option : option.label;
         return `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
       }).join("");
-      return `<div class="field"><label for="${id}">${escapeHtml(field.label)}</label><select id="${id}" name="${field.name}">${opts}</select></div>`;
+      return `<div class="field"><label for="${id}">${escapeHtml(field.label)}</label><select id="${id}" name="${field.name}">${opts}</select>${hint}</div>`;
     }
     if (field.type === "textarea") {
       return `<div class="field wide"><label for="${id}">${escapeHtml(field.label)}</label><textarea id="${id}" name="${field.name}" placeholder="${escapeHtml(field.placeholder || "")}"></textarea></div>`;
     }
-    return `<div class="field"><label for="${id}">${escapeHtml(field.label)}</label><input id="${id}" name="${field.name}" type="${field.type || "text"}" placeholder="${escapeHtml(field.placeholder || "")}"></div>`;
+    return `<div class="field"><label for="${id}">${escapeHtml(field.label)}</label><input id="${id}" name="${field.name}" type="${field.type || "text"}" placeholder="${escapeHtml(field.placeholder || "")}" ${field.required ? "required" : ""} ${field.suggestions ? `list="${id}-list"` : ""} aria-describedby="${id}-hint">${field.suggestions ? `<datalist id="${id}-list">${field.suggestions.map(v => `<option value="${escapeHtml(v)}"></option>`).join("")}</datalist>` : ""}${hint}</div>`;
   }).join("");
   return `<form class="form-grid" data-form="${action}">${controls}<button class="btn primary" type="submit">${escapeHtml(submitText)}</button></form>`;
 }
@@ -499,7 +495,7 @@ async function checkApi() {
 }
 
 async function loadOverview() {
-  const [metrics, orders, users, repairers, withdrawals, alerts, stores] = await Promise.all([
+  const [metrics, orders, users, repairers, withdrawals, alerts, stores, regions] = await Promise.all([
     // 2026-10-07:改走 Bearer token 的管理端点。
     // 原来调 "/metrics",那个路径有 nginx basic auth,浏览器会弹原生账号密码框。
     api("/api/v1/admin/metrics").catch(() => ({})),
@@ -508,7 +504,8 @@ async function loadOverview() {
     api("/api/v1/repairers").catch(() => []),
     api("/api/v1/wallet/withdrawals?limit=100").catch(() => []),
     api("/api/v1/admin/alerts?resolved=false").catch(() => []),
-    api("/api/v1/stores").catch(() => [])
+    api("/api/v1/stores").catch(() => []),
+    api("/api/v1/regions").catch(() => [])
   ]);
   const pendingWithdrawals = withdrawals.filter((item) => item.status === "pending").length;
   const activeOrders = orders.filter((item) => !["completed", "cancelled"].includes(item.status)).length;
@@ -539,7 +536,7 @@ async function loadOverview() {
 
   const storeSummary = table([
     { label: "门店", key: "name" },
-    { label: "区域", key: "region_id" },
+    { label: "所属区域", render: row => escapeHtml(regions.find(r => r.id === row.region_id)?.name || "未设置") },
     { label: "负责人", key: "manager_id" },
     { label: "默认师傅", key: "default_second_receiver_id" },
     { label: "状态", render: (row) => statusBadge(row.status) }
@@ -590,113 +587,97 @@ async function loadOrders() {
 }
 
 async function loadUsers() {
-  const users = await api("/api/v1/users");
-  state.cache.users = users;
-  if (!state.roleOptions) {
-    state.roleOptions = await api("/api/v1/users/roles/options").catch(() => null);
-  }
-  const createForm = form([
-    { name: "phone", label: "手机号", placeholder: "13800138000" },
-    { name: "name", label: "姓名" },
-    { name: "role", label: "账号类型", type: "select", options: [
-      { value: "customer", label: "用户" },
-      { value: "repairer", label: "师傅" },
-      { value: "admin", label: "管理员" }
-    ] },
-    { name: "promotion_manager_id", label: "推广经理ID", type: "number" }
-  ], "create-user", "新增用户");
-  const body = createForm + table([
+  const users = await allUsers();
+  const search = document.querySelector('#users-search')?.value?.trim() || '';
+  const matchingUsers = users.filter(u => !search || `${u.name} ${u.phone}`.includes(search));
+  const body = table([
     { label: "ID", key: "id" },
     { label: "手机号", key: "phone" },
     { label: "姓名", key: "name" },
-    { label: "账号类型", render: (row) => badge(roleText[row.role] || row.role) },
-    {
-      label: "业务角色",
-      render: (row) => {
-        const roles = userBusinessRoles(row);
-        if (!roles.length) return "-";
-        const active = userActiveRole(row);
-        const tags = roles
-          .slice()
-          .sort((a, b) => businessRoleOrder.indexOf(a) - businessRoleOrder.indexOf(b))
-          .map((value) => `${businessRoleLabel(value)}${value === active ? "＊" : ""}`)
-          .join(" / ");
-        return `<span title="＊ = 当前身份">${escapeHtml(tags)}</span>`;
-      }
-    },
-    { label: "当前身份", render: (row) => {
-      const active = userActiveRole(row);
-      return active ? badge(businessRoleLabel(active), "ok") : "-";
-    } },
+    { label: "角色", render: (row) => badge(({customer:"客户",repairer:"师傅",second_receiver:"二接师傅",store_manager:"店长",city_manager:"城市经理",promotion_manager:"推广经理",tech_support:"客服",finance:"财务",platform_admin:"平台管理员"})[row.business_role] || row.business_role) },
+    { label: "兼任身份", render: row => escapeHtml((row.business_roles || []).filter(r => r !== row.business_role && r !== "customer").map(r => ({store_manager:"店长",repairer:"师傅",promotion_manager:"推广经理"})[r] || r).join("、") || "—") },
+    { label: "账号状态", render: (row) => badge(row.is_active ? "已启用" : "已停用", row.is_active ? "ok" : "warn") },
     { label: "推广经理", render: (row) => row.is_promotion_manager ? badge("是", "ok") : "-" },
+    { label: "上级推广", render: (row) => row.promotion_manager_id || "-" },
     { label: "创建时间", render: (row) => fmtDate(row.created_at) },
     {
       label: "操作",
       render: (row) => `<div class="actions">
-        ${actionButton("配置角色", "user-roles", { id: row.id })}
-        ${actionButton("改名", "user-name", { id: row.id, name: row.name })}
-        ${actionButton(row.is_promotion_manager ? "取消推广" : "设为推广", "user-promo", { id: row.id, active: row.is_promotion_manager ? "1" : "0" })}
+        ${actionButton(row.is_active ? "停用" : "启用", "user-status", { id: row.id, active: row.is_active ? "1" : "0" })}
+        ${row.phone.startsWith("1880000") ? "" : actionButton("改名", "user-name", { id: row.id, name: row.name })}
+        ${actionButton("业务身份", "user-business-roles", {id:row.id, roles:(row.business_roles || [row.business_role]).join(","), primary:row.business_role, fixed:row.phone.startsWith("1880000") ? "1" : "0"})}
+        ${row.phone.startsWith("1880000") ? "" : actionButton("其他管理角色", "user-role", { id: row.id, role: row.business_role })}
       </div>`
     }
-  ], users, "暂无用户");
-  els.content.innerHTML = section("用户列表", "「配置角色」可多选:一个账号可同时是店长+师傅+业务", body);
+  ], matchingUsers, "没有匹配的用户，请确认对方已在小程序注册");
+  els.content.innerHTML = section("人员账号与授权", "新成员先在小程序注册，再搜索手机号设置店长、城市经理、师傅或其他管理角色", body, `<input id="users-search" placeholder="搜索姓名或手机号" value="${escapeHtml(search)}"><button class="btn" data-action="search-users">查找人员</button>`);
 }
 
 async function loadRepairers() {
-  const repairers = await api("/api/v1/repairers");
+  const [repairers, users, regions] = await Promise.all([api("/api/v1/repairers?limit=100"), allUsers(), api("/api/v1/regions")]);
   const createForm = form([
-    { name: "user_id", label: "用户ID", type: "number" },
-    { name: "skills", label: "技能", placeholder: "水电,家电维修" },
-    { name: "region_id", label: "区域ID", type: "number" },
-    { name: "intro", label: "简介" }
+    choiceField('user_id', '师傅账号', userChoices(users.filter(u => !repairers.some(r => r.user_id === u.id)), ['repairer','second_receiver']), '搜索姓名或手机号，选择已注册并获得师傅角色的账号；已有档案的账号不重复显示', true),
+    { name: 'skills', label: '技能', placeholder: '例如：水电,家电维修', required:true, hint:'用逗号分隔，例如：水电,家电维修' },
+    choiceField('region_id', '服务区域', regionChoices(regions), '先在区域页新增城市和区县，再搜索选择服务区域'),
+    { name:'intro', label:'简介', placeholder:'例如：从事水电维修 8 年，可服务海沧区' }
   ], "create-repairer", "新增师傅");
   const body = createForm + table([
     { label: "ID", key: "id" },
-    { label: "用户ID", key: "user_id" },
+    { label: "姓名 / 手机号", render: row => { const u=users.find(u=>u.id===row.user_id); return escapeHtml(u ? `${u.name} / ${u.phone}` : String(row.user_id)); } },
     { label: "技能", key: "skills", wrap: true },
     { label: "区域", render: (row) => row.region_id || "-" },
     { label: "评分", key: "rating" },
     { label: "接单数", key: "order_count" },
-    { label: "状态", render: (row) => statusBadge(row.status) },
+    { label: "状态", render: (row) => badge(({online:"在线",offline:"休息",busy:"服务中"})[row.status] || "待确认", row.status==="online"?"ok":"warn") },
     {
       label: "操作",
       render: (row) => `<div class="actions">
+        ${actionButton("完善资料", "repairer-profile", { id: row.id })}
         ${actionButton("改状态", "repairer-status", { id: row.id, status: row.status })}
         ${actionButton("改技能", "repairer-skills", { id: row.id, skills: row.skills })}
       </div>`
     }
   ], repairers, "暂无师傅");
-  els.content.innerHTML = section("师傅列表", "资料和接单状态", body);
+  els.content.innerHTML = section("师傅列表", "授权师傅身份后自动入列；完善技能、服务区域后再接单", body);
 }
 
+
 async function loadStores() {
-  const stores = await api("/api/v1/stores");
+  const [stores, regions, users, repairers, addresses, addressAreas] = await Promise.all([api("/api/v1/stores"), api("/api/v1/regions"), allUsers(), api("/api/v1/repairers?limit=100"), api("/api/v1/stores/addresses"), api("/api/v1/service-areas/customer-options")]);
+  state.cache.addressAreas = addressAreas;
   const createForm = form([
-    { name: "name", label: "门店名称" },
-    { name: "region_id", label: "区域ID", type: "number" },
-    { name: "manager_id", label: "负责人ID", type: "number" },
-    { name: "city_manager_id", label: "城市经理ID", type: "number" },
-    { name: "default_second_receiver_id", label: "默认师傅ID", type: "number" },
-    { name: "remark", label: "备注" }
+    {name:'name', label:'门店名称', required:true, placeholder:'例如：立即修海沧店'},
+    choiceField('region_id', '所属区域', regionChoices(regions), '搜索并选择已创建的区域，例如：厦门市 / 海沧区', true),
+    choiceField('manager_id', '门店负责人', userChoices(users, ['store_manager']), '搜索店长姓名或手机号，选择负责人', true),
+    choiceField('city_manager_id', '城市经理', userChoices(users, ['city_manager']), '选填：搜索城市经理姓名或手机号'),
+    choiceField('default_second_receiver_id', '默认接单师傅', repairers.filter(r => users.some(u => u.id === r.user_id && u.is_active)).map(r => ({value:r.id,label:`${users.find(u => u.id === r.user_id)?.name} · ${users.find(u => u.id === r.user_id)?.phone}`})), '选填：先在师傅页创建档案，再选择默认接单师傅'),
+    {name:'remark',label:'备注',placeholder:'例如：服务海沧区，营业时间 08:00—20:00'}
   ], "create-store", "新增门店");
   const body = createForm + table([
     { label: "ID", key: "id" },
     { label: "名称", key: "name" },
-    { label: "区域", key: "region_id" },
-    { label: "负责人", key: "manager_id" },
-    { label: "城市经理", render: (row) => row.city_manager_id || "-" },
+    { label: "所属区域", render: row => escapeHtml(regions.find(r => r.id === row.region_id)?.name || "未设置") },
+    { label: "负责人", render: row => escapeHtml(users.find(u => u.id === row.manager_id)?.name || "未设置") },
+    { label: "城市经理", render: row => escapeHtml(users.find(u => u.id === row.city_manager_id)?.name || "未设置") },
     { label: "默认师傅", render: (row) => row.default_second_receiver_id || "-" },
-    { label: "启用", render: (row) => row.enabled ? badge("启用", "ok") : badge("停用", "warn") },
-    { label: "状态", render: (row) => statusBadge(row.status) },
+    { label: "开通状态", render: row => row.enabled && row.status === "active" ? badge("已开通", "ok") : badge("未开通", "warn") },
     {
       label: "操作",
       render: (row) => `<div class="actions">
-        ${actionButton(row.enabled ? "停用" : "启用", "store-enabled", { id: row.id, enabled: row.enabled ? "1" : "0" })}
+        ${actionButton(row.enabled && row.status === "active" ? "停用门店" : "启用并开通", "store-enabled", { id: row.id, enabled: row.enabled && row.status === "active" ? "1" : "0" })}
+        ${actionButton("分配服务范围", "store-coverage", {id:row.id})}
         ${actionButton("默认师傅", "store-default-repairer", { id: row.id })}
       </div>`
     }
   ], stores, "暂无门店");
-  els.content.innerHTML = section("门店列表", "区域门店和接单配置", body);
+  els.content.innerHTML = section("创建与开通门店", "1. 选择区域和店长 → 2. 新增门店 → 3. 启用并开通 → 4. 分配服务范围", body);
+  els.content.innerHTML += section('门店地址库', '按小区服务范围自动归属门店；与客户端地址簿使用同一格式',
+    `<form class="form-grid" data-form="create-store-address">${AddressFields.render(addressAreas)}<button class="btn primary" type="submit">新增地址</button></form>` +
+    table([{label:'城市/区域',render: row => escapeHtml(`${row.city}/${row.district}`)},
+      {label:'小区',key:'estate'}, {label:'门牌号',render: row => escapeHtml(row.door_number || [row.building,row.unit,row.room].filter(Boolean).join(''))},
+      {label:'接单门店',render: row => escapeHtml(stores.find(store => store.id === row.store_id)?.name || '')}], addresses, '暂无地址'));
+
+
 }
 
 async function loadRegions() {
@@ -708,7 +689,7 @@ async function loadRegions() {
     api("/api/v1/regions"),
     api("/api/v1/service-areas/filters"),
     api("/api/v1/stores"),
-    api("/api/v1/users"),
+    allUsers(),
   ]);
   const areaData = await api(query("/api/v1/service-areas", {
     district: currentDistrict,
@@ -718,16 +699,13 @@ async function loadRegions() {
     limit: 1000,
   }));
   const logs = await api("/api/v1/service-areas/assignment-logs?limit=30");
+  regionFormData = {regions, filters};
   const createForm = form([
-    { name: "name", label: "区域名称" },
-    { name: "level", label: "层级", type: "select", options: [
-      { value: "1", label: "一级" },
-      { value: "2", label: "二级" },
-      { value: "3", label: "三级" }
-    ] },
-    { name: "parent_id", label: "上级ID", type: "number" },
-    { name: "manager_id", label: "负责人ID", type: "number" }
-  ], "create-region", "新增区域");
+    {name:'level',label:'区域层级',type:'select',options:[{value:'1',label:'一级：城市'},{value:'2',label:'二级：区县'}],hint:'先新增厦门市，再新增其下属区县'},
+    choiceField('parent_id','上级区域',[], '二级区县选择上级城市；一级城市无需上级'),
+    {name:'name',label:'区域名称',required:true,placeholder:'例如：厦门市',suggestions:[filters.city || '厦门市'],hint:'输入关键词搜索，例如厦门；选中上级后，下一级会显示匹配的区县，也可填写其他实际区域'},
+    choiceField('manager_id','区域负责人',userChoices(users,['city_manager','store_manager','platform_admin']), '选填：搜索负责人姓名或手机号')
+  ], 'create-region', '新增区域');
   const regionBody = createForm + table([
     { label: "ID", key: "id" },
     { label: "名称", key: "name" },
@@ -753,18 +731,7 @@ async function loadRegions() {
     `<option value="${escapeHtml(item.name)}" ${item.name === currentStreet ? "selected" : ""}>${escapeHtml(item.name)}（${item.count}）</option>`
   ).join("");
   const activeStores = stores.filter((item) => item.enabled && item.status === "active");
-  const managerRoles = new Set(["store_manager", "city_manager", "platform_admin"]);
-  const managers = users.filter((item) => managerRoles.has(item.business_role));
-  const operators = users.filter((item) => item.business_role === "platform_admin");
-  const storeOptions = activeStores.map((item) =>
-    `<option value="${item.id}">${escapeHtml(item.name)}</option>`
-  ).join("");
-  const managerOptions = managers.map((item) =>
-    `<option value="${item.id}">${escapeHtml(item.name)}（${escapeHtml(item.phone || `#${item.id}`)}）</option>`
-  ).join("");
-  const operatorOptions = operators.map((item) =>
-    `<option value="${item.id}">${escapeHtml(item.name)}（${escapeHtml(item.phone || `#${item.id}`)}）</option>`
-  ).join("");
+  const storeOptions = stores.map(item => `<option value="${item.id}" ${item.enabled && item.status === 'active' ? '' : 'disabled'}>${escapeHtml(item.name)}${item.enabled && item.status === 'active' ? '' : '（未开通，请到门店页开通）'}</option>`).join('');
   const statusLabel = { assigned: "已分配", unassigned: "未分配", conflict: "需处理" };
   const selectedCount = state.selectedServiceAreas.size;
 
@@ -786,15 +753,13 @@ async function loadRegions() {
     <span class="selection-count">已选择 <strong>${selectedCount}</strong> 条</span>
     <select id="service-area-primary-store" aria-label="主服务门店"><option value="">选择主服务门店</option>${storeOptions}</select>
     <select id="service-area-backup-store" aria-label="备用服务门店"><option value="">选择备用门店</option>${storeOptions}</select>
-    <select id="service-area-manager" aria-label="负责人"><option value="">选择负责人</option>${managerOptions}</select>
-    <select id="service-area-operator" aria-label="操作人"><option value="">选择操作人</option>${operatorOptions}</select>
     <select id="service-area-conflict-mode" aria-label="冲突处理">
       <option value="skip">跳过已有分配</option>
       <option value="fill_empty">只补充空缺项</option>
       <option value="replace">覆盖原分配</option>
     </select>
     <input id="service-area-remark" placeholder="分配备注">
-    <button class="btn primary" data-action="service-area-assign">批量分配</button>
+    <button class="btn primary" data-action="service-area-assign">确认分配所选地址</button>
     <button class="btn danger" data-action="service-area-clear">清除分配</button>
     <button class="btn" data-action="service-area-clear-selection">取消选择</button>
   `;
@@ -832,9 +797,14 @@ async function loadRegions() {
 
   els.content.innerHTML = `
     ${section("区域列表", "现有城市、区域和负责人", regionBody)}
-    ${section("厦门地址库", `共 ${filters.total} 条社区和村级服务区域`, `${summary}<div class="assignment-bar">${assignmentToolbar}</div>${areaTable}`, filterToolbar)}
-    ${section("分配记录", "地址归属调整不会改变历史订单和客户推广关系", logTable)}
+    <section class="section address-library"><div class="section-head"><h2>厦门地址库</h2><button class="btn" data-action="toggle-address-library" aria-expanded="${state.addressLibraryOpen}">${state.addressLibraryOpen ? '收起' : '展开'}</button></div>
+    <div id="address-library-body" ${state.addressLibraryOpen ? '' : 'hidden'}>
+      <div class="workflow-note"><strong>分配服务范围</strong><p>第一步：选择行政区和街道，查询需要服务的社区。第二步：勾选社区，选择已开通的主服务门店。第三步：确认分配，客户即可选择社区并填写小区、楼栋、单元和房号下单。负责人跟随门店，操作人记录当前登录账号。</p>${activeStores.length ? '' : '<p class="text-danger">当前没有已开通门店。请到门店页点击“启用并开通”，再分配服务范围。</p>'}<button class="btn" data-action="guide-view" data-target="stores">去门店管理</button></div>
+      <div class="toolbar area-filters">${filterToolbar}</div>${summary}<div class="assignment-bar">${assignmentToolbar}</div>${areaTable}
+      <details class="audit-fold"><summary>查看分配记录</summary>${logTable}</details>
+    </div></section>
   `;
+  updateRegionChoices(false);
 }
 
 async function loadWallet() {
@@ -1128,7 +1098,23 @@ function readForm(formEl) {
 
 async function handleForm(formEl) {
   const action = formEl.dataset.form;
+  for (const input of formEl.querySelectorAll('[data-choice]')) {
+    if (input.disabled || !input.value.trim()) continue;
+    const option = Array.from(document.getElementById(input.getAttribute('list')).options).find(o => o.value === input.value.trim());
+    if (!option) { input.setCustomValidity('请从搜索候选项中选择，不能填写未匹配的名称'); input.reportValidity(); return; }
+  }
   const data = readForm(formEl);
+  for (const input of formEl.querySelectorAll('[data-choice]')) {
+    if (input.disabled) { delete data[input.name]; continue; }
+    const option = Array.from(document.getElementById(input.getAttribute('list')).options).find(o => o.value === input.value.trim());
+    if (option) data[input.name] = Number(option.dataset.value);
+  }
+  if (action === "create-store-address") {
+    const fields = AddressFields.resolve(state.cache.addressAreas || [], data);
+    const me = await api('/api/v1/auth/me');
+    await api('/api/v1/stores/addresses', {method:'POST',body:{...fields,created_by_user_id:me.id}});
+    await loadStores(); return;
+  }
   if (action === "create-domestic-worker") {
     await api("/api/v1/business/domestic/workers", {
       method: "POST",
@@ -1159,7 +1145,7 @@ async function handleForm(formEl) {
   if (!target) return;
   await api(target[0], { method: "POST", body: target[1] });
   formEl.reset();
-  notify("已保存");
+  notify(action === "create-store" ? "门店已创建，请点击“启用并开通”，再分配服务范围" : "已保存");
   await loadView();
 }
 
@@ -1180,83 +1166,35 @@ async function promptText(label, current = "") {
 function showModal(title, html) {
   els.modalTitle.textContent = title;
   els.modalBody.innerHTML = html;
+  els.modal.querySelector(".modal-panel").classList.toggle("status-modal-panel", !!els.modalBody.querySelector('[data-form="repairer-status"]'));
   els.modal.hidden = false;
-}
-
-/**
- * 2026-10-07 multi-role:一个账号的「关联角色」配置面板。
- * 勾选即拥有,「当前身份」决定用户进小程序先看到哪个工作台。
- */
-function openUserRolePicker(userId) {
-  const user = (state.cache.users || []).find((item) => Number(item.id) === Number(userId));
-  if (!user) {
-    notify(`未找到用户 #${userId},请先刷新列表`);
-    return;
-  }
-  const options = state.roleOptions && state.roleOptions.length
-    ? state.roleOptions
-    : businessRoleOptions().map((item) => ({ ...item, staff: false, workbench: item.value !== "customer" }));
-  const owned = userBusinessRoles(user);
-  const active = userActiveRole(user);
-  const checkboxes = options.map((option) => `
-    <label class="role-option">
-      <input type="checkbox" name="role" value="${escapeHtml(option.value)}" ${owned.includes(option.value) ? "checked" : ""}>
-      <span>${escapeHtml(option.label)}</span>
-      <em>${escapeHtml(option.value)}</em>
-    </label>
-  `).join("");
-  const activeOptions = options
-    .map((option) => `<option value="${escapeHtml(option.value)}" ${option.value === active ? "selected" : ""}>${escapeHtml(option.label)}</option>`)
-    .join("");
-  const ownedList = owned.map((value) => `<span class="badge">${escapeHtml(businessRoleLabel(value))}</span>`).join(" ");
-  const historyText = "历史记录在 /api/v1/users/{id}/roles 的 history 字段";
-
-  showModal(`配置角色 · ${user.name || user.phone || `#${userId}`}`, `
-    <div class="role-picker">
-      <p class="muted">当前拥有:${ownedList || "-"}${active ? ` · 当前身份 <strong>${escapeHtml(businessRoleLabel(active))}</strong>` : ""}</p>
-      <form data-role-form="${userId}">
-        <div class="role-option-grid" data-role-checkboxes>${checkboxes}</div>
-        <div class="field">
-          <label for="role-active-select">当前身份(切换工作台)</label>
-          <select id="role-active-select" name="active_business_role">${activeOptions}</select>
-        </div>
-        <div class="field wide">
-          <label for="role-remark">变更备注(写入角色变更记录)</label>
-          <input id="role-remark" name="remark" placeholder="如:兼任门店店长">
-        </div>
-        <div class="role-picker-actions">
-          <button class="btn primary" type="submit">保存角色</button>
-          <button class="btn" type="button" data-action="role-picker-close">取消</button>
-        </div>
-        <p class="muted" style="margin-top:8px">只勾选不保存不会生效;取消勾选会立即收回该角色。${escapeHtml(historyText)}。</p>
-      </form>
-    </div>
-  `);
-}
-
-async function saveUserRoles(formEl) {
-  const userId = formEl.dataset.roleForm;
-  const checked = [...formEl.querySelectorAll("input[name='role']:checked")].map((item) => item.value);
-  if (!checked.length) {
-    notify("至少保留一个角色");
-    return;
-  }
-  const activeValue = formEl.querySelector("select[name='active_business_role']")?.value || "";
-  const remark = formEl.querySelector("input[name='remark']")?.value?.trim() || null;
-  const body = { business_roles: checked, remark };
-  if (activeValue && checked.includes(activeValue)) body.active_business_role = activeValue;
-
-  const result = await api(`/api/v1/users/${userId}/roles`, { method: "PATCH", body });
-  els.modal.hidden = true;
-  notify(`已保存:${(result.business_roles || []).map(businessRoleLabel).join(" / ") || "无"}`);
-  state.roleOptions = null;
-  await loadView("users");
 }
 
 async function handleAction(button) {
   const action = button.dataset.action;
   const id = button.dataset.id;
 
+  if (action === 'close-modal') { els.modal.hidden=true;return; }
+  if (action === 'repairer-profile') {
+    const [r, regions] = await Promise.all([api(`/api/v1/repairers/${id}`), api('/api/v1/regions')]);
+    showModal('完善师傅资料', `<form class="form-grid" data-form="repairer-profile"><input type="hidden" name="id" value="${r.id}"><div class="field"><label>技能</label><input name="skills" required value="${escapeHtml(r.skills==='待完善'?'':r.skills)}" placeholder="例如：水电,家电维修"></div><div class="field"><label>服务区域</label><select name="region_id" required><option value="">请选择</option>${regionChoices(regions).map(o=>`<option value="${o.value}" ${Number(o.value)===r.region_id?'selected':''}>${escapeHtml(o.label)}</option>`).join('')}</select></div><div class="field"><label>简介</label><input name="intro" value="${escapeHtml(r.intro || '')}"></div><button class="btn primary" type="submit">保存资料</button></form>`);
+    return;
+  }
+  if (action === 'user-business-roles') {
+    const granted = (button.dataset.roles || '').split(',');
+    showModal('勾选业务身份', `<form data-form="user-business-roles"><input type="hidden" name="user_id" value="${id}"><p>同一手机号可同时拥有以下三个身份；保存后请该用户重新登录。</p>${Object.entries({store_manager:'店长',repairer:'师傅',promotion_manager:'推广经理'}).map(([r,label]) => `<label class="identity-choice"><input type="checkbox" name="business_roles" value="${r}" ${granted.includes(r) ? 'checked' : ''} ${button.dataset.fixed === '1' && button.dataset.primary === r ? 'disabled' : ''}>${label}</label>${button.dataset.fixed === '1' && button.dataset.primary === r ? `<input type="hidden" name="business_roles" value="${r}">` : ''}`).join('')}<p class="muted">admin 保留最高管理员权限，基础账号原有主角色保持不变。勾选师傅身份会自动建立档案，请到师傅页完善技能和服务区域。</p><button class="btn primary" type="submit">保存身份</button></form>`);
+    return;
+  }
+  if (action === 'search-users') return loadUsers();
+  if (action === 'toggle-address-library') {
+    state.addressLibraryOpen = !state.addressLibraryOpen;
+    document.querySelector('#address-library-body').hidden = !state.addressLibraryOpen;
+    button.textContent = state.addressLibraryOpen ? '收起' : '展开';
+    button.setAttribute('aria-expanded', String(state.addressLibraryOpen));
+    return;
+  }
+  if (action === 'guide-view') return loadView(button.dataset.target);
+  if (action === 'store-coverage') {state.addressLibraryOpen = true;await loadView('regions');document.querySelector('.address-library')?.scrollIntoView({behavior:'smooth',block:'start'});return;}
   if (action === "filter-orders") return loadOrders();
   if (action === "service-area-filter") return loadRegions();
   if (action === "service-area-sync") {
@@ -1277,14 +1215,13 @@ async function handleAction(button) {
       const value = document.querySelector(selector)?.value;
       return value ? Number(value) : null;
     };
+    if (!numberValue("#service-area-primary-store")) throw new Error("请选择已开通的主服务门店；未开通门店请先到门店页开通");
     const body = {
       service_area_ids: ids,
       primary_store_id: numberValue("#service-area-primary-store"),
       backup_store_id: numberValue("#service-area-backup-store"),
-      manager_id: numberValue("#service-area-manager"),
       conflict_mode: document.querySelector("#service-area-conflict-mode")?.value || "skip",
       remark: document.querySelector("#service-area-remark")?.value?.trim() || null,
-      operator_user_id: numberValue("#service-area-operator"),
       dry_run: true,
     };
     const preview = await api("/api/v1/service-areas/assignments/bulk", { method: "POST", body });
@@ -1301,14 +1238,12 @@ async function handleAction(button) {
   if (action === "service-area-clear") {
     const ids = [...state.selectedServiceAreas];
     if (!ids.length) throw new Error("请先勾选要清除分配的地址");
-    const operatorValue = document.querySelector("#service-area-operator")?.value;
-    const operatorUserId = operatorValue ? Number(operatorValue) : null;
     const preview = await api("/api/v1/service-areas/assignments/bulk-clear", {
-      method: "POST", body: { service_area_ids: ids, operator_user_id: operatorUserId, dry_run: true },
+      method: "POST", body: { service_area_ids: ids, dry_run: true },
     });
     if (!window.confirm(`将清除 ${preview.cleared} 条已有分配，未分配的 ${preview.unchanged} 条保持不变。确认继续吗？`)) return;
     await api("/api/v1/service-areas/assignments/bulk-clear", {
-      method: "POST", body: { service_area_ids: ids, operator_user_id: operatorUserId, remark: "管理后台批量清除", dry_run: false },
+      method: "POST", body: { service_area_ids: ids, remark: "管理后台批量清除", dry_run: false },
     });
     state.selectedServiceAreas.clear();
     notify("地址分配已清除");
@@ -1345,11 +1280,12 @@ async function handleAction(button) {
       { label: "时间", render: (row) => fmtDate(row.created_at) }
     ], logs, "暂无日志"));
     return;
-  } else if (action === "user-roles") {
-    openUserRolePicker(id);
-    return;
-  } else if (action === "role-picker-close") {
-    els.modal.hidden = true;
+  } else if (action === "user-status") {
+    if (!window.confirm(button.dataset.active === "1" ? "停用后该用户将无法登录和操作，确认停用？" : "确认启用该用户？")) return;
+    await api(`/api/v1/users/${id}/account-status`, { method: "PATCH", body: { is_active: button.dataset.active !== "1" } });
+  } else if (action === "user-role") {
+    const roles = { customer: "客户", repairer: "师傅", second_receiver: "二接师傅", store_manager: "店长", city_manager: "城市经理", promotion_manager: "推广经理", tech_support: "客服", finance: "财务", platform_admin: "平台管理员" };
+    showModal("设置业务角色", `<form data-form="user-role"><input type="hidden" name="user_id" value="${id}"><select name="business_role">${Object.entries(roles).map(([key, label]) => `<option value="${key}" ${button.dataset.role === key ? "selected" : ""}>${label}</option>`).join("")}</select><button class="btn primary" type="submit">保存</button></form>`);
     return;
   } else if (action === "user-name") {
     const name = await promptText("姓名", button.dataset.name);
@@ -1358,9 +1294,8 @@ async function handleAction(button) {
   } else if (action === "user-promo") {
     await api(`/api/v1/users/${id}`, { method: "PATCH", body: { is_promotion_manager: button.dataset.active !== "1" } });
   } else if (action === "repairer-status") {
-    const status = await promptText("师傅状态", button.dataset.status);
-    if (!status) return;
-    await api(`/api/v1/repairers/${id}`, { method: "PATCH", body: { status } });
+    showModal('修改师傅接单状态', `<form class="status-dialog-form" data-form="repairer-status"><input type="hidden" name="id" value="${id}"><div class="field"><label>接单状态</label><select name="status" required><option value="online" ${button.dataset.status==='online'?'selected':''}>在线</option><option value="offline" ${button.dataset.status!=='online'?'selected':''}>休息</option></select><small class="field-hint">在线：可以接单；休息：暂停接单。</small></div><div class="status-dialog-actions"><button class="btn" type="button" data-action="close-modal">取消</button><button class="btn primary" type="submit">确认修改</button></div></form>`);
+    return;
   } else if (action === "repairer-skills") {
     const skills = await promptText("技能", button.dataset.skills);
     if (!skills) return;
@@ -1461,10 +1396,31 @@ els.content.addEventListener("click", async (event) => {
   }
 });
 
-els.content.addEventListener("submit", async (event) => {
+document.addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
     const formName = event.target.dataset.form;
+    if (formName === 'repairer-status') {
+      const values=new FormData(event.target);const status=values.get('status');
+      if (!['online','offline'].includes(status)) throw new Error('请选择在线或休息');
+      await api(`/api/v1/repairers/${values.get('id')}`, {method:'PATCH',body:{status}});
+      els.modal.hidden=true;notify(status==='online'?'已设为在线':'已设为休息');await loadView('repairers');return;
+    }
+    if (formName === 'repairer-profile') {
+      const values = new FormData(event.target);
+      await api(`/api/v1/repairers/${values.get('id')}`, {method:'PATCH',body:{skills:values.get('skills'),region_id:Number(values.get('region_id')),intro:values.get('intro')}});
+      els.modal.hidden=true;notify('师傅资料已完善');await loadView('repairers');return;
+    }
+    if (formName === 'user-business-roles') {
+      const fields=new FormData(event.target);
+      await api(`/api/v1/users/${fields.get('user_id')}/business-roles`,{method:'PATCH',body:{roles:fields.getAll('business_roles')}});
+      els.modal.hidden=true;notify('身份已保存，请用户重新登录');await loadUsers();return;
+    }
+    if (formName === "user-role") {
+      const fields = new FormData(event.target);
+      await api(`/api/v1/users/${fields.get("user_id")}`, { method: "PATCH", body: { business_role: fields.get("business_role") } });
+      els.modal.hidden = true; await loadView("users"); return;
+    }
     if (formName === "auth-login") {
       await submitAuthLogin(event.target);
       return;
@@ -1509,18 +1465,6 @@ els.modal.addEventListener("click", (event) => {
   if (event.target === els.modal) els.modal.hidden = true;
 });
 
-// 2026-10-07 multi-role:角色配置表单在弹窗里,不在 els.content 内,单独监听
-els.modalBody.addEventListener("submit", async (event) => {
-  const formEl = event.target.closest("[data-role-form]");
-  if (!formEl) return;
-  event.preventDefault();
-  try {
-    await saveUserRoles(formEl);
-  } catch (error) {
-    notify(error.message || "保存失败");
-  }
-});
-
 loadWallet = async function loadWalletWechat() {
   const [withdrawals, transferStatus] = await Promise.all([
     api("/api/v1/wallet/withdrawals?limit=100"),
@@ -1542,17 +1486,17 @@ loadWallet = async function loadWalletWechat() {
 
   const body = table([
     { label: "ID", key: "id" },
-    { label: "User", key: "user_id" },
+    { label: "用户", key: "user_id" },
     { label: "Wallet", key: "wallet_id" },
-    { label: "Amount", render: (row) => money(row.amount) },
-    { label: "Status", render: (row) => statusBadge(row.status) },
+    { label: "金额", render: (row) => money(row.amount) },
+    { label: "状态", render: (row) => statusBadge(row.status) },
     { label: "Payout", render: (row) => `${row.payout_provider || "-"} / ${row.payout_status || "-"}` },
     { label: "Wechat bill", render: (row) => row.transfer_out_bill_no || "-" },
     { label: "Remark", key: "remark", wrap: true },
-    { label: "Created", render: (row) => fmtDate(row.created_at) },
+    { label: "创建时间", render: (row) => fmtDate(row.created_at) },
     { label: "Reviewed", render: (row) => fmtDate(row.reviewed_at) },
     {
-      label: "Actions",
+      label: "操作",
       render: (row) => {
         if (row.status === "pending") {
           return `<div class="actions">
@@ -1587,67 +1531,67 @@ loadFinance = async function loadFinanceWechat() {
 
   const wechatStatusBody = `
     <div class="form-grid">
-      <div class="field"><label>Payment</label>${wechatStatus.ready ? badge("ready", "ok") : badge("not ready", "warn")}</div>
+      <div class="field"><label>支付单</label>${wechatStatus.ready ? badge("ready", "ok") : badge("not ready", "warn")}</div>
       <div class="field"><label>AppID</label><span>${escapeHtml(wechatStatus.appid || "-")}</span></div>
-      <div class="field"><label>Mch ID</label><span>${escapeHtml(wechatStatus.mch_id || "-")}</span></div>
-      <div class="field"><label>Serial</label><span>${escapeHtml(wechatStatus.merchant_serial_no || "-")}</span></div>
-      <div class="field wide"><label>Pay notify</label><span>${escapeHtml(wechatStatus.notify_url || "-")}</span></div>
-      <div class="field wide"><label>Refund notify</label><span>${escapeHtml(wechatStatus.refund_notify_url || "-")}</span></div>
+      <div class="field"><label>商户号</label><span>${escapeHtml(wechatStatus.mch_id || "-")}</span></div>
+      <div class="field"><label>商户证书序列号</label><span>${escapeHtml(wechatStatus.merchant_serial_no || "-")}</span></div>
+      <div class="field wide"><label>支付回调地址</label><span>${escapeHtml(wechatStatus.notify_url || "-")}</span></div>
+      <div class="field wide"><label>退款回调地址</label><span>${escapeHtml(wechatStatus.refund_notify_url || "-")}</span></div>
       <div class="field"><label>APIv3 key</label>${wechatStatus.api_v3_key_configured ? badge("configured", "ok") : badge("missing", "danger")}</div>
       <div class="field"><label>AppSecret</label>${wechatStatus.app_secret_configured ? badge("configured", "ok") : badge("missing", "danger")}</div>
-      <div class="field"><label>Cert</label>${wechatStatus.cert_exists ? badge("found", "ok") : badge("missing", "danger")}</div>
-      <div class="field"><label>Key</label>${wechatStatus.key_exists ? badge("found", "ok") : badge("missing", "danger")}</div>
+      <div class="field"><label>证书</label>${wechatStatus.cert_exists ? badge("found", "ok") : badge("missing", "danger")}</div>
+      <div class="field"><label>私钥</label>${wechatStatus.key_exists ? badge("found", "ok") : badge("missing", "danger")}</div>
     </div>
     ${(wechatStatus.issues || []).length ? `<div class="empty">${wechatStatus.issues.map(escapeHtml).join("<br>")}</div>` : ""}
   `;
 
   const tools = `
     <div class="form-grid">
-      <div class="field"><label for="profit-order-id">Order ID</label><input id="profit-order-id" type="number"></div>
-      <button class="btn" data-action="profit-order">Order profit</button>
-      <div class="field"><label for="profit-user-id">User ID</label><input id="profit-user-id" type="number"></div>
-      <button class="btn" data-action="profit-user">User profit</button>
+      <div class="field"><label for="profit-order-id">订单编号</label><input id="profit-order-id" type="number"></div>
+      <button class="btn" data-action="profit-order">订单分润</button>
+      <div class="field"><label for="profit-user-id">用户编号</label><input id="profit-user-id" type="number"></div>
+      <button class="btn" data-action="profit-user">用户分润</button>
     </div>
   `;
 
   const paymentsTable = table([
-    { label: "Payment", render: (row) => `#${row.id}` },
-    { label: "Order", key: "order_id" },
-    { label: "User", key: "user_id" },
-    { label: "Amount", render: (row) => money(row.amount) },
-    { label: "Status", render: (row) => statusBadge(row.status) },
-    { label: "Provider", key: "provider" },
-    { label: "Out trade no", render: (row) => row.out_trade_no || "-" },
-    { label: "Transaction", render: (row) => row.transaction_id || "-" },
-    { label: "Paid", render: (row) => fmtDate(row.paid_at) },
+    { label: "支付单", render: (row) => `#${row.id}` },
+    { label: "订单", key: "order_id" },
+    { label: "用户", key: "user_id" },
+    { label: "金额", render: (row) => money(row.amount) },
+    { label: "状态", render: (row) => statusBadge(row.status) },
+    { label: "渠道", key: "provider" },
+    { label: "商户订单号", render: (row) => row.out_trade_no || "-" },
+    { label: "微信交易号", render: (row) => row.transaction_id || "-" },
+    { label: "支付时间", render: (row) => fmtDate(row.paid_at) },
     {
-      label: "Actions",
+      label: "操作",
       render: (row) => `<div class="actions">
-        ${row.provider === "wechat" && row.status === "pending" ? actionButton("Sync pay", "payment-sync", { id: row.id }, "primary") : ""}
-        ${row.provider === "wechat" && ["paid", "partially_refunded"].includes(row.status) ? actionButton("Refund", "payment-refund", { id: row.id, amount: row.amount }, "danger") : ""}
+        ${row.provider === "wechat" && row.status === "pending" ? actionButton("同步支付", "payment-sync", { id: row.id }, "primary") : ""}
+        ${row.provider === "wechat" && ["paid", "partially_refunded"].includes(row.status) ? actionButton("退款", "payment-refund", { id: row.id, amount: row.amount }, "danger") : ""}
       </div>`,
     },
-  ], payments, "No payment records");
+  ], payments, "暂无支付记录");
 
   const refundsTable = table([
-    { label: "Refund", render: (row) => `#${row.id}` },
-    { label: "Payment", key: "pay_order_id" },
-    { label: "Order", key: "order_id" },
-    { label: "User", key: "user_id" },
-    { label: "Amount", render: (row) => money(row.amount) },
-    { label: "Status", render: (row) => statusBadge(row.status) },
-    { label: "Out refund no", render: (row) => row.out_refund_no || "-" },
-    { label: "Wechat refund", render: (row) => row.refund_id || "-" },
-    { label: "Created", render: (row) => fmtDate(row.created_at) },
+    { label: "退款", render: (row) => `#${row.id}` },
+    { label: "支付单", key: "pay_order_id" },
+    { label: "订单", key: "order_id" },
+    { label: "用户", key: "user_id" },
+    { label: "金额", render: (row) => money(row.amount) },
+    { label: "状态", render: (row) => statusBadge(row.status) },
+    { label: "商户退款号", render: (row) => row.out_refund_no || "-" },
+    { label: "微信退款号", render: (row) => row.refund_id || "-" },
+    { label: "创建时间", render: (row) => fmtDate(row.created_at) },
     {
-      label: "Actions",
-      render: (row) => row.status === "processing" ? actionButton("Sync refund", "refund-sync", { id: row.id }, "primary") : "-",
+      label: "操作",
+      render: (row) => row.status === "processing" ? actionButton("同步退款", "refund-sync", { id: row.id }, "primary") : "-",
     },
-  ], refunds, "No refund records");
+  ], refunds, "暂无退款记录");
 
   els.content.innerHTML = `
-    ${section("Wechat Payment Config", "Non-secret diagnostics only.", wechatStatusBody)}
-    ${section("Payment And Profit", "Payment list, refunds and profit queries.", `${tools}${paymentsTable}<h3 style="margin:22px 0 12px">Refunds</h3>${refundsTable}`)}
+    ${section("微信支付配置", "支付通道状态", wechatStatusBody)}
+    ${section("支付与分润", "支付记录、退款记录及分润查询", `${tools}${paymentsTable}<h3 style="margin:22px 0 12px">退款记录</h3>${refundsTable}`)}
   `;
 };
 
@@ -1659,13 +1603,13 @@ handleAction = async function handleWechatFinanceAction(button) {
   if (action === "withdraw-approve-manual" || action === "withdraw-approve-wechat" || action === "withdraw-reject") {
     const approve = action !== "withdraw-reject";
     const payoutMethod = action === "withdraw-approve-wechat" ? "wechat" : "manual";
-    const remark = await promptText(approve ? "Review remark" : "Reject reason", approve ? "approved" : "rejected");
+    const remark = await promptText(approve ? "审核备注" : "驳回原因", approve ? "approved" : "rejected");
     if (remark === null) return;
     await api(`/api/v1/wallet/withdraw/${id}/review`, {
       method: "POST",
       body: { action: approve ? "approve" : "reject", remark, payout_method: payoutMethod },
     });
-    notify("Operation complete");
+    notify("操作完成");
     await loadView("wallet");
     return;
   }
@@ -1678,9 +1622,9 @@ handleAction = async function handleWechatFinanceAction(button) {
   }
 
   if (action === "payment-refund") {
-    const amount = await promptNumber("Refund amount", button.dataset.amount || "");
+    const amount = await promptNumber("退款金额", button.dataset.amount || "");
     if (amount === null) return;
-    const reason = await promptText("Refund reason", "refund");
+    const reason = await promptText("退款原因", "refund");
     if (reason === null) return;
     const result = await api("/api/v1/payment/refund", {
       method: "POST",
@@ -1700,6 +1644,31 @@ handleAction = async function handleWechatFinanceAction(button) {
 
   return previousHandleAction(button);
 };
+
+const WORKFLOW_GUIDES = {
+  stores:{title:'创建门店与开通服务',steps:[['users','第一步：准备店长账号','新成员先在小程序注册，在人员页搜索手机号，点击“业务身份”勾选店长。已有基础店长可直接使用。兼任身份保存后，重新登录客户端即可切换。'],['regions','第二步：创建城市和区县','先创建厦门市，再选择上级厦门市创建海沧区等区县。'],['stores','第三步：创建并开通门店','选择所属区域和店长，新增门店后点击“启用并开通”。'],['regions','第四步：分配社区并开通下单','展开厦门地址库，筛选行政区及街道，勾选社区，选择已开通的主服务门店并确认分配。完成后客户即可选择该社区及小区，填写楼栋、单元和房号下单，无需逐户录入。'],['repairers','第五步：准备师傅接单','在用户页勾选师傅身份，再到师傅页建立档案并选择服务区域；店长也可兼任师傅。下单开通无需等待逐户地址录入，实际派单前应备好师傅。']]},
+  users:{title:'添加与管理人员',steps:[['users','第一步：本人真实注册','请新成员在小程序主动使用手机号快捷登录完成注册。'],['users','第二步：搜索并授权','在用户页按手机号查找。用“业务身份”勾选店长、师傅、推广经理，可兼任；扫个人推广码注册的客户会绑定推荐人。admin保留最高管理权限。'],['stores','第三步：绑定业务','店长选择为门店负责人；师傅需建立师傅档案，工作人员按所负责业务进入对应页面。'],['users','第四步：账号管理','离职或暂停使用时停用账号；恢复后可以重新登录。基础账号的名称、手机号和角色保持原设置。']]},
+  orders:{title:'订单服务与结算',steps:[['stores','第一步：确保地址可下单','门店已开通、社区已分配，即可接收客户订单。'],['orders','第二步：客户提交订单','客户选择服务社区及小区，填写楼栋、单元和房号，再提交问题。门店自动匹配。'],['orders','第三步：接单与派单','门店确认订单并安排师傅，师傅接单上门并提交服务内容与费用。'],['orders','第四步：客户确认与支付','客户确认服务单和金额后付款，门店完成复核。'],['warranties','第五步：完工与售后','核对服务结果和保修凭证，按实际问题处理售后。'],['payroll','第六步：工资与提现','核对工资和资金流水，再审核提现；实际收付款以支付结果为准。']]}
+};
+function setupWorkflowGuide() {
+  const open = document.createElement('button');open.className='btn guide-launch';open.textContent='操作流程';open.id='workflow-guide-open';
+  document.querySelector('.top-actions').prepend(open);
+  const panel=document.createElement('aside');panel.className='workflow-guide';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','业务操作流程');
+  panel.innerHTML=`<div class="guide-head" tabindex="0" aria-label="拖动流程窗口，方向键可移动"><strong>业务操作流程</strong><button class="btn compact" id="guide-close" aria-label="关闭操作流程">关闭</button></div><div class="guide-tabs">${Object.entries(WORKFLOW_GUIDES).map(([key,v])=>`<button class="btn compact" data-guide="${key}">${v.title}</button>`).join('')}</div><div class="guide-body"></div><div class="guide-foot">拖动标题栏可移动窗口；键盘聚焦标题栏后使用方向键移动。</div>`;
+  document.body.append(panel);
+  const show = key => { const g=WORKFLOW_GUIDES[key];panel.querySelector('.guide-body').innerHTML='<div class="workflow-note">门店启用 → 分配社区 → 客户选址下单。无需逐户开通地址；小区未收录可直接填写，单元可选填。</div>'+g.steps.map(([view,title,text])=>`<article class="guide-step"><h3>${title}</h3><p>${text}</p><button class="btn compact" data-guide-view="${view}">前往${state.titles[view][0]}</button></article>`).join(''); };
+  open.addEventListener('click',()=>{panel.hidden=!panel.hidden;if(!panel.hidden)show(WORKFLOW_GUIDES[state.view]?state.view:'stores');});
+  panel.querySelector('#guide-close').addEventListener('click',()=>{panel.hidden=true;open.focus();});
+  panel.addEventListener('click',e=>{const tab=e.target.closest('[data-guide]');if(tab)show(tab.dataset.guide);const link=e.target.closest('[data-guide-view]');if(link)loadView(link.dataset.guideView).catch(e=>notify(e.message));});
+  const header=panel.querySelector('.guide-head');let drag=null;
+  const move=(x,y)=>{panel.style.right='auto';panel.style.left=`${Math.max(0,Math.min(x,window.innerWidth-panel.offsetWidth))}px`;panel.style.top=`${Math.max(0,Math.min(y,window.innerHeight-70))}px`;};
+  header.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;const r=panel.getBoundingClientRect();drag={x:e.clientX-r.left,y:e.clientY-r.top};header.setPointerCapture(e.pointerId);});
+  header.addEventListener('pointermove',e=>{if(drag)move(e.clientX-drag.x,e.clientY-drag.y);});
+  header.addEventListener('pointerup',()=>{drag=null;});header.addEventListener('pointercancel',()=>{drag=null;});
+  header.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();const r=panel.getBoundingClientRect();move(r.left+(e.key==='ArrowRight'?20:e.key==='ArrowLeft'?-20:0),r.top+(e.key==='ArrowDown'?20:e.key==='ArrowUp'?-20:0));});
+  window.addEventListener('resize',()=>{if(!panel.hidden){const r=panel.getBoundingClientRect();move(r.left,r.top);}});
+}
+setupWorkflowGuide();
 
 // 2026-10-05:启动时先建立登录态 —— 没有 token 直接进登录页,
 // 有 token 先 /auth/me 校验,避免用过期 token 猛打 401。

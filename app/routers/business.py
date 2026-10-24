@@ -96,7 +96,10 @@ async def update_address(
     if not address:
         raise HTTPException(404, "Address not found")
     require_staff_or_self(address.user_id, user)
-    return await service.update_address(db, address, data)
+    try:
+        return await service.update_address(db, address, data)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 @router.post("/orders/{order_id}/access/{purpose}", response_model=AccessTokenOut)

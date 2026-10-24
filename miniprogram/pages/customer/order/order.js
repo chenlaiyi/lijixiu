@@ -196,6 +196,16 @@ Page({
     });
   },
 
+  onAddressFieldsChange(e) {
+    const value = e.detail;
+    this.setData({ addressFieldsValue: value, serviceAreaId: value.service_area_id,
+      estate: value.estate, doorNumber: value.door_number, address: value.address,
+      regionId: value.region_id, storeId: value.store_id,
+      currentRegionName: value.city ? `${value.city}/${value.district}` : '未选择城市/区域',
+      currentStoreName: value.store_name || '请选择小区',
+      'validationErrors.address': '', optionsFailed: false });
+  },
+
   onServiceAddressChange(e) {
     const index = Number(e.detail.value);
     const selected = this.data.serviceAddresses[index];
@@ -657,42 +667,16 @@ Page({
   async loadOptions() {
     this.setData({ optionsLoading: true, optionsFailed: false });
     try {
-      const userInfo = wx.getStorageSync('userInfo') || {};
-      const [stores, addresses, serviceAddresses] = await Promise.all([
-        api.get('/api/v1/stores'),
-        userInfo.id ? api.get('/api/v1/business/addresses', { user_id: userInfo.id }) : Promise.resolve([]),
-        api.get('/api/v1/stores/addresses', { enabled: true }),
-      ]);
-      const activeStores = (stores || []).filter(item => item.enabled);
-      const savedAddresses = (addresses || []).filter(item => item.service_address_id);
-      const defaultAddress = savedAddresses.find(item => item.is_default) || savedAddresses[0];
-      const selectedIndex = Math.max(0, (serviceAddresses || []).findIndex(item => item.id === (defaultAddress && defaultAddress.service_address_id)));
-      const selected = (serviceAddresses || [])[selectedIndex];
-      const selectedStore = selected && activeStores.find(item => item.id === selected.store_id);
-      this.setData({
-        stores: activeStores,
-        serviceAddresses: serviceAddresses || [],
-        serviceAddressIndex: selectedIndex,
-        addressBookId: selected ? selected.id : 0,
-        addressCode: selected ? selected.address_code : '',
-        currentRegionName: selected ? `${selected.district || ''}${selected.street || ''}` : '未选择标准地址',
-        currentStoreName: selectedStore ? selectedStore.name : '地址归属门店',
-        regionId: selected ? selected.region_id : null,
-        storeId: selected ? selected.store_id : null,
-        address: selected ? selected.full_address : '',
-        contactPhone: defaultAddress ? defaultAddress.contact_phone : this.data.contactPhone,
-        optionsLoading: false,
-        optionsFailed: !(serviceAddresses || []).length,
-      });
-    } catch {
-      this.setData({
-        regionId: 1,
-        currentRegionName: '默认服务区域',
-        currentStoreName: '自动匹配',
-        optionsLoading: false,
-        optionsFailed: true,
-      });
-    }
+      const user = wx.getStorageSync('userInfo') || {};
+      const saved = user.id ? await api.get('/api/v1/business/addresses', { user_id: user.id }) : [];
+      const selected = saved.find(item => item.is_default) || saved[0];
+      if (selected && selected.service_area_id) this.onAddressFieldsChange({ detail: {
+        service_area_id: selected.service_area_id, estate: selected.estate, door_number: selected.door_number,
+        region_id: selected.region_id, address: selected.address, city: selected.city, district: selected.district,
+      } });
+      if (selected) this.setData({ contactPhone: selected.contact_phone });
+    } catch (_) { /* Address selection remains available when saved addresses fail. */ }
+    this.setData({ optionsLoading: false });
   },
 
   async submitOrder() {
@@ -701,8 +685,8 @@ Page({
     if (!description.trim() && this.data.mediaList.length === 0) {
       validationErrors.description = '填描述或加素材';
     }
-    if (!this.data.addressBookId || !address.trim()) {
-      validationErrors.address = '请选择平台已开通的标准地址';
+    if (!this.data.serviceAreaId || !this.data.estate || !this.data.doorNumber) {
+      validationErrors.address = '请选择城市/区域和小区，填写门牌号';
     }
     if (validationErrors.description || validationErrors.address) {
       this.setData({ validationErrors });
@@ -717,7 +701,9 @@ Page({
         customer_id: userInfo.id,
         region_id: this.data.regionId || 1,
         store_id: this.data.storeId || undefined,
-        address_book_id: this.data.addressBookId,
+        service_area_id: this.data.serviceAreaId,
+        estate: this.data.estate,
+        door_number: this.data.doorNumber,
         category: category || 'other',
         description: description.trim() || '已上传素材',
         address: address.trim(),

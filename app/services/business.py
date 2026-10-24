@@ -48,24 +48,52 @@ def _token_hash(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+async def _attach_address(db, address):
+    from .address_format import door_number, full_address
+    from sqlalchemy.orm.attributes import set_committed_value
+    standard = await db.get(StoreAddress, address.service_address_id) if address.service_address_id else None
+    if standard:
+        for key in ('service_area_id', 'city', 'district', 'estate'):
+            setattr(address, key, getattr(standard, key))
+        address.door_number = door_number(standard.door_number, standard.building, standard.unit, standard.room)
+        if standard.estate and address.door_number:
+            set_committed_value(address, "address", full_address(standard.city, standard.district, standard.estate, address.door_number))
+    return address
+
+
+async def _resolve_customer_address(db, data, user_id):
+    from .store import create_address as create_standard
+    from .service_area import resolve_open_area
+    from ..schemas.store import StoreAddressCreate
+    if data.service_area_id:
+        area, assignment, store = await resolve_open_area(db, data.service_area_id)
+        return await create_standard(db, StoreAddressCreate(
+            service_area_id=area.id, estate=data.estate or '', door_number=data.door_number,
+            created_by_user_id=user_id, store_id=store.id,
+        ), customer_address=True)
+    standard = await db.get(StoreAddress, data.service_address_id) if data.service_address_id else None
+    if not standard or not standard.enabled or not standard.full_address:
+        raise ValueError('请填写城市/区域、小区和门牌号')
+    await resolve_open_area(db, standard.service_area_id)
+    return standard
+
+
 async def list_addresses(db: AsyncSession, user_id: int) -> list[CustomerAddress]:
     rows = await db.execute(
         select(CustomerAddress)
         .where(CustomerAddress.user_id == user_id, CustomerAddress.enabled.is_(True))
         .order_by(CustomerAddress.is_default.desc(), CustomerAddress.id.desc())
     )
-    return list(rows.scalars().all())
+    return [await _attach_address(db, item) for item in rows.scalars().all()]
 
 
 async def create_address(db: AsyncSession, data: AddressCreate) -> CustomerAddress:
-    service_address = await db.get(StoreAddress, data.service_address_id)
-    if not service_address or not service_address.enabled or not service_address.full_address:
-        raise ValueError("请选择地址库中已开通的标准服务地址")
+    service_address = await _resolve_customer_address(db, data, data.user_id)
     existing = (
         await db.execute(
             select(CustomerAddress).where(
                 CustomerAddress.user_id == data.user_id,
-                CustomerAddress.service_address_id == data.service_address_id,
+                CustomerAddress.service_address_id == service_address.id,
                 CustomerAddress.enabled.is_(True),
             )
         )
@@ -79,20 +107,28 @@ async def create_address(db: AsyncSession, data: AddressCreate) -> CustomerAddre
             .values(is_default=False)
         )
     address = CustomerAddress(
-        **data.model_dump(),
+        **data.model_dump(exclude={"service_area_id", "estate", "door_number", "service_address_id"}),
+        service_address_id=service_address.id,
         region_id=service_address.region_id,
         address=service_address.full_address,
     )
     db.add(address)
     await db.commit()
     await db.refresh(address)
-    return address
+    return await _attach_address(db, address)
 
 
 async def update_address(
     db: AsyncSession, address: CustomerAddress, data: AddressUpdate
 ) -> CustomerAddress:
     values = data.model_dump(exclude_unset=True)
+    if values.get('service_area_id') or values.get('service_address_id'):
+        standard = await _resolve_customer_address(db, data, address.user_id)
+        values['service_address_id'] = standard.id
+        address.address, address.region_id = standard.full_address, standard.region_id
+    for field in ('service_area_id', 'estate', 'door_number'):
+        values.pop(field, None)
+
     if values.get("is_default"):
         await db.execute(
             update(CustomerAddress)
@@ -103,7 +139,7 @@ async def update_address(
         setattr(address, key, value)
     await db.commit()
     await db.refresh(address)
-    return address
+    return await _attach_address(db, address)
 
 
 async def create_access_token(

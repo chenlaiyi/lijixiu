@@ -1,0 +1,16 @@
+<view class="address-fields">
+  <text class="label">城市/区域</text>
+  <picker range="{{regions}}" value="{{regionIndex}}" bindchange="selectRegion">
+    <view class="field">{{regionText || '请选择城市/区域，如：厦门市/海沧区'}}</view>
+  </picker>
+  <text class="label">小区</text>
+  <picker range="{{neighborhoods}}" range-key="label" value="{{areaIndex}}" bindchange="selectNeighborhood" disabled="{{regionIndex < 0}}">
+    <view class="choice">{{estate ? '重新选择小区' : '请选择已开通的小区'}}</view>
+  </picker>
+  <input class="field" value="{{estate}}" bindinput="inputEstate" maxlength="160" placeholder="例如：未来海岸-蓝月湾一期" />
+  <text class="label">门牌号</text>
+  <input class="field" value="{{doorNumber}}" bindinput="inputDoor" maxlength="240" placeholder="例如：嵩屿北五里23号2101室" />
+  <text wx:if="{{loading}}" class="tip">地址加载中</text>
+  <text wx:if="{{!loading && !regions.length && !error}}" class="tip">暂无已开通的城市/区域</text>
+  <button wx:if="{{error}}" bindtap="load">{{error}}</button>
+</view>

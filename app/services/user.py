@@ -1,24 +1,17 @@
 """用户服务"""
 
 from sqlalchemy import select
+import secrets
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.user import User, normalize_business_roles
+from ..models.user import User
 from ..schemas.user import UserCreate, UserUpdate
-from .role import resolve_roles, sync_legacy_business_role
 
 
 async def create_user(db: AsyncSession, data: UserCreate) -> User:
-    payload = data.model_dump()
-    payload.pop("business_roles", None)
-
-    # 2026-10-07 multi-role:建号即可带多个角色,留空时退回单个 business_role。
-    roles = normalize_business_roles(data.business_roles or [data.business_role])
-    if not roles:
-        roles = normalize_business_roles(data.business_role) or ["customer"]
-
-    user = User(**payload)
-    sync_legacy_business_role(user, roles)
+    values=data.model_dump()
+    values["referral_code"] = secrets.token_urlsafe(12)
+    user = User(**values)
     db.add(user)
     await db.commit()
     await db.refresh(user)
@@ -46,32 +39,34 @@ async def list_users(
 
 
 async def update_user(db: AsyncSession, user: User, data: UserUpdate) -> User:
-    """Apply a partial update, keeping the role set coherent.
-
-    Role字段用了「只增不减」的策略:`business_role`(老后台的单选)与
-    `is_promotion_manager`(老接口的推广开关)只保证角色在集合里,不会把账号
-    已有的其它角色抹掉 —— 抹角色必须显式走 `business_roles`(多选)或
-    PATCH /users/{id}/roles。
-    """
-    payload = data.model_dump(exclude_unset=True)
-    payload.pop("business_roles", None)
-    for key, val in payload.items():
+    for key, val in data.model_dump(exclude_unset=True).items():
         setattr(user, key, val)
-
-    if data.business_roles is not None:
-        sync_legacy_business_role(user, normalize_business_roles(data.business_roles))
-    else:
-        merged = list(resolve_roles(user))
-        changed = False
-        if data.business_role is not None and data.business_role.value not in merged:
-            merged.insert(0, data.business_role.value)
-            changed = True
-        if data.is_promotion_manager is True and "promotion_manager" not in merged:
-            merged.append("promotion_manager")
-            changed = True
-        if changed:
-            sync_legacy_business_role(user, normalize_business_roles(merged))
-
+    if data.is_promotion_manager is True and data.business_role is None:
+        user.business_role = "promotion_manager"
     await db.commit()
     await db.refresh(user)
     return user
+
+
+async def ensure_referral_code(db: AsyncSession, user: User) -> str:
+    if user.referral_code:
+        return user.referral_code
+    for _ in range(5):
+        code=secrets.token_urlsafe(12)
+        if not (await db.execute(select(User.id).where(User.referral_code == code))).scalar_one_or_none():
+            user.referral_code=code
+            await db.commit()
+            await db.refresh(user)
+            return code
+    raise RuntimeError("无法生成专属推荐码")
+
+
+async def bind_referrer(db: AsyncSession, user: User, code: str | None) -> None:
+    if not code or user.referrer_user_id or user.promotion_manager_id or user.id is None:
+        return
+    inviter=(await db.execute(select(User).where(User.referral_code == code))).scalar_one_or_none()
+    if not inviter or inviter.id == user.id or not inviter.is_active or inviter.is_pending_deletion:
+        return
+    user.referrer_user_id=inviter.id
+    await db.commit()
+    await db.refresh(user)

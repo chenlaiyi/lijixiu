@@ -1,12 +1,15 @@
 """Payment routes."""
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.auth import get_current_user, is_staff, require_staff, require_staff_or_self
+from ..core.auth import get_current_user, is_staff, require_staff, require_staff_or_self, require_admin, require_roles, require_self_or_admin
 from ..core.database import get_db
-from ..models.user import User
+from ..models.user import User, BusinessRole
+from ..models.pay_order import PayProvider
 from ..schemas.payment import (
     PayCallbackRequest,
     PayCreateRequest,
@@ -21,6 +24,7 @@ from ..services import wechat_pay
 from ..services.wechat_pay import WeChatPayError
 
 router = APIRouter(prefix="/api/v1/payment", tags=["payment"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/create", response_model=PayCreateResponse)
@@ -32,6 +36,8 @@ async def create_payment(
     # 只能给自己发起支付;内部角色可代客发起
     if not is_staff(user) and data.user_id != user.id:
         raise HTTPException(403, "cannot pay for another user")
+    if data.provider == PayProvider.WECHAT and (not data.js_code or data.payer_openid):
+        raise HTTPException(400, "WeChat payment requires a fresh login code")
     try:
         pay_order = await payment_service.create_payment(db, data)
         intent = await payment_service.create_payment_intent(db, pay_order, data)
@@ -51,7 +57,7 @@ async def create_payment(
 async def payment_callback(
     data: PayCallbackRequest,
     db: AsyncSession = Depends(get_db),
-    _staff: User = Depends(require_staff),  # 2026-10-05:mock 回调仅内部可用
+    _admin: User = Depends(require_admin),
 ):
     try:
         pay_order = await payment_service.handle_callback(
@@ -72,8 +78,9 @@ async def wechat_payment_notify(
     try:
         await payment_service.handle_wechat_notification(db, headers, body)
         return {"code": "SUCCESS", "message": "success"}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"code": "FAIL", "message": str(e)})
+    except Exception:
+        logger.exception("WeChat payment notification failed")
+        return JSONResponse(status_code=500, content={"code": "FAIL", "message": "processing failed"})
 
 
 @router.post("/wechat/refund-notify")
@@ -86,8 +93,9 @@ async def wechat_refund_notify(
     try:
         await payment_service.handle_wechat_refund_notification(db, headers, body)
         return {"code": "SUCCESS", "message": "success"}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"code": "FAIL", "message": str(e)})
+    except Exception:
+        logger.exception("WeChat refund notification failed")
+        return JSONResponse(status_code=500, content={"code": "FAIL", "message": "processing failed"})
 
 
 @router.get("/wechat/config-status")
@@ -101,9 +109,13 @@ async def wechat_payment_config_status(
 async def sync_wechat_payment(
     pay_order_id: int,
     db: AsyncSession = Depends(get_db),
-    _staff: User = Depends(require_staff),
+    user: User = Depends(get_current_user),
 ):
     try:
+        pay_order = await payment_service.get_pay_order(db, pay_order_id)
+        if not pay_order:
+            raise HTTPException(404, "pay order not found")
+        require_self_or_admin(pay_order.user_id, user)
         return await payment_service.sync_wechat_payment(db, pay_order_id)
     except (ValueError, WeChatPayError, safety.SafetyError) as e:
         raise HTTPException(400, str(e))
@@ -113,9 +125,10 @@ async def sync_wechat_payment(
 async def create_refund(
     data: RefundCreateRequest,
     db: AsyncSession = Depends(get_db),
-    _staff: User = Depends(require_staff),  # 2026-10-05:退款仅内部发起
+    admin: User = Depends(require_admin),
 ):
     try:
+        data.operator_id = admin.id
         return await payment_service.create_refund(db, data)
     except (ValueError, WeChatPayError) as e:
         raise HTTPException(400, str(e))
@@ -125,7 +138,7 @@ async def create_refund(
 async def sync_wechat_refund(
     refund_order_id: int,
     db: AsyncSession = Depends(get_db),
-    _staff: User = Depends(require_staff),
+    _admin: User = Depends(require_admin),
 ):
     try:
         return await payment_service.sync_wechat_refund(db, refund_order_id)

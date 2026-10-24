@@ -157,6 +157,11 @@ class Order(Base):
     address_book_id: Mapped[int | None] = mapped_column(
         ForeignKey("store_addresses.id"), nullable=True
     )
+    estate: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    door_number: Mapped[str | None] = mapped_column(String(240), nullable=True)
+    building: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    unit: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    room: Mapped[str | None] = mapped_column(String(80), nullable=True)
     address_code_snapshot: Mapped[str | None] = mapped_column(String(40), nullable=True)
     address_owner_user_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id"), nullable=True, index=True

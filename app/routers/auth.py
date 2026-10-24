@@ -27,7 +27,6 @@ from ..schemas.auth import (
     WechatPhoneLoginRequest,
 )
 from ..schemas.user import AgreementRequest, AgreementStatus, UserCreate
-from ..services import role as role_service
 from ..services import user as user_service
 from ..services import wechat_pay
 from ..services.wechat_pay import WeChatPayError
@@ -37,6 +36,7 @@ router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 audit_log = get_audit_logger()
 
 _SECRET = settings.AUTH_SECRET.encode("utf-8")
+_password_attempts = {}
 
 _DEMO_ACCOUNTS = {
     "18800000000": (UserRole.ADMIN, BusinessRole.PLATFORM_ADMIN),
@@ -48,9 +48,6 @@ _DEMO_ACCOUNTS = {
     "18800000006": (UserRole.CUSTOMER, BusinessRole.PROMOTION_MANAGER),
     "18800000007": (UserRole.ADMIN, BusinessRole.TECH_SUPPORT),
     "18800000008": (UserRole.ADMIN, BusinessRole.FINANCE),
-    # 2026-10-07 multi-role:真实手机号示例。登录只保证「店长」在角色集合里,
-    # scripts/seed_multi_role_demo.py 会给它补齐 师傅 + 业务(多角色演示账号)。
-    "18060936373": (UserRole.ADMIN, BusinessRole.STORE_MANAGER),
     "18800000999": (UserRole.REPAIRER, BusinessRole.REPAIRER),
 }
 
@@ -99,11 +96,11 @@ async def _login_with_phone(
     name: str,
     role_str: str,
     wx_code: str | None = None,
+    referral_code: str | None = None,
 ) -> WechatLoginResponse:
     demo_identity = _DEMO_ACCOUNTS.get(phone)
     role = demo_identity[0] if demo_identity else UserRole.CUSTOMER
     business_role = demo_identity[1] if demo_identity else BusinessRole.CUSTOMER
-    demo_role_value = business_role.value
 
     user = await user_service.get_user_by_phone(db, phone)
     if not user:
@@ -114,28 +111,14 @@ async def _login_with_phone(
                 name=name,
                 role=role,
                 business_role=business_role,
-                business_roles=[business_role],
                 is_promotion_manager=business_role == BusinessRole.PROMOTION_MANAGER,
             ),
         )
-    else:
-        # 2026-10-07 multi-role:演示/审核账号登录只保证「演示角色在集合里」,
-        # 不再把后台配好的其它角色覆盖掉(运营常给演示号叠加店长+师傅+业务
-        # 来演示一个号多角色)。存量单角色账号在此完成一次性迁移。
-        changed = False
-        roles = role_service.resolve_roles(user)
-        if not getattr(user, "business_roles", None):
-            changed = True
-        if demo_identity and demo_role_value not in roles:
-            roles = [*roles, demo_role_value]
-            changed = True
-        if changed:
-            role_service.sync_legacy_business_role(user, roles)
-            await db.commit()
-            await db.refresh(user)
-
+    if not user.is_active or user.is_pending_deletion:
+        raise HTTPException(403, "账号已停用")
+    await user_service.bind_referrer(db, user, referral_code)
     await _save_openid_if_available(db, user, wx_code)
-    if phone == settings.WECHAT_REVIEW_PHONE.strip():
+    if settings.DEBUG and settings.ALLOW_DEMO_LOGIN and phone == settings.WECHAT_REVIEW_PHONE.strip():
         await _refresh_review_demo_wallet(db, user)
 
     # 2026-08-14: 记录登录时间(覆盖 4 个登录端点:/wechat-login / review-login / wechat-phone-login / sms/login)
@@ -147,7 +130,7 @@ async def _login_with_phone(
     await db.commit()
 
     return WechatLoginResponse(
-        token=_make_token(user.id, user.role.value),
+        token=_make_token(user.id, user.role.value, user.auth_version),
         user=_user_payload(user),
     )
 
@@ -193,14 +176,14 @@ async def _refresh_review_demo_wallet(db: AsyncSession, user: User) -> None:
 
 def _user_payload(user: User) -> dict:
     return {
+        "is_active": user.is_active,
         "id": user.id,
         "phone": user.phone,
         "name": user.name,
         "role": user.role.value,
         "business_role": user.business_role or user.role.value,
-        # 2026-10-07 multi-role:前端按集合渲染标签 + 决定当前身份
-        "business_roles": role_service.resolve_roles(user),
-        "active_business_role": role_service.active_role(user),
+        "business_roles": user.business_roles,
+        "active_business_role": user.active_business_role,
         "avatar": user.avatar,
         "is_promotion_manager": user.is_promotion_manager,
         "has_wechat_openid": bool(user.wechat_openid),
@@ -221,6 +204,8 @@ CURRENT_PRIVACY_VERSION = "v1.0"
 
 @router.post("/wechat-login", response_model=WechatLoginResponse)
 async def wechat_login(data: WechatLoginRequest, db: AsyncSession = Depends(get_db)):
+    if not (settings.DEBUG and settings.ALLOW_DEMO_LOGIN):
+        raise HTTPException(403, "请使用密码或微信手机号登录")
     phone, name, role_str = _parse_demo_code(data)
     if phone not in _DEMO_ACCOUNTS:
         raise HTTPException(403, "This endpoint is only available for configured demo accounts")
@@ -229,6 +214,8 @@ async def wechat_login(data: WechatLoginRequest, db: AsyncSession = Depends(get_
 
 @router.post("/review-login", response_model=WechatLoginResponse)
 async def review_login(data: ReviewLoginRequest, db: AsyncSession = Depends(get_db)):
+    if not (settings.DEBUG and settings.ALLOW_DEMO_LOGIN):
+        raise HTTPException(403, "请使用密码登录")
     account = settings.WECHAT_REVIEW_ACCOUNT.strip()
     password = settings.WECHAT_REVIEW_PASSWORD
     phone = settings.WECHAT_REVIEW_PHONE.strip()
@@ -245,31 +232,48 @@ async def review_login(data: ReviewLoginRequest, db: AsyncSession = Depends(get_
 
 
 @router.post("/admin-login", response_model=WechatLoginResponse)
-async def admin_login(data: AdminLoginRequest, db: AsyncSession = Depends(get_db)):
-    """管理后台账号密码登录(2026-10-07)。
+async def admin_login(data: AdminLoginRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    result = await password_login(data, request, db)
+    if result.user["business_role"] != BusinessRole.PLATFORM_ADMIN.value:
+        raise HTTPException(403, "仅平台管理员可登录管理后台")
+    return result
 
-    替代「手工到 /admin/ 粘贴 Bearer token」的用法:后台登录框填账号密码,
-    后台内部拿这里返回的 token 去调管理接口。
 
-    凭据来自 .env:`ADMIN_WEB_ACCOUNT` / `ADMIN_WEB_PASSWORD`,
-    登录成功返回 `ADMIN_WEB_PHONE`(默认 18800000000,platform_admin)对应的用户。
-    """
-    account = settings.ADMIN_WEB_ACCOUNT.strip()
-    password = settings.ADMIN_WEB_PASSWORD
-    phone = settings.ADMIN_WEB_PHONE.strip()
-    if not account or not password:
-        raise HTTPException(503, "Admin login is not configured")
-    if not (
-        hmac.compare_digest(data.account.strip(), account)
-        and hmac.compare_digest(data.password, password)
-    ):
-        raise HTTPException(401, "Account or password is incorrect")
-    if phone not in _DEMO_ACCOUNTS:
-        raise HTTPException(503, "Admin account is not linked to a demo user")
-    user_role, business_role = _DEMO_ACCOUNTS[phone]
-    if business_role != BusinessRole.PLATFORM_ADMIN:
-        raise HTTPException(503, "Admin account is not a platform admin")
-    return await _login_with_phone(db, phone, "演示管理员", user_role.value)
+@router.post("/password-login", response_model=WechatLoginResponse)
+async def password_login(data: AdminLoginRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    import asyncio
+    from collections import deque
+    from ..core.passwords import check_password
+    key = (request.client.host if request.client else "unknown", data.account.strip())
+    now = time.monotonic()
+    history = _password_attempts.setdefault(key, deque())
+    while history and now - history[0] > 300:
+        history.popleft()
+    if len(history) >= 10:
+        raise HTTPException(429, "尝试次数过多，请稍后再试")
+    history.append(now)
+    if len(_password_attempts) > 10000:
+        for stale in list(_password_attempts):
+            if not _password_attempts[stale] or now - _password_attempts[stale][-1] > 300:
+                _password_attempts.pop(stale, None)
+    account = data.account.strip()
+    phone = settings.ADMIN_WEB_PHONE if account == settings.ADMIN_WEB_ACCOUNT.strip() else account
+    user = await user_service.get_user_by_phone(db, phone)
+    # Run the same expensive hash for unknown accounts to avoid an identity timing oracle.
+    dummy = "pbkdf2_sha256$600000$invalid$" + "0" * 64
+    valid = await asyncio.to_thread(check_password, data.password, user.password_hash if user else dummy)
+    if not user or not valid:
+        raise HTTPException(401, "账号或密码不正确")
+    if not user.is_active or user.is_pending_deletion:
+        raise HTTPException(403, "账号已停用")
+    if data.referral_code:
+        await user_service.bind_referrer(db, user, data.referral_code)
+    if data.wx_code and not user.wechat_openid:
+        await _save_openid_if_available(db, user, data.wx_code)
+    _password_attempts.pop(key, None)
+    user.last_login_at = datetime.now(timezone.utc)
+    await db.commit()
+    return WechatLoginResponse(token=make_token(user.id, user.role.value, user.auth_version), user=_user_payload(user))
 
 
 @router.post("/wechat-phone-login", response_model=WechatLoginResponse)
@@ -282,8 +286,10 @@ async def wechat_phone_login(
     except WeChatPayError as exc:
         raise HTTPException(400, f"phone authorization failed: {exc}") from exc
 
+    if phone in _DEMO_ACCOUNTS:
+        raise HTTPException(403, "该账号请使用密码登录")
     name = data.name or f"user{phone[-4:]}"
-    return await _login_with_phone(db, phone, name, "customer", data.wx_code)
+    return await _login_with_phone(db, phone, name, "customer", data.wx_code, data.referral_code)
 
 
 def _sms_hash(phone: str, code: str) -> str:
@@ -375,6 +381,7 @@ async def sms_login(data: SmsLoginRequest, db: AsyncSession = Depends(get_db)):
         data.name or f"用户{data.phone[-4:]}",
         "customer",
         data.wx_code,
+        data.referral_code,
     )
 
 
@@ -450,10 +457,9 @@ async def export_my_data(
     return {
         "exported_at": datetime.now(timezone.utc).isoformat(),
         "user": {
-            "id": user.id, "phone": user.phone, "name": user.name,
+            "is_active": user.is_active,
+        "id": user.id, "phone": user.phone, "name": user.name,
             "role": user.role.value, "business_role": user.business_role,
-            "business_roles": role_service.resolve_roles(user),
-            "active_business_role": role_service.active_role(user),
             "avatar": user.avatar, "created_at": user.created_at.isoformat() if user.created_at else None,
         },
         "agreements": {
