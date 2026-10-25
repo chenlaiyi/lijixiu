@@ -69,6 +69,7 @@ Page({
   ...share.create({ title: '立即修｜上门维修' }),
 
   data: {
+    agreementAccepted: false,
     phone: '',
     smsCode: '',
     smsSending: false,
@@ -116,6 +117,20 @@ Page({
     if (wx.getStorageSync('token')) this._redirectByRole();
   },
 
+  onAgreementChange(e) {
+    this.setData({ agreementAccepted: (e.detail.value || []).includes('accept') });
+  },
+
+  requireAgreement() {
+    if (this.data.agreementAccepted) return true;
+    wx.showToast({ title: '请阅读并自主勾选协议', icon: 'none' });
+    return false;
+  },
+
+  openTerms() { wx.navigateTo({ url: '/pages/common/agreement/agreement?tab=terms' }); },
+  openPolicy() { wx.navigateTo({ url: '/pages/common/agreement/agreement?tab=privacy' }); },
+  browseServices() { wx.reLaunch({ url: '/pages/customer/home/home' }); },
+
   onPhoneInput(e) {
     const phone = e.detail.value;
     const validationErrors = { ...this.data.validationErrors };
@@ -138,6 +153,7 @@ Page({
   },
 
   async sendSmsCode() {
+    if (!this.requireAgreement()) return;
     const phone = this.data.phone;
     if (!phone || phone.length !== 11) {
       this.setData({ validationErrors: { phone: '请输入 11 位手机号' }, phoneInputFocus: true });
@@ -198,6 +214,7 @@ Page({
   },
 
   async handleAccountLogin() {
+    if (!this.requireAgreement()) return;
     if (this.data.loading) return;
     const account = String(this.data.reviewAccount || '').trim();
     const password = String(this.data.reviewPassword || '');
@@ -230,6 +247,7 @@ Page({
   },
 
   handleWechatPhoneTap() {
+    if (!this.requireAgreement()) return;
     if (this.data.loading || this.data.phoneAuthPreparing) return;
     this.setData({
       quickLoginTip: '',
@@ -320,6 +338,7 @@ Page({
   },
 
   async prepareWechatPhoneLogin() {
+    if (!this.requireAgreement()) return;
     if (this.data.loading || this.data.phoneAuthPreparing) return;
     this.setData({
       phoneAuthPreparing: true,
@@ -402,6 +421,7 @@ Page({
   },
 
   async enterFullExperience() {
+    if (!this.requireAgreement()) return;
     if (this.data.loading) return;
     const item = { phone: '18800000999', name: '审核功能体验' };
     this.setData({ loading: true, accountLoginError: '' });
@@ -438,6 +458,7 @@ Page({
   },
 
   async handleDemoLogin(item) {
+    if (!this.requireAgreement()) return;
     this.setData({ loading: true });
     try {
       const backendRole = role.getBackendRole(item.phone);
@@ -456,6 +477,7 @@ Page({
   },
 
   async handleWechatPhoneLogin(e) {
+    if (!this.requireAgreement()) return;
     if (this.data.loading) return;
     const detail = (e && e.detail) || {};
     if (!detail.code) {
@@ -504,6 +526,7 @@ Page({
   },
 
   async handleLogin() {
+    if (!this.requireAgreement()) return;
     if (this.data.loading) return;
     const { phone, name, smsCode } = this.data;
     if (!phone || phone.length < 11) {

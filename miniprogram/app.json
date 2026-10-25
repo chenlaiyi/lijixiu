@@ -32,7 +32,7 @@
     "pages/support/dashboard/dashboard",
     "pages/finance/dashboard/dashboard"
   ],
-  "entryPagePath": "pages/login/login",
+  "entryPagePath": "pages/index/index",
   "__usePrivacyCheck__": true,
   "window": {
     "navigationBarBackgroundColor": "#ffffff",

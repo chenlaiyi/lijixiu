@@ -1,3 +1,4 @@
+const role = require('../../utils/role');
 const share = require('../../utils/share');
 
 // 给用户 1.2 秒看到品牌区, 不再像之前 280ms 那样一闪而过
@@ -45,7 +46,7 @@ Page({
   },
 
   _attemptEntry(method, attempt) {
-    const target = '/pages/login/login';
+    const target = wx.getStorageSync('token') ? role.getEntryPath(wx.getStorageSync('userInfo')) : '/pages/customer/home/home';
     const navigate = method === 'relaunch' ? wx.reLaunch : wx.redirectTo;
     navigate({
       url: target,

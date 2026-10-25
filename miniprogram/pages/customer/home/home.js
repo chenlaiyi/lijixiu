@@ -395,7 +395,6 @@ Page({
   onShow() {
     share.enable();
     this._updateGreeting();
-    this._checkLogin();
     this._loadRecentOrders();
   },
 
@@ -411,9 +410,7 @@ Page({
   },
 
   _checkLogin() {
-    if (!wx.getStorageSync('token')) {
-      wx.reLaunch({ url: '/pages/login/login' });
-    }
+    return Boolean(wx.getStorageSync('token'));
   },
 
   _applyNavSafeArea() {
@@ -441,11 +438,11 @@ Page({
     });
     try {
       const userInfo = wx.getStorageSync('userInfo');
-      if (!userInfo) {
+      if (!wx.getStorageSync('token') || !userInfo) {
         this.setData({
           recentLoading: false,
           syncStatusText: '未登录',
-          syncHint: '请先登录',
+          syncHint: '可先浏览服务，登录后查看订单',
           recentSubtitle: '登录后查看',
           showStatusDock: false,
           statusHighlightCount: '未登录',
@@ -635,7 +632,7 @@ Page({
     const id = e.currentTarget.dataset.id;
     wx.navigateTo({ url: `/pages/customer/detail/detail?orderId=${id}` });
   },
-  goProfile() { wx.navigateTo({ url: '/pages/customer/profile/profile' }); },
+  goProfile() { wx.navigateTo({ url: wx.getStorageSync('token') ? '/pages/customer/profile/profile' : '/pages/login/login' }); },
   reloadRecentOrders() { return this._loadRecentOrders(); },
   onPullDownRefresh() {
     Promise.resolve(this._loadRecentOrders()).catch(() => {}).then(() => {

@@ -18,7 +18,7 @@
 
       <view class="agreement-block">
         <text class="agreement-h2">二、账号与登录</text>
-        <text class="agreement-p">1. 您可使用微信手机号快捷登录或账号密码方式登录本平台。\n2. 您应妥善保管账号与登录凭证，因您主动泄露或未尽保管义务造成的损失，由您本人承担。\n3. 同一手机号在同一时间仅可登录一台设备。</text>
+        <text class="agreement-p">1. 您可使用手机号快捷登录或账号密码方式登录本平台。\n2. 您应妥善保管账号与登录凭证，因您主动泄露或未尽保管义务造成的损失，由您本人承担。\n3. 同一手机号在同一时间仅可登录一台设备。</text>
       </view>
 
       <view class="agreement-block">
@@ -43,7 +43,7 @@
 
       <view class="agreement-block">
         <text class="agreement-h2">七、协议变更与终止</text>
-        <text class="agreement-p">平台可根据业务调整对本协议进行修订，重大变更将通过应用内通知等方式告知。如您不同意变更，可停止使用本服务；继续使用即视为接受。</text>
+        <text class="agreement-p">平台可根据业务调整对本协议进行修订，重大变更将通过应用内通知等方式告知。重大变更需由您阅读并自主选择是否同意；未同意前仍可浏览无需登录的服务内容。</text>
       </view>
 
       <view class="agreement-block">

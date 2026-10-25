@@ -49,6 +49,12 @@
 
   <!-- ===== 主操作卡片 ===== -->
   <view class="login-card">
+    <checkbox-group bindchange="onAgreementChange">
+      <label class="agreement-choice"><checkbox value="accept" checked="{{agreementAccepted}}" />我已阅读并同意</label>
+    </checkbox-group>
+    <view class="login-foot-line"><text class="login-foot-link" bindtap="openTerms">《用户服务协议》</text> 和 <text class="login-foot-link" bindtap="openPolicy">《隐私政策》</text></view>
+    <view class="login-foot-line"><text class="login-foot-link" bindtap="openPrivacyContract">查看《{{privacyContractName}}》</text></view>
+
     <view class="login-tabs" role="tablist">
       <view
         class="login-tab {{loginMode === 'wechat' ? 'active' : ''}}"
@@ -56,8 +62,8 @@
         bindtap="switchLoginMode"
         hover-class="none"
       >
-        <text class="login-tab-ico" aria-hidden="true">💬</text>
-        <text>微信登录</text>
+
+        <text>快捷登录</text>
       </view>
       <view
         class="login-tab {{loginMode === 'phone' ? 'active' : ''}}"
@@ -70,10 +76,10 @@
       </view>
     </view>
 
-    <!-- ===== 微信登录面板 ===== -->
+    <!-- ===== 快捷登录面板 ===== -->
     <view class="login-pane" hidden="{{loginMode !== 'wechat'}}">
       <button
-        wx:if="{{phoneAuthReady}}"
+        wx:if="{{phoneAuthReady && agreementAccepted}}"
         class="wechat-primary {{loading ? 'is-disabled' : ''}}"
         open-type="getPhoneNumber"
         phone-number-no-quota-toast="{{false}}"
@@ -82,8 +88,8 @@
         disabled="{{loading}}"
         hover-class="button-hover"
       >
-        <text class="wechat-primary-ico" aria-hidden="true">🟢</text>
-        <text>{{loading ? '登录中' : '微信手机号一键登录'}}</text>
+
+        <text>{{loading ? '登录中' : '手机号快捷登录'}}</text>
       </button>
       <button
         wx:else
@@ -93,7 +99,7 @@
         hover-class="button-hover"
       >
         <text class="wechat-primary-ico" aria-hidden="true">🔐</text>
-        <text>{{phoneAuthPreparing ? '准备中' : '授权并登录'}}</text>
+        <text>{{phoneAuthPreparing ? '准备中' : '手机号快捷登录'}}</text>
       </button>
 
       <text wx:if="{{quickLoginTip}}" class="auth-tip {{quickLoginTipTone}}">{{quickLoginTip}}</text>
@@ -166,7 +172,7 @@
         </view>
         <text class="login-link-dot">·</text>
         <view class="login-link" bindtap="switchLoginMode" data-mode="wechat" hover-class="none">
-          <text>微信快捷登录</text>
+          <text>手机号快捷登录</text>
         </view>
       </view>
     </view>
@@ -192,7 +198,7 @@
 
       <view class="login-link-row">
         <view class="login-link" bindtap="switchLoginMode" data-mode="wechat" hover-class="none">
-          <text>← 微信登录</text>
+          <text>← 快捷登录</text>
         </view>
       </view>
     </view>
@@ -262,7 +268,7 @@
 
   <view class="login-foot">
     <view class="login-foot-line">手机号仅用于账户识别和服务联系</view>
-    <view class="login-foot-line">登录即表示已阅读并同意 <text class="login-foot-link" bindtap="openPrivacyContract">《{{privacyContractName}}》</text></view>
+    <button class="browse-services" bindtap="browseServices">暂不登录，先浏览服务</button>
   </view>
 
   <!-- ===== 隐私授权弹窗 ===== -->
