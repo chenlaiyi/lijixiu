@@ -23,7 +23,7 @@ Page({
   ...share.create({ title: '立即修｜收益' }),
 
   data: {
-    withdrawalTiming: '由财务人工审核，当前未承诺固定审核及到账时限；实际到账以收款记录为准。如有延迟，请联系客服。',
+    withdrawalTiming: '申请提交成功后 7 天内完成审核；审核通过后 7 天内到账。以上均为自然日。可在提现记录查看处理状态，超过时限未处理或未到账，请联系客服核实。',
     wallet: null,
     walletView: {
       available_balance: '0.00',

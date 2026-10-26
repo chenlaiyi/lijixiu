@@ -62,6 +62,8 @@ function page(file, storage = {}) {
   await demand.submit();
   assert.strictEqual(demandCalls[0][0], 'showModal');
   const rules = fs.readFileSync('miniprogram/pages/repairer/earnings/earnings.wxml', 'utf8');
+  assert(earnings.data.withdrawalTiming.includes('提交成功后 7 天内完成审核'));
+  assert(earnings.data.withdrawalTiming.includes('审核通过后 7 天内到账'));
   assert(rules.includes('每日次数') && rules.includes('申请时间') && rules.includes('审核及到账时间') && rules.includes('可提现额度'));
   assert(rules.indexOf('提现规则') < rules.indexOf('class="withdraw-btn"'));
   console.log('PASS: explicit revocable consent gates all login methods; guest browsing has no forced login or private requests; order submission requests login');
