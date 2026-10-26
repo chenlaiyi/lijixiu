@@ -470,7 +470,7 @@ async def resolve_open_area(db, area_id):
     raise ValueError("所选社区的服务门店暂未开通")
 
 
-async def customer_options(db):
+async def customer_options(db, *, include_order_estates=True):
     from ..models.store import StoreAddress
     from ..models.order import Order
     areas = (await db.execute(select(ServiceArea).join(ServiceAreaAssignment,
@@ -485,7 +485,7 @@ async def customer_options(db):
             StoreAddress.service_area_id == area.id, StoreAddress.enabled == True,
             StoreAddress.estate != ""))).scalars().all()))
         ordered_estates = (await db.execute(select(Order.estate).where(
-            Order.service_area_id == area.id, Order.estate.is_not(None), Order.estate != ""))).scalars().all()
+            Order.service_area_id == area.id, Order.estate.is_not(None), Order.estate != ""))).scalars().all() if include_order_estates else []
         estates = sorted(set(estates + list(ordered_estates)))
         result.append(dict(id=area.id, service_area_id=area.id, name=area.name,
             label=f"{area.district} / {area.street} / {area.name}",

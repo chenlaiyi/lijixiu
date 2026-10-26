@@ -270,7 +270,7 @@ Page({
   },
 
   goLogin() {
-    wx.reLaunch({ url: '/pages/login/login' });
+    wx.reLaunch({ url: '/pages/customer/home/home' });
   },
 
   /** 退出 */

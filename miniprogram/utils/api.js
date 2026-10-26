@@ -30,7 +30,7 @@ const request = (url, method = 'GET', data = {}) => {
         } else if (res.statusCode === 401) {
           wx.removeStorageSync('token');
           wx.showToast({ title: '登录已过期，请重新登录', icon: 'none' });
-          wx.reLaunch({ url: '/pages/login/login' });
+          wx.reLaunch({ url: '/pages/customer/home/home' });
           reject(new Error('登录已过期'));
         } else {
           const msg = (res.data && res.data.detail) || `请求失败(${res.statusCode})`;

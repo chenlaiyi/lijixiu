@@ -72,7 +72,7 @@ Page({
     share.enable();
     const userInfo = wx.getStorageSync('userInfo');
     if (!userInfo) {
-      wx.reLaunch({ url: '/pages/login/login' });
+      wx.reLaunch({ url: '/pages/customer/home/home' });
       return;
     }
     this.loadData();

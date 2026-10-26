@@ -88,6 +88,6 @@ App({
     this.globalData.token = '';
     this.globalData.userInfo = null;
     this.globalData.role = '';
-    wx.reLaunch({ url: '/pages/login/login' });
+    wx.reLaunch({ url: '/pages/customer/home/home' });
   }
 });

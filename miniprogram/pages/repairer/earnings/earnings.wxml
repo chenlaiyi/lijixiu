@@ -61,6 +61,17 @@
       </view>
       <text wx:if="{{withdrawErrorText}}" class="withdraw-error">{{withdrawErrorText}}</text>
     </view>
+    <view class="withdraw-rules">
+      <text class="withdraw-rules-title">提现规则</text>
+      <text class="withdraw-rule">可提现额度：以页面“可提现余额”为准，冻结中及待审核收益不可提现。金额以元为单位，精确到分，最低申请 ¥0.01，单次不超过可提现余额。</text>
+      <text wx:if="{{isReviewExperience}}" class="withdraw-rule">当前为功能体验账号，单次申请上限 ¥5.00，且不超过可提现余额。</text>
+      <text class="withdraw-rule">每日次数：当前不设每日申请次数上限；申请金额冻结后不能重复提现，请勿重复提交。</text>
+      <text class="withdraw-rule">申请时间：每天 00:00—24:00 均可提交（北京时间）。提交成功后进入财务人工审核，并非立即到账。</text>
+      <text class="withdraw-rule">审核及到账时间：{{withdrawalTiming}}</text>
+      <text class="withdraw-rule">手续费：平台不从申请金额中另扣提现手续费。审核未通过时，申请金额退回可提现余额。</text>
+      <text class="withdraw-rule">到账方式与查询：财务审核后按实际打款方式处理；可在下方“提现记录”查看申请及处理状态，未到账可联系客服核实。</text>
+      <button class="withdraw-help" open-type="contact">提现问题联系客服</button>
+    </view>
     <button class="withdraw-btn" bindtap="withdraw" disabled="{{loading || withdrawing || !canWithdraw}}" hover-class="button-hover">
       <image class="withdraw-icon" src="/assets/ui/wallet.png" mode="aspectFit" />
       <text>{{withdrawing ? '提交中' : '申请提现'}}</text>

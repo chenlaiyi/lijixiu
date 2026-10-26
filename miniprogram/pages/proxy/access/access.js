@@ -23,7 +23,7 @@ Page({
   },
   goLogin() {
     wx.setStorageSync('pendingAccessToken', this.data.token);
-    wx.navigateTo({ url: '/pages/login/login' });
+    wx.navigateTo({ url: '/pages/login/login?intent=login' });
   },
   async claimOrder() {
     const user = wx.getStorageSync('userInfo');

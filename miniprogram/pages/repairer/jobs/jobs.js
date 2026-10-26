@@ -26,7 +26,7 @@ Page({
     share.enable();
     const ui = wx.getStorageSync('userInfo');
     if (!ui) {
-      wx.reLaunch({ url: '/pages/login/login' });
+      wx.reLaunch({ url: '/pages/customer/home/home' });
       return;
     }
     this.setData({ userInfo: ui });

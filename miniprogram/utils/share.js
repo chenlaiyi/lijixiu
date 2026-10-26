@@ -16,7 +16,7 @@ function getPageOptions(page) {
 }
 
 function getCurrentPath(page) {
-  const route = page && page.route ? page.route : 'pages/login/login';
+  const route = page && page.route && page.route !== 'pages/login/login' ? page.route : 'pages/customer/home/home';
   const query = encodeQuery({
     ...getPageOptions(page),
     from: 'share',

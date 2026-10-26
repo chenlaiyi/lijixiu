@@ -66,7 +66,7 @@ function resolvePhoneAuthFailure(detail = {}) {
 }
 
 Page({
-  ...share.create({ title: '立即修｜上门维修' }),
+  ...share.create({ title: '立即修｜上门维修', path: '/pages/customer/home/home' }),
 
   data: {
     agreementAccepted: false,
@@ -110,7 +110,12 @@ Page({
     ],
   },
 
-  onLoad() {
+  onLoad(options = {}) {
+    // Historical QR codes/review paths must not make login the landing page.
+    if (options.intent !== 'login') {
+      wx.reLaunch({ url: '/pages/customer/home/home' });
+      return;
+    }
     share.enable();
     this._applyNavSafeArea();
     this.initPrivacy();

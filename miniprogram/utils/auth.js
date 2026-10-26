@@ -80,7 +80,7 @@ function logout() {
   wx.removeStorageSync('token');
   wx.removeStorageSync('userInfo');
   wx.removeStorageSync('reviewExperience');
-  wx.reLaunch({ url: '/pages/login/login' });
+  wx.reLaunch({ url: '/pages/customer/home/home' });
 }
 
 module.exports = {

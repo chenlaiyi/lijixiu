@@ -23,6 +23,7 @@ Page({
   ...share.create({ title: '立即修｜收益' }),
 
   data: {
+    withdrawalTiming: '由财务人工审核，当前未承诺固定审核及到账时限；实际到账以收款记录为准。如有延迟，请联系客服。',
     wallet: null,
     walletView: {
       available_balance: '0.00',
@@ -49,17 +50,9 @@ Page({
   async onShow() {
     share.enable();
     let userInfo = wx.getStorageSync('userInfo');
-    if (!userInfo) {
-      if (this.enteringExperience) return;
-      this.enteringExperience = true;
-      try {
-        userInfo = await this.enterExperienceAccount();
-      } catch (e) {
-        wx.reLaunch({ url: '/pages/login/login' });
-        return;
-      } finally {
-        this.enteringExperience = false;
-      }
+    if (!wx.getStorageSync('token') || !userInfo) {
+      wx.reLaunch({ url: '/pages/customer/home/home' });
+      return;
     }
     this.setData({
       userInfo,

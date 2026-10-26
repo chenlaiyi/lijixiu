@@ -32,7 +32,7 @@ Page({
   async loadData() {
     const user = wx.getStorageSync('userInfo');
     if (!user) {
-      wx.reLaunch({ url: '/pages/login/login' });
+      wx.reLaunch({ url: '/pages/customer/home/home' });
       return;
     }
     this.setData({ loading: true, loadFailed: false, errorText: '' });

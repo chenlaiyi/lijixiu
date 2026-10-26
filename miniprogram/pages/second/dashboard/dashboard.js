@@ -40,7 +40,7 @@ Page({
   onShow() {
     share.enable();
     if (!wx.getStorageSync('userInfo')) {
-      wx.reLaunch({ url: '/pages/login/login' });
+      wx.reLaunch({ url: '/pages/customer/home/home' });
       return;
     }
     this.loadData();

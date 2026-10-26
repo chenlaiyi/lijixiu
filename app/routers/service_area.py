@@ -86,3 +86,11 @@ async def logs(
 @router.get("/customer-options")
 async def customer_options(db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
     return await service.customer_options(db)
+
+
+@router.get("/public-options")
+async def public_options(db: AsyncSession = Depends(get_db)):
+    """Public service coverage only; excludes order-derived addresses and operator data."""
+    areas = await service.customer_options(db, include_order_estates=False)
+    fields = {"id", "service_area_id", "name", "city", "district", "street", "estates"}
+    return [{key: value for key, value in area.items() if key in fields} for area in areas]

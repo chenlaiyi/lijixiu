@@ -681,7 +681,7 @@ Page({
 
   async submitOrder() {
     if (!wx.getStorageSync('token')) {
-      wx.showModal({ title: '登录后提交报修', content: '浏览服务无需登录，提交订单时需要登录以联系和查看进度。', confirmText: '去登录', cancelText: '继续浏览', success: (res) => { if (res.confirm) wx.navigateTo({ url: '/pages/login/login' }); } });
+      wx.showModal({ title: '登录后提交报修', content: '浏览服务无需登录，提交订单时需要登录以联系和查看进度。', confirmText: '去登录', cancelText: '继续浏览', success: (res) => { if (res.confirm) wx.navigateTo({ url: '/pages/login/login?intent=login' }); } });
       return;
     }
     const { description, address, category } = this.data;

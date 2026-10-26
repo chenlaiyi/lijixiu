@@ -441,6 +441,8 @@ Page({
       if (!wx.getStorageSync('token') || !userInfo) {
         this.setData({
           recentLoading: false,
+          recentOrders: [], activeCount: 0, waitPayCount: 0,
+          heroSummary: buildHeroSummary(0, 0), homeNotice: buildHomeNotice(0, 0),
           syncStatusText: '未登录',
           syncHint: '可先浏览服务，登录后查看订单',
           recentSubtitle: '登录后查看',
@@ -632,7 +634,7 @@ Page({
     const id = e.currentTarget.dataset.id;
     wx.navigateTo({ url: `/pages/customer/detail/detail?orderId=${id}` });
   },
-  goProfile() { wx.navigateTo({ url: wx.getStorageSync('token') ? '/pages/customer/profile/profile' : '/pages/login/login' }); },
+  goProfile() { wx.navigateTo({ url: wx.getStorageSync('token') ? '/pages/customer/profile/profile' : '/pages/login/login?intent=login' }); },
   reloadRecentOrders() { return this._loadRecentOrders(); },
   onPullDownRefresh() {
     Promise.resolve(this._loadRecentOrders()).catch(() => {}).then(() => {

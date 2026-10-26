@@ -15,7 +15,7 @@ Page({
   onShow() {
     const user = wx.getStorageSync('userInfo');
     if (!user) {
-      wx.reLaunch({ url: '/pages/login/login' });
+      wx.reLaunch({ url: '/pages/customer/home/home' });
       return;
     }
     let versionText = '体验版';

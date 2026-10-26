@@ -63,6 +63,10 @@ async def main():
         assert legacy.door_number=='23号楼2单元2101室'
         options=await customer_options(db)
         assert fields['estate'] in options[0]['estates'] and options[0]['store_id']==stores[1].id
+        order.estate = '仅订单中出现的小区'
+        await db.commit()
+        assert order.estate in (await customer_options(db))[0]['estates']
+        assert order.estate not in (await customer_options(db, include_order_estates=False))[0]['estates']
         # The mini-program sends business_role, not active_business_role.
         switched=await switch_active_role(manager.id,ActiveRoleRequest(business_role='store_manager'),db,manager)
         assert switched.active_business_role=='store_manager'

@@ -15,12 +15,20 @@
     <button class="publish-button" bindtap="publishDemand">发布需求</button>
   </view>
 
+  <view class="service-description">
+    <text class="service-description-title">{{serviceType === 'maternity' ? '月嫂服务内容' : '保姆服务内容'}}</text>
+    <text class="service-description-text">{{serviceType === 'maternity' ? '产妇日常生活照护、月子餐协助、婴儿日常照护及家庭护理指导。具体服务范围、周期及时间由双方在签约前确认，不提供医疗诊疗服务。' : '家庭日常清洁、餐食制作、衣物整理及约定的日常照护；可选择住家、白班、钟点或长期服务，工作内容及时间在签约前确认。'}}</text>
+    <text class="service-description-title">服务流程与费用</text>
+    <text class="service-description-text">浏览服务 → 按需发布需求 → 门店联系核实 → 匹配人员及预约面试 → 确认档期、服务内容与报价 → 签约服务。费用根据服务方式、周期及人员情况报价，确认后再签约付款。</text>
+    <text class="service-description-text">浏览服务介绍无需登录；主动发布需求或查看个人业务信息时，再选择登录。</text>
+    <button open-type="contact">咨询服务</button>
+  </view>
   <view wx:if="{{myDemands.length}}" class="demand-summary">
     <view class="list-head"><text>我的需求</text><text class="list-count">最近 {{myDemands.length}} 条</text></view>
     <view class="demand-row" wx:for="{{myDemands}}" wx:key="id"><view><text class="demand-name">#{{item.id}} {{item.description}}</text><text class="demand-date">开始时间 {{item.service_start || '待确认'}}</text></view><text class="demand-status">{{item.statusText}}</text></view>
   </view>
 
-  <view class="list-head">
+  <view wx:if="{{!guest}}" class="list-head">
     <text>可匹配人员</text>
     <text class="list-count">{{workers.length}} 人</text>
   </view>
@@ -30,12 +38,12 @@
     <text>加载失败</text>
     <button bindtap="loadWorkers">重试</button>
   </view>
-  <view wx:elif="{{workers.length === 0}}" class="state-panel">
+  <view wx:elif="{{!guest && workers.length === 0}}" class="state-panel">
     <text>暂时没有公开档案</text>
     <text>提交需求后由门店为您匹配</text>
   </view>
 
-  <view wx:else class="worker-list">
+  <view wx:elif="{{!guest}}" class="worker-list">
     <view class="worker-card" wx:for="{{workers}}" wx:key="id" data-id="{{item.id}}" bindtap="openWorker" hover-class="worker-card-active">
       <image wx:if="{{item.avatar}}" class="worker-avatar" src="{{item.avatar}}" mode="aspectFill" />
       <view wx:else class="worker-avatar fallback">{{item.initial}}</view>

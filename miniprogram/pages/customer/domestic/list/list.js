@@ -7,6 +7,7 @@ Page({
     serviceType: 'maternity',
     title: '月嫂服务',
     subtitle: '根据档期、经验和技能匹配合适人选',
+    guest: true,
     workers: [],
     myDemands: [],
     loading: true,
@@ -31,6 +32,12 @@ Page({
   },
   switchType(e) { this.setType(e.currentTarget.dataset.type); },
   async loadWorkers() {
+    const guest = !wx.getStorageSync('token');
+    this.setData({ guest });
+    if (guest) {
+      this.setData({ workers: [], myDemands: [], loading: false, failed: false });
+      return;
+    }
     this.setData({ loading: true, failed: false });
     try {
       const user = wx.getStorageSync('userInfo') || {};

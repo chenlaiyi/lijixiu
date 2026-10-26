@@ -33,3 +33,7 @@
 .state-panel.warning { color: #b54708; }
 .state-panel button { width: 150rpx; height: 58rpx; color: #087443; background: #ecfdf3; font-size: 22rpx; }
 .demand-summary { margin-top: 24rpx; }.demand-summary .list-head { margin-top: 0; }.demand-row { display: flex; align-items: center; gap: 14rpx; padding: 18rpx 20rpx; background: #fff; border-bottom: 1rpx solid #eaecf0; }.demand-row > view { min-width: 0; flex: 1; }.demand-name { display: block; overflow: hidden; font-size: 23rpx; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }.demand-date { display: block; margin-top: 6rpx; color: #667085; font-size: 19rpx; }.demand-status { flex-shrink: 0; color: #175cd3; font-size: 21rpx; font-weight: 800; }
+
+.service-description { margin: 24rpx; padding: 28rpx; background: #fff; border: 1rpx solid #dde8e2; border-radius: 20rpx; }
+.service-description-title { display: block; font-size: 30rpx; font-weight: 600; margin: 16rpx 0; color: #203e30; }
+.service-description-text { display: block; font-size: 27rpx; line-height: 1.8; color: #42584c; margin-bottom: 18rpx; }

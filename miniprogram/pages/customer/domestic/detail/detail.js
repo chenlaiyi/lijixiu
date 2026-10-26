@@ -5,6 +5,10 @@ Page({
   ...share.create({ title: '立即修｜服务人员档案' }),
   data: { worker: null, skills: [], loading: true, errorText: '', serviceType: 'maternity' },
   onLoad(options) {
+    if (!wx.getStorageSync('token')) {
+      wx.redirectTo({ url: `/pages/customer/domestic/list/list?type=${options.type === 'nanny' ? 'nanny' : 'maternity'}` });
+      return;
+    }
     this.workerId = Number(options.id);
     this.setData({ serviceType: options.type === 'nanny' ? 'nanny' : 'maternity' });
     this.loadWorker();

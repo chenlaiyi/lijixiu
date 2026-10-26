@@ -601,3 +601,7 @@
 .empty-action {
   box-shadow: none;
 }
+.withdraw-rules { margin: 24rpx 0; padding: 24rpx; background: #f3f8f6; border: 1rpx solid #dce8e2; border-radius: 16rpx; }
+.withdraw-rules-title { display: block; font-size: 30rpx; font-weight: 600; color: #173f30; margin-bottom: 12rpx; }
+.withdraw-rule { display: block; font-size: 25rpx; line-height: 1.7; color: #344b41; margin-top: 10rpx; white-space: normal; }
+.withdraw-help { margin-top: 18rpx; font-size: 26rpx; color: #087a52; background: #ffffff; }

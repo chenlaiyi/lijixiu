@@ -16,7 +16,7 @@ Component({
   methods: {
     async load() {
       try {
-        this.areas = await api.get('/api/v1/service-areas/customer-options');
+        this.areas = await api.get('/api/v1/service-areas/public-options');
         this.setData({ regions: [...new Set(this.areas.map(regionLabel))], loading: false, error: '' });
         this.syncValue();
       } catch (e) { this.setData({ loading: false, error: '地址加载失败，请重试' }); }

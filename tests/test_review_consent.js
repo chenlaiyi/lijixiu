@@ -39,7 +39,31 @@ function page(file, storage = {}) {
   const markup = fs.readFileSync('miniprogram/pages/login/login.wxml', 'utf8');
   assert(markup.includes('phoneAuthReady && agreementAccepted'));
   assert(!/微信|登录即表示/.test(markup));
-  assert.strictEqual(JSON.parse(fs.readFileSync('miniprogram/app.json')).entryPagePath, 'pages/index/index');
+  assert.strictEqual(JSON.parse(fs.readFileSync('miniprogram/app.json')).entryPagePath, 'pages/customer/home/home');
+
+  const config = JSON.parse(fs.readFileSync('miniprogram/app.json'));
+  assert.strictEqual(config.pages[0], 'pages/customer/home/home');
+  const { instance: oldLogin, calls: oldCalls } = page('login/login');
+  oldLogin.onLoad({});
+  assert.strictEqual(oldCalls[0][0], 'reLaunch');
+  assert.strictEqual(oldCalls[0][1].url, '/pages/customer/home/home');
+  const { instance: earnings, calls: earningsCalls } = page('repairer/earnings/earnings');
+  await earnings.onShow();
+  assert(earningsCalls.every(call => Array.isArray(call) && call[0] === 'reLaunch'));
+  assert.strictEqual(earningsCalls[0][1].url, '/pages/customer/home/home');
+  const { instance: domestic, calls: domesticCalls } = page('customer/domestic/list/list');
+  await domestic.loadWorkers();
+  assert.strictEqual(domestic.data.guest, true);
+  assert.strictEqual(domesticCalls.length, 0, 'Guest service description has no private personnel or demand requests');
+  const { instance: demand, calls: demandCalls } = page('customer/domestic/demand/demand');
+  demandCalls.length = 0;
+  await demand.loadDefaults();
+  assert.strictEqual(demandCalls.length, 0);
+  await demand.submit();
+  assert.strictEqual(demandCalls[0][0], 'showModal');
+  const rules = fs.readFileSync('miniprogram/pages/repairer/earnings/earnings.wxml', 'utf8');
+  assert(rules.includes('每日次数') && rules.includes('申请时间') && rules.includes('审核及到账时间') && rules.includes('可提现额度'));
+  assert(rules.indexOf('提现规则') < rules.indexOf('class="withdraw-btn"'));
   console.log('PASS: explicit revocable consent gates all login methods; guest browsing has no forced login or private requests; order submission requests login');
 })().catch(error => { console.error(error); process.exitCode = 1; });
 

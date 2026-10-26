@@ -40,6 +40,7 @@ Page({
   },
   onShow() { share.enable(); },
   async loadDefaults() {
+    if (!wx.getStorageSync('token')) return;
     const user = this.data.userInfo;
     try {
       const [addresses, stores, regions] = await Promise.all([
@@ -153,6 +154,10 @@ Page({
       : { service_mode: f.serviceMode, family_size: f.familySize, schedule: f.schedule, tasks: f.tasks, pets: f.pets };
   },
   async submit() {
+    if (!wx.getStorageSync('token')) {
+      wx.showModal({ title: '登录后发布需求', content: '浏览服务无需登录，发布需求时需登录以便门店联系。', confirmText: '去登录', cancelText: '继续浏览', success: (res) => { if (res.confirm) wx.navigateTo({ url: '/pages/login/login?intent=login' }); } });
+      return;
+    }
     const f = this.data.form;
     if (!f.contactName || !f.contactPhone || !f.address || !f.startDate) {
       wx.showToast({ title: '请完整填写联系人、地址和开始日期', icon: 'none' }); return;
