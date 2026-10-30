@@ -70,19 +70,35 @@ class StoreAddressCreate(BaseModel):
     room: str = Field(default="", max_length=80)
     business_owner_user_id: int | None = None
     created_by_user_id: int
-    detail_hint: str | None = None
+    detail_hint: str | None = Field(default=None, max_length=300)
+    aliases: str = Field(default="", max_length=4000)
+    source_name: str = Field(default="", max_length=80)
+    source_ref: str = Field(default="", max_length=240)
+    catalog_published: bool = True
 
 
 class StoreAddressUpdate(BaseModel):
+    service_area_id: int | None = None
+    building: str | None = Field(default=None, max_length=80)
+    unit: str | None = Field(default=None, max_length=80)
+    room: str | None = Field(default=None, max_length=80)
+    aliases: str | None = Field(default=None, max_length=4000)
+    source_name: str | None = Field(default=None, max_length=80)
+    source_ref: str | None = Field(default=None, max_length=240)
+    catalog_published: bool | None = None
     estate: str | None = Field(default=None, min_length=1, max_length=160)
     door_number: str | None = Field(default=None, min_length=1, max_length=240)
     store_id: int | None = None
     business_owner_user_id: int | None = None
-    detail_hint: str | None = None
+    detail_hint: str | None = Field(default=None, max_length=300)
     enabled: bool | None = None
 
 
 class StoreAddressOut(BaseModel):
+    aliases: str = ""
+    source_name: str = ""
+    source_ref: str = ""
+    catalog_published: bool = False
     id: int
     store_id: int
     region_id: int

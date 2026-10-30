@@ -94,3 +94,21 @@ async def public_options(db: AsyncSession = Depends(get_db)):
     areas = await service.customer_options(db, include_order_estates=False)
     fields = {"id", "service_area_id", "name", "city", "district", "street", "estates"}
     return [{key: value for key, value in area.items() if key in fields} for area in areas]
+
+
+@router.get("/address-catalog")
+async def address_catalog(db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import select
+    from ..models.store import StoreAddress
+    areas = await service.customer_options(db, include_order_estates=False)
+    rows = (await db.execute(select(StoreAddress).where(StoreAddress.enabled == True,
+        StoreAddress.catalog_published == True))).scalars().all()
+    fields = {"id", "service_area_id", "name", "city", "district", "street", "estates"}
+    result = []
+    for area in areas:
+        item = {key: value for key, value in area.items() if key in fields}
+        item["addresses"] = [dict(id=row.id, estate=row.estate, building=row.building,
+            unit=row.unit, room=row.room, door_number=row.door_number or "", aliases=row.aliases or "")
+            for row in rows if row.service_area_id == area["id"]]
+        result.append(item)
+    return result

@@ -74,6 +74,41 @@ async def main():
             await create_order(db,OrderCreate(**args,service_area_id=area.id,estate='未来海岸'))
             raise AssertionError('Missing door number was accepted')
         except ValueError: pass
+        from app.schemas.store import StoreAddressUpdate
+        from app.services.store import update_address as update_standard
+        from app.routers.service_area import address_catalog
+        from app.routers.store import delete_address
+        leaf = await create_standard(db, StoreAddressCreate(service_area_id=area.id,
+            estate='蓝月湾一期', building='S5栋', unit='', room='2605',
+            door_number='嵩屿北五里27号2605室', aliases='厦门市海沧区蓝月湾一期S5栋2605室',
+            detail_hint='内部核验备注', created_by_user_id=manager.id, source_name='贝壳'))
+        leaf_id = leaf.id
+        catalog = await address_catalog(db)
+        public_leaf = next(row for row in catalog[0]['addresses'] if row['id'] == leaf_id)
+        assert public_leaf['building']=='S5栋' and public_leaf['room']=='2605'
+        assert 'detail_hint' not in public_leaf and 'created_by_user_id' not in public_leaf
+        captured = await create_order(db, OrderCreate(**args, service_area_id=area.id,
+            address_book_id=leaf_id, estate='伪造小区', door_number='伪造门牌'))
+        assert captured.address_book_id==leaf_id and captured.estate=='蓝月湾一期'
+        assert captured.door_number=='嵩屿北五里27号2605室'
+        snapshot=captured.address
+        saved_leaf = await create_address(db, AddressCreate(user_id=customer.id,
+            contact_name='test',contact_phone='19900000001',service_area_id=area.id,
+            service_address_id=leaf_id,estate='client label',door_number='client label'))
+        assert saved_leaf.service_address_id==leaf_id
+        duplicate = await create_standard(db, StoreAddressCreate(service_area_id=area.id,
+            estate='蓝月湾一期',building='S5栋',room='2605',door_number='S5栋2605室',created_by_user_id=manager.id))
+        assert duplicate.id==leaf_id
+        await update_standard(db,leaf,StoreAddressUpdate(door_number='嵩屿北五里27号2605室',
+            aliases='蓝月湾一期S5栋2605室\n嵩屿北五里27号2605室',detail_hint='已核实'))
+        assert leaf.id==leaf_id and captured.address==snapshot
+        await delete_address(leaf_id, db, manager)
+        assert all(row['id']!=leaf_id for row in (await address_catalog(db))[0]['addresses'])
+        try:
+            await create_order(db,OrderCreate(**args,address_book_id=leaf_id,service_area_id=area.id))
+            raise AssertionError('Deleted address remained selectable')
+        except ValueError: pass
+        assert captured.address==snapshot and captured.address_book_id==leaf_id
         print('PASS: unified address format, library reuse, saved-address edit, current routing, immutable order snapshots and legacy compatibility')
     await engine.dispose()
 

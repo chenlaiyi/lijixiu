@@ -76,12 +76,25 @@ async def list_staff(
     return await store_service.list_store_staff(db, store_id)
 
 
+async def _check_address_scope(db, user, service_area_id):
+    if 'platform_admin' in user.business_roles:
+        return
+    from ..services.service_area import resolve_open_area
+    try:
+        _, _, store = await resolve_open_area(db, service_area_id)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    if store.manager_id != user.id:
+        raise HTTPException(403, "只能维护本人负责门店的地址")
+
+
 @router.post("/addresses", response_model=StoreAddressOut, status_code=201)
 async def create_address(
     data: StoreAddressCreate,
     db: AsyncSession = Depends(get_db),
     _staff: User = Depends(require_roles("platform_admin", "store_manager")),
 ):
+    await _check_address_scope(db, _staff, data.service_area_id)
     try:
         return await store_service.create_address(db, data.model_copy(update={"created_by_user_id": _staff.id}))
     except ValueError as exc:
@@ -113,6 +126,8 @@ async def update_address(
     address = await store_service.find_address(db, address_id)
     if not address:
         raise HTTPException(404, "Address not found")
+    await _check_address_scope(db, _staff, address.service_area_id)
+    await _check_address_scope(db, _staff, data.service_area_id or address.service_area_id)
     try:
         return await store_service.update_address(db, address, data)
     except ValueError as exc:
@@ -126,3 +141,14 @@ async def create_area_open_request(
     _user: User = Depends(get_current_user),
 ):
     return await store_service.create_area_open_request(db, data)
+
+
+@router.delete("/addresses/{address_id}")
+async def delete_address(address_id: int, db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_roles("platform_admin"))):
+    address = await store_service.find_address(db, address_id)
+    if not address:
+        raise HTTPException(404, "Address not found")
+    address.enabled = False
+    await db.commit()
+    return {"id": address.id, "deleted": True}

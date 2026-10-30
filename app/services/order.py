@@ -121,7 +121,7 @@ async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
         OrderSource.AFTER_SALES,
     }
     service_address = None
-    if data.source in controlled_sources and not data.service_area_id:
+    if data.address_book_id or (data.source in controlled_sources and not data.service_area_id):
         if not data.address_book_id:
             raise ValueError("请选择地址库中的标准上门地址，联系电话不能代替地址归属")
         service_address = await find_address(db, data.address_book_id)
@@ -147,7 +147,7 @@ async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
     matched_area = None
     area_assignment = None
     store = None
-    if data.service_area_id:
+    if data.service_area_id and not service_address:
         matched_area, area_assignment, store = await resolve_open_area(db, data.service_area_id)
         door = door_number(data.door_number, data.building, data.unit, data.room)
         full_address = format_address(matched_area.city, matched_area.district, data.estate, door)
@@ -178,6 +178,7 @@ async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
             "address": normalized_address,
             "customer_address_snapshot": normalized_address,
             "estate": service_address.estate, "door_number": door,
+            "building": service_address.building, "unit": service_address.unit, "room": service_address.room,
             "region_id": store.region_id,
             "store_id": store.id,
             "address_code_snapshot": service_address.address_code,

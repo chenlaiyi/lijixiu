@@ -1,4 +1,4 @@
-﻿"""Store, staff, and service-address models."""
+"""Store, staff, and service-address models."""
 
 import enum
 from datetime import datetime
@@ -111,6 +111,10 @@ class StoreAddress(Base):
         String(80), default="", comment="Building number"
     )
     door_number: Mapped[str | None] = mapped_column(String(240), nullable=True)
+    aliases: Mapped[str] = mapped_column(Text, default="")
+    source_name: Mapped[str] = mapped_column(String(80), default="")
+    source_ref: Mapped[str] = mapped_column(String(240), default="")
+    catalog_published: Mapped[bool] = mapped_column(Boolean, default=False)
     unit: Mapped[str] = mapped_column(
         String(80), default="", comment="Unit number"
     )

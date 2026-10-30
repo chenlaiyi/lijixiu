@@ -8,7 +8,16 @@
     <view class="choice">{{estate ? '重新选择小区' : '请选择已开通的小区'}}</view>
   </picker>
   <input class="field" value="{{estate}}" bindinput="inputEstate" maxlength="160" placeholder="例如：未来海岸-蓝月湾一期" />
-  <text class="label">门牌号</text>
+  <view wx:if="{{buildings.length}}">
+    <text class="label">楼栋</text>
+    <picker range="{{buildings}}" bindchange="selectBuilding"><view class="field">{{building || '请选择楼栋（未编号可选空项）'}}</view></picker>
+    <text class="label">单元</text>
+    <picker range="{{units}}" bindchange="selectUnit"><view class="field">{{unit || '请选择单元（无单元可选空项）'}}</view></picker>
+    <text class="label">房号</text>
+    <picker range="{{rooms}}" bindchange="selectRoom"><view class="field">{{room || '请选择房号'}}</view></picker>
+  </view>
+  <text wx:if="{{aliases}}" class="tip">同址其他写法：{{aliases}}</text>
+  <text class="label">门牌号（可按实际补充；修改后按手填地址提交）</text>
   <input class="field" value="{{doorNumber}}" bindinput="inputDoor" maxlength="240" placeholder="例如：嵩屿北五里23号2101室" />
   <text wx:if="{{loading}}" class="tip">地址加载中</text>
   <text wx:if="{{!loading && !regions.length && !error}}" class="tip">暂无已开通的城市/区域</text>

@@ -309,7 +309,7 @@ async function loadBusiness(tab) {
   if (tab === "warranties") state.cache.warranties = await safeList(`/api/v1/business/warranties?customer_id=${state.user.id}`);
   if (tab === "addresses") {
     [state.cache.addresses, state.cache.addressAreas] = await Promise.all([
-      api(`/api/v1/business/addresses?user_id=${state.user.id}`), api('/api/v1/service-areas/customer-options')]);
+      api(`/api/v1/business/addresses?user_id=${state.user.id}`), api('/api/v1/service-areas/address-catalog')]);
   }
   if (tab === "earnings") await loadWallet(state.user.id);
 }
@@ -327,7 +327,7 @@ async function loadCustomer(tab) {
   if (tab === "home") {
     const [orders, serviceAddresses] = await Promise.all([
       safeList(`/api/v1/orders?customer_id=${state.user.id}&limit=5`),
-      safeList("/api/v1/service-areas/customer-options"),
+      safeList("/api/v1/service-areas/address-catalog"),
     ]);
     state.cache.customerRecentOrders = orders;
     state.cache.serviceAddresses = serviceAddresses;

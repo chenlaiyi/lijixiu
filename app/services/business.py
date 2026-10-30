@@ -65,7 +65,7 @@ async def _resolve_customer_address(db, data, user_id):
     from .store import create_address as create_standard
     from .service_area import resolve_open_area
     from ..schemas.store import StoreAddressCreate
-    if data.service_area_id:
+    if data.service_area_id and not data.service_address_id:
         area, assignment, store = await resolve_open_area(db, data.service_area_id)
         return await create_standard(db, StoreAddressCreate(
             service_area_id=area.id, estate=data.estate or '', door_number=data.door_number,

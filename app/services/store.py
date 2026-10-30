@@ -171,10 +171,17 @@ async def create_address(db: AsyncSession, data: StoreAddressCreate, *, customer
             StoreAddress.service_area_id == area.id, StoreAddress.estate == clean(data.estate)
         ))).scalars().all()
         duplicate = next((item for item in candidates if door_number(
-            item.door_number, item.building, item.unit, item.room) == door), None)
+            item.door_number, item.building, item.unit, item.room) == door or
+            (clean(data.building) and clean(data.room) and
+             (clean(item.building),clean(item.unit),clean(item.room)) == (clean(data.building),clean(data.unit),clean(data.room)))), None)
     if duplicate:
         if not duplicate.enabled:
             raise ValueError("该地址已停用，请联系平台")
+        if not customer_address:
+            for attr in ("aliases", "detail_hint", "source_name", "source_ref"):
+                if getattr(data, attr): setattr(duplicate, attr, getattr(data, attr))
+            duplicate.catalog_published = data.catalog_published
+            await db.commit()
         return duplicate
 
     address = StoreAddress(
@@ -197,6 +204,10 @@ async def create_address(db: AsyncSession, data: StoreAddressCreate, *, customer
         business_owner_user_id=owner_id,
         created_by_user_id=data.created_by_user_id,
         detail_hint=data.detail_hint,
+        aliases=data.aliases,
+        source_name=data.source_name,
+        source_ref=data.source_ref,
+        catalog_published=data.catalog_published and not customer_address,
     )
     db.add(address)
     await db.commit()
@@ -233,32 +244,41 @@ async def list_addresses(
             StoreAddress.full_address.ilike(keyword),
             StoreAddress.community.ilike(keyword),
             StoreAddress.estate.ilike(keyword),
+            StoreAddress.aliases.ilike(keyword),
+            StoreAddress.detail_hint.ilike(keyword),
         ))
     result = await db.execute(stmt)
     return list(result.scalars().all())
 
 
-async def update_address(
-    db: AsyncSession, address: StoreAddress, data: StoreAddressUpdate
-) -> StoreAddress:
+async def update_address(db: AsyncSession, address: StoreAddress, data: StoreAddressUpdate) -> StoreAddress:
     values = data.model_dump(exclude_unset=True)
-    if "store_id" in values:
-        store = await db.get(Store, values["store_id"])
-        if not store or not store.enabled or store.status != StoreStatus.ACTIVE:
-            raise ValueError("目标门店尚未启用")
-        address.store_id = store.id
-        address.region_id = store.region_id
-    if "business_owner_user_id" in values and values["business_owner_user_id"]:
-        if not await db.get(User, values["business_owner_user_id"]):
-            raise ValueError("地址业务负责人不存在")
-    if "estate" in values or "door_number" in values:
-        address.estate = clean(values.get("estate", address.estate))
-        address.door_number = door_number(values.get("door_number", address.door_number), address.building, address.unit, address.room)
-        address.full_address = format_address(address.city, address.district, address.estate, address.door_number)
-        _, address.canonical_key, address.address_code = _address_identity([address.city,address.district,address.estate,address.door_number])
-    for key in ("business_owner_user_id", "detail_hint", "enabled"):
-        if key in values:
-            setattr(address, key, values[key])
+    area_id = values.get("service_area_id", address.service_area_id)
+    from .service_area import resolve_open_area
+    area, assignment, store = await resolve_open_area(db, area_id)
+    estate = clean(values.get("estate", address.estate))
+    building = clean(values.get("building", address.building))
+    unit = clean(values.get("unit", address.unit))
+    room = clean(values.get("room", address.room))
+    door = door_number(values.get("door_number", address.door_number), building, unit, room)
+    full = format_address(area.city, area.district, estate, door)
+    _, key, code = _address_identity([area.city, area.district, estate, door])
+    duplicates = (await db.execute(select(StoreAddress).where(StoreAddress.id != address.id,
+        StoreAddress.service_area_id == area.id))).scalars().all()
+    if any(item.canonical_key == key or (building and room and
+           (clean(item.estate), clean(item.building), clean(item.unit), clean(item.room)) == (estate, building, unit, room)) for item in duplicates):
+        raise ValueError("该实体地址已有记录，请在已有地址上维护别名")
+    owner = values.get("business_owner_user_id", address.business_owner_user_id)
+    if owner and not await db.get(User, owner):
+        raise ValueError("地址业务负责人不存在")
+    for attr, value in dict(service_area_id=area.id, store_id=store.id, region_id=store.region_id,
+            province=area.province, city=area.city, district=area.district, street=area.street,
+            community=area.name, estate=estate, building=building, unit=unit, room=room,
+            door_number=door, full_address=full, canonical_key=key, address_code=code).items():
+        setattr(address, attr, value)
+    for attr in ("business_owner_user_id", "detail_hint", "enabled", "aliases", "source_name", "source_ref", "catalog_published"):
+        if attr in values:
+            setattr(address, attr, (values[attr] or "") if attr in ("aliases", "source_name", "source_ref") else values[attr])
     await db.commit()
     await db.refresh(address)
     return address

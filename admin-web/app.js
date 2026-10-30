@@ -642,9 +642,20 @@ async function loadRepairers() {
 }
 
 
+function addressEditor(areas, row = {}) {
+  const field = (key, label, placeholder = '') => `<div class="field"><label>${label}</label><input name="${key}" value="${escapeHtml(row[key] || '')}" placeholder="${escapeHtml(placeholder)}" maxlength="${key === 'door_number' ? 240 : 160}"></div>`;
+  return `<input type="hidden" name="id" value="${row.id || ''}"><div class="field"><label>城市/区域 / 服务社区（决定接单门店）</label><select name="service_area_id" required><option value="">请选择归属区域</option>${areas.map(a => `<option value="${a.id}" ${a.id === row.service_area_id ? 'selected' : ''}>${escapeHtml(`${a.city}/${a.district} · ${a.street} · ${a.name}`)}</option>`).join('')}</select></div>` +
+    field('estate','小区 / 分期（可粘贴贝壳名称）','未来海岸蓝月湾一期') +
+    field('building','楼栋','S5栋') + field('unit','单元（无则留空）','1单元') + field('room','房号','2605') +
+    field('door_number','标准门牌写法（可选，默认由楼栋单元房号组成）','嵩屿北五里27号2605室') +
+    `<div class="field"><label>同址别名（一行一种写法，不新增实体地址）</label><textarea name="aliases" maxlength="4000" placeholder="厦门市海沧区蓝月湾一期S5栋2605室">${escapeHtml(row.aliases || '')}</textarea></div><div class="field"><label>内部备注（不向游客公开）</label><textarea name="detail_hint" maxlength="300">${escapeHtml(row.detail_hint || '')}</textarea></div>` +
+    field('source_name','来源名称','贝壳 / 人工核验') + field('source_ref','来源小区编号或链接（选填）');
+}
+
 async function loadStores() {
-  const [stores, regions, users, repairers, addresses, addressAreas] = await Promise.all([api("/api/v1/stores"), api("/api/v1/regions"), allUsers(), api("/api/v1/repairers?limit=100"), api("/api/v1/stores/addresses"), api("/api/v1/service-areas/customer-options")]);
+  const [stores, regions, users, repairers, addresses, addressAreas] = await Promise.all([api("/api/v1/stores"), api("/api/v1/regions"), allUsers(), api("/api/v1/repairers?limit=100"), api("/api/v1/stores/addresses"), api("/api/v1/service-areas/address-catalog")]);
   state.cache.addressAreas = addressAreas;
+  state.cache.storeAddresses = addresses;
   const createForm = form([
     {name:'name', label:'门店名称', required:true, placeholder:'例如：立即修海沧店'},
     choiceField('region_id', '所属区域', regionChoices(regions), '搜索并选择已创建的区域，例如：厦门市 / 海沧区', true),
@@ -671,11 +682,14 @@ async function loadStores() {
     }
   ], stores, "暂无门店");
   els.content.innerHTML = section("创建与开通门店", "1. 选择区域和店长 → 2. 新增门店 → 3. 启用并开通 → 4. 分配服务范围", body);
-  els.content.innerHTML += section('门店地址库', '按小区服务范围自动归属门店；与客户端地址簿使用同一格式',
-    `<form class="form-grid" data-form="create-store-address">${AddressFields.render(addressAreas)}<button class="btn primary" type="submit">新增地址</button></form>` +
+  els.content.innerHTML += section('门店地址库', '小区 / 楼栋 / 单元 / 房号；同址别名共用一个地址。删除后不影响历史订单' ,
+    `<form class="form-grid" data-form="create-store-address">${addressEditor(addressAreas)}<button class="btn primary" type="submit">新增地址</button></form>` +
     table([{label:'城市/区域',render: row => escapeHtml(`${row.city}/${row.district}`)},
       {label:'小区',key:'estate'}, {label:'门牌号',render: row => escapeHtml(row.door_number || [row.building,row.unit,row.room].filter(Boolean).join(''))},
-      {label:'接单门店',render: row => escapeHtml(stores.find(store => store.id === row.store_id)?.name || '')}], addresses, '暂无地址'));
+      {label:'楼栋 / 单元 / 房号',render:row => escapeHtml([row.building,row.unit,row.room].filter(Boolean).join(' / '))},
+      {label:'同址别名 / 备注',render:row => escapeHtml([row.aliases,row.detail_hint].filter(Boolean).join('；'))},
+      {label:'接单门店',render: row => escapeHtml(stores.find(store => store.id === row.store_id)?.name || '')},
+      {label:'操作',render:row => actionButton('修改','edit-store-address',{id:row.id}) + actionButton('删除','delete-store-address',{id:row.id})}], addresses.filter(row => row.enabled), '暂无地址'));
 
 
 }
@@ -1109,10 +1123,15 @@ async function handleForm(formEl) {
     const option = Array.from(document.getElementById(input.getAttribute('list')).options).find(o => o.value === input.value.trim());
     if (option) data[input.name] = Number(option.dataset.value);
   }
-  if (action === "create-store-address") {
-    const fields = AddressFields.resolve(state.cache.addressAreas || [], data);
+  if (action === "create-store-address" || action === "edit-store-address") {
     const me = await api('/api/v1/auth/me');
-    await api('/api/v1/stores/addresses', {method:'POST',body:{...fields,created_by_user_id:me.id}});
+    const fields = {service_area_id:Number(data.service_area_id),estate:data.estate.trim(),building:data.building || '', unit:data.unit || '',room:data.room || '', aliases:data.aliases || '', detail_hint:data.detail_hint || '',source_name:data.source_name || '',source_ref:data.source_ref || '',catalog_published:true};
+    if (!fields.estate || (!data.door_number && !fields.room)) throw new Error('请填写小区，以及房号或标准门牌写法');
+    // Empty door is synthesized from the structural fields; PATCH must send the resulting value.
+    fields.door_number = data.door_number || [fields.building,fields.unit,fields.room && `${fields.room}室`].filter(Boolean).join('');
+    if (action === 'edit-store-address') await api(`/api/v1/stores/addresses/${Number(data.id)}`, {method:'PATCH',body:fields});
+    else await api('/api/v1/stores/addresses', {method:'POST',body:{...fields,created_by_user_id:me.id}});
+    els.modal.hidden = true;
     await loadStores(); return;
   }
   if (action === "create-domestic-worker") {
@@ -1174,6 +1193,16 @@ async function handleAction(button) {
   const action = button.dataset.action;
   const id = button.dataset.id;
 
+  if (action === 'edit-store-address') {
+    const row = (state.cache.storeAddresses || []).find(item => item.id === Number(button.dataset.id));
+    if (!row) throw new Error('地址不存在，请刷新');
+    showModal('修改实体地址及同址别名', `<form class="form-grid" data-form="edit-store-address">${addressEditor(state.cache.addressAreas || [],row)}<button class="btn primary" type="submit">保存修改</button></form>`); return;
+  }
+  if (action === 'delete-store-address') {
+    if (!confirm('删除后客户端不能再选择此地址；历史订单保留原地址。确认删除？')) return;
+    await api(`/api/v1/stores/addresses/${Number(button.dataset.id)}`, {method:'DELETE'});
+    await loadStores(); return;
+  }
   if (action === 'close-modal') { els.modal.hidden=true;return; }
   if (action === 'repairer-profile') {
     const [r, regions] = await Promise.all([api(`/api/v1/repairers/${id}`), api('/api/v1/regions')]);

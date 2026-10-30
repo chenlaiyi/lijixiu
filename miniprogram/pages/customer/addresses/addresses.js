@@ -39,7 +39,7 @@ Page({
     this.setData({ saving: true });
     try {
       const body = { contact_name: f.contactName, contact_phone: f.contactPhone, is_default: f.isDefault,
-        service_area_id: v.service_area_id, estate: v.estate, door_number: v.door_number };
+        service_address_id: v.address_book_id || v.service_address_id || null, service_area_id: v.service_area_id, estate: v.estate, door_number: v.door_number };
       if (this.data.editingId) await api.patch(`/api/v1/business/addresses/${this.data.editingId}`, body);
       else await api.post('/api/v1/business/addresses', { ...body, user_id: user.id });
       this.setData({ showForm: false }); await this.load();

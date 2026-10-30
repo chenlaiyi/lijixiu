@@ -198,7 +198,7 @@ Page({
 
   onAddressFieldsChange(e) {
     const value = e.detail;
-    this.setData({ addressFieldsValue: value, serviceAreaId: value.service_area_id,
+    this.setData({ addressFieldsValue: value, addressBookId: value.address_book_id || null, serviceAreaId: value.service_area_id,
       estate: value.estate, doorNumber: value.door_number, address: value.address,
       regionId: value.region_id, storeId: value.store_id,
       currentRegionName: value.city ? `${value.city}/${value.district}` : '未选择城市/区域',
@@ -671,7 +671,7 @@ Page({
       const saved = user.id ? await api.get('/api/v1/business/addresses', { user_id: user.id }) : [];
       const selected = saved.find(item => item.is_default) || saved[0];
       if (selected && selected.service_area_id) this.onAddressFieldsChange({ detail: {
-        service_area_id: selected.service_area_id, estate: selected.estate, door_number: selected.door_number,
+        service_address_id: selected.service_address_id, service_area_id: selected.service_area_id, estate: selected.estate, door_number: selected.door_number,
         region_id: selected.region_id, address: selected.address, city: selected.city, district: selected.district,
       } });
       if (selected) this.setData({ contactPhone: selected.contact_phone });
@@ -706,6 +706,7 @@ Page({
         region_id: this.data.regionId || 1,
         store_id: this.data.storeId || undefined,
         service_area_id: this.data.serviceAreaId,
+        address_book_id: this.data.addressBookId || null,
         estate: this.data.estate,
         door_number: this.data.doorNumber,
         category: category || 'other',
