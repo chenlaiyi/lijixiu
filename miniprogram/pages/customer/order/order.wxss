@@ -723,3 +723,12 @@
 .submit-btn {
   box-shadow: none;
 }
+.safe-page.order-page .submit-bar {
+  bottom: calc(120rpx + env(safe-area-inset-bottom));
+  z-index: 70;
+  min-height: 104rpx;
+  padding: 12rpx 24rpx;
+}
+.safe-page.order-page { padding-bottom: calc(300rpx + env(safe-area-inset-bottom)); }
+.form-submit-section { padding: 24rpx 0; }
+.safe-page.order-page .form-submit-button { width: 100%; min-height: 88rpx; padding: 20rpx; background: #087443; color: #fff; font-size: 32rpx; font-weight: 700; border-radius: 14rpx; }

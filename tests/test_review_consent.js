@@ -36,6 +36,10 @@ function page(file, storage = {}) {
   await order.submitOrder();
   assert(orderCalls.some(call => Array.isArray(call) && call[0] === 'showModal'));
   assert(!orderCalls.some(call => call === 'post'));
+  order.data.submitting = true; orderCalls.length = 0;
+  await order.submitOrder();
+  assert.strictEqual(orderCalls.length, 0, 'Repeated taps must not submit twice');
+  order.data.submitting = false;
   const markup = fs.readFileSync('miniprogram/pages/login/login.wxml', 'utf8');
   assert(markup.includes('phoneAuthReady && agreementAccepted'));
   assert(!/微信|登录即表示/.test(markup));

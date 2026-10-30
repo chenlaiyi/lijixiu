@@ -89,6 +89,11 @@
     </view>
   </view>
 
+  <view class="form-submit-section">
+    <button id="submit-order-inline" class="form-submit-button" bindtap="submitOrder" loading="{{submitting}}" disabled="{{submitting}}" hover-class="button-hover">提交订单</button>
+    <text class="field-tip">请确认故障描述、服务地址和联系电话后提交</text>
+  </view>
+
   <view class="submit-bar">
     <view class="submit-copy">
       <text class="submit-label">报修类型</text>
@@ -97,7 +102,7 @@
     <button class="submit-btn" bindtap="submitOrder" loading="{{submitting}}" disabled="{{submitting}}" hover-class="button-hover">
       <view class="mini-action-content">
         <image class="submit-icon" src="/assets/ui/bill-check.png" mode="aspectFit" />
-        <text>提交</text>
+        <text>提交订单</text>
       </view>
     </button>
   </view>
