@@ -13,6 +13,8 @@ class RegionCreate(BaseModel):
 
 
 class RegionUpdate(BaseModel):
+    level: int | None = Field(default=None, ge=1, le=2)
+    parent_id: int | None = None
     name: str | None = Field(None, min_length=1, max_length=100)
     manager_id: int | None = None
 

@@ -717,6 +717,7 @@ async function loadRegions() {
   }));
   const logs = await api("/api/v1/service-areas/assignment-logs?limit=30");
   regionFormData = {regions, filters};
+  state.cache.regionEditors = {regions,users};
   const createForm = form([
     {name:'level',label:'区域层级',type:'select',options:[{value:'1',label:'一级：城市'},{value:'2',label:'二级：区县'}],hint:'先新增厦门市，再新增其下属区县'},
     choiceField('parent_id','上级区域',[], '二级区县选择上级城市；一级城市无需上级'),
@@ -733,8 +734,8 @@ async function loadRegions() {
     {
       label: "操作",
       render: (row) => `<div class="actions">
-        ${actionButton("改名", "region-name", { id: row.id, name: row.name })}
-        ${actionButton("负责人", "region-manager", { id: row.id })}
+        ${actionButton("修改", "edit-region", {id:row.id})}
+        ${actionButton("删除", "delete-region", {id:row.id,name:row.name})}
       </div>`
     }
   ], regions, "暂无区域");
@@ -1126,6 +1127,17 @@ async function handleForm(formEl) {
     const option = Array.from(document.getElementById(input.getAttribute('list')).options).find(o => o.value === input.value.trim());
     if (option) data[input.name] = Number(option.dataset.value);
   }
+  if (action === 'create-region' || action === 'edit-region') {
+    if (formEl.dataset.saving === '1') return;
+    formEl.dataset.saving='1';
+    const submit=formEl.querySelector('[type="submit"]');if(submit)submit.disabled=true;
+    try {
+      const fields={name:data.name,level:Number(data.level),parent_id:data.parent_id?Number(data.parent_id):null,manager_id:data.manager_id?Number(data.manager_id):null};
+      await api(action==='edit-region'?`/api/v1/regions/${Number(data.id)}`:'/api/v1/regions',{method:action==='edit-region'?'PATCH':'POST',body:fields});
+      els.modal.hidden=true;await loadRegions();notify('区域已保存');
+    } finally { formEl.dataset.saving='0';if(submit)submit.disabled=false; }
+    return;
+  }
   if (action === 'edit-store') {
     await api(`/api/v1/stores/${Number(data.id)}`, {method:'PATCH',body:{name:data.name,region_id:Number(data.region_id),manager_id:Number(data.manager_id),city_manager_id:data.city_manager_id?Number(data.city_manager_id):null,default_second_receiver_id:data.default_second_receiver_id?Number(data.default_second_receiver_id):null,remark:data.remark || ''}});
     els.modal.hidden=true; await loadStores();notify('门店已保存');return;
@@ -1215,6 +1227,18 @@ async function handleAction(button) {
     if (!confirm('删除后客户端不能再选择此地址；历史订单保留原地址。确认删除？')) return;
     await api(`/api/v1/stores/addresses/${Number(button.dataset.id)}`, {method:'DELETE'});
     await loadStores(); return;
+  }
+  if (action === 'edit-region') {
+    const {regions,users}=state.cache.regionEditors;
+    const row=regions.find(item=>item.id===Number(button.dataset.id));
+    if(!row)throw new Error('区域不存在，请刷新');
+    const option=(value,label,selected)=>`<option value="${value}" ${Number(value)===Number(selected)?'selected':''}>${escapeHtml(label)}</option>`;
+    showModal('修改区域',`<form class="form-grid" data-form="edit-region"><input type="hidden" name="id" value="${row.id}"><div class="field"><label>区域名称</label><input name="name" required maxlength="100" value="${escapeHtml(row.name)}"></div><div class="field"><label>区域层级</label><select name="level">${option(1,'城市',row.level)}${option(2,'区县',row.level)}</select></div><div class="field"><label>上级城市（城市本身留空）</label><select name="parent_id"><option value="">无上级</option>${regions.filter(r=>r.level===1&&r.id!==row.id).map(r=>option(r.id,r.name,row.parent_id)).join('')}</select></div><div class="field"><label>区域负责人</label><select name="manager_id"><option value="">未设置</option>${users.filter(u=>u.is_active||u.id===row.manager_id).map(u=>option(u.id,u.name,row.manager_id)).join('')}</select></div><p>有下级、门店或订单等引用的区域可修改负责人；变更地理名称、层级或上级前需先调整关联。</p><button class="btn primary" type="submit">保存区域</button></form>`);return;
+  }
+  if (action === 'delete-region') {
+    if(!confirm(`确认删除区域“${button.dataset.name}”？有关联的区域会提示原因并拒绝删除。`))return;
+    await api(`/api/v1/regions/${Number(button.dataset.id)}`,{method:'DELETE'});
+    await loadRegions();notify('区域已删除');return;
   }
   if (action === 'close-modal') { els.modal.hidden=true;return; }
   if (action === 'repairer-profile') {

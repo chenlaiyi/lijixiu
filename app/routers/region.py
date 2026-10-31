@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.auth import get_current_user, require_staff, require_admin
+from ..core.auth import get_current_user, require_staff, require_admin, require_roles
 from ..core.database import get_db
 from ..models.user import User
 from ..schemas.region import RegionCreate, RegionOut, RegionUpdate
@@ -22,7 +22,10 @@ async def create_region(
         parent = await region_service.get_region(db, data.parent_id)
         if not parent:
             raise HTTPException(404, "上级区域不存在")
-    return await region_service.create_region(db, data)
+    try:
+        return await region_service.create_region(db, data)
+    except ValueError as exc:
+        raise HTTPException(400,str(exc))
 
 
 @router.get("", response_model=list[RegionOut])
@@ -67,4 +70,18 @@ async def update_region(
     r = await region_service.get_region(db, region_id)
     if not r:
         raise HTTPException(404, "区域不存在")
-    return await region_service.update_region(db, r, data)
+    try:
+        return await region_service.update_region(db, r, data)
+    except ValueError as exc:
+        raise HTTPException(400,str(exc))
+
+
+@router.delete("/{region_id}")
+async def delete_region(region_id:int,db:AsyncSession=Depends(get_db),admin:User=Depends(require_roles('platform_admin'))):
+    region=await region_service.get_region(db,region_id)
+    if not region:raise HTTPException(404,'区域不存在')
+    try:
+        await region_service.delete_region(db,region)
+    except ValueError as exc:
+        raise HTTPException(409,str(exc))
+    return {'id':region_id,'deleted':True}
