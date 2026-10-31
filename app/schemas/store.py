@@ -17,6 +17,7 @@ class StoreCreate(BaseModel):
 
 
 class StoreUpdate(BaseModel):
+    region_id: int | None = None
     name: str | None = Field(None, min_length=1, max_length=100)
     manager_id: int | None = None
     city_manager_id: int | None = None
@@ -145,3 +146,7 @@ class AreaOpenRequestOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class StoreCoverageUpdate(BaseModel):
+    estates: list[str] = Field(default_factory=list, max_length=500)

@@ -4,7 +4,7 @@ import hashlib
 import re
 import unicodedata
 
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.service_area import ServiceArea, ServiceAreaAssignment
@@ -28,7 +28,19 @@ from ..schemas.store import (
 )
 
 
+async def district_region(db, region_id):
+    from ..models.region import Region
+    district = await db.get(Region, region_id)
+    city = await db.get(Region, district.parent_id) if district and district.parent_id else None
+    if not district or district.level != 2 or not city or city.level != 1:
+        raise ValueError("门店所属区域必须选择城市下的区县，请先创建城市和区县")
+    return city, district
+
+
 async def create_store(db: AsyncSession, data: StoreCreate) -> Store:
+    await district_region(db, data.region_id)
+    if not await db.get(User, data.manager_id):
+        raise ValueError("门店负责人不存在")
     store = Store(**data.model_dump(), status=StoreStatus.DRAFT, enabled=False)
     db.add(store)
     manager = await db.get(User, data.manager_id)
@@ -62,6 +74,18 @@ async def list_stores(db: AsyncSession, region_id: int | None = None) -> list[St
 
 
 async def update_store(db: AsyncSession, store: Store, data: StoreUpdate) -> Store:
+    values = data.model_dump(exclude_unset=True)
+    if any(key in values and values[key] is None for key in ('region_id','manager_id','name','enabled','status')):
+        raise ValueError("门店名称、区县、负责人及状态不能为空")
+    if data.region_id is not None:
+        await district_region(db, data.region_id)
+        assigned = (await db.execute(select(ServiceAreaAssignment).where(ServiceAreaAssignment.primary_store_id == store.id))).scalars().first()
+        if data.region_id != store.region_id and assigned:
+            raise ValueError("请先清空该门店的小区服务范围，再修改所属区县")
+    if data.city_manager_id is not None and not await db.get(User, data.city_manager_id):
+        raise ValueError("城市经理不存在")
+    if data.manager_id is not None and not await db.get(User, data.manager_id):
+        raise ValueError("门店负责人不存在")
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(store, key, value)
     if data.enabled is True and data.status is None:
@@ -74,6 +98,11 @@ async def update_store(db: AsyncSession, store: Store, data: StoreUpdate) -> Sto
         city_manager = await db.get(User, data.city_manager_id)
         if city_manager:
             city_manager.grant_business_role(BusinessRole.CITY_MANAGER.value)
+    assignments = (await db.execute(select(ServiceAreaAssignment).where(ServiceAreaAssignment.primary_store_id == store.id))).scalars().all()
+    for assignment in assignments:
+        assignment.manager_id = store.manager_id
+        await db.execute(update(StoreAddress).where(StoreAddress.service_area_id == assignment.service_area_id).values(
+            store_id=store.id,region_id=store.region_id,business_owner_user_id=store.manager_id))
     await db.commit()
     await db.refresh(store)
     return store
@@ -296,3 +325,67 @@ async def create_area_open_request(
     await db.commit()
     await db.refresh(item)
     return item
+
+
+async def store_coverage(db, store):
+    rows = (await db.execute(select(ServiceArea).join(ServiceAreaAssignment,
+        ServiceAreaAssignment.service_area_id == ServiceArea.id).where(
+        ServiceAreaAssignment.primary_store_id == store.id))).scalars().all()
+    return [dict(id=row.id, name=row.name, city=row.city, district=row.district, area_type=row.area_type) for row in rows]
+
+
+async def save_store_coverage(db, store, estates, operator_id):
+    import json
+    from ..models.service_area import ServiceAreaAssignmentLog
+    city, district = await district_region(db, store.region_id)
+    names = list(dict.fromkeys(clean(name) for name in estates if clean(name)))
+    if any(len(name) > 120 for name in names):
+        raise ValueError("小区名称不能超过120字")
+    if names and (not store.enabled or store.status != StoreStatus.ACTIVE):
+        raise ValueError("请先启用门店再分配小区")
+    areas = (await db.execute(select(ServiceArea).where(ServiceArea.city == city.name,
+        ServiceArea.district == district.name, ServiceArea.area_type == 'estate'))).scalars().all()
+    by_name = {row.name: row for row in areas}
+    existing = (await db.execute(select(ServiceAreaAssignment))).scalars().all()
+    assignments = {row.service_area_id: row for row in existing}
+    for name in names:
+        area = by_name.get(name)
+        assigned = assignments.get(area.id) if area else None
+        if assigned and assigned.primary_store_id not in (None, store.id):
+            raise ValueError(f"小区 {name} 已分配给其他门店，请先由原门店移除")
+    try:
+        desired = set()
+        for name in names:
+            area = by_name.get(name)
+            if not area:
+                code = 'ESTATE-' + hashlib.sha256(f'{city.name}|{district.name}|{name}'.encode()).hexdigest()[:24]
+                area = ServiceArea(code=code, province='福建省', city=city.name, district=district.name,
+                    street='', name=name, area_type='estate', source_name='管理员小区库',
+                    source_url='', source_published_at='', active=True)
+                db.add(area); await db.flush()
+            desired.add(area.id)
+            assigned = assignments.get(area.id)
+            if not assigned:
+                assigned = ServiceAreaAssignment(service_area_id=area.id)
+                db.add(assigned)
+            before = dict(primary_store_id=assigned.primary_store_id, manager_id=assigned.manager_id)
+            assigned.primary_store_id = store.id
+            assigned.backup_store_id = None
+            assigned.manager_id = store.manager_id
+            await db.execute(update(StoreAddress).where(StoreAddress.service_area_id == area.id).values(
+                store_id=store.id,region_id=store.region_id,business_owner_user_id=store.manager_id))
+            assigned.updated_by_user_id = operator_id
+            area.active = True
+            db.add(ServiceAreaAssignmentLog(service_area_id=area.id,action='update',
+                before_json=json.dumps(before),after_json=json.dumps({'primary_store_id':store.id}),operator_user_id=operator_id))
+        for assigned in existing:
+            if assigned.primary_store_id == store.id and assigned.service_area_id not in desired:
+                db.add(ServiceAreaAssignmentLog(service_area_id=assigned.service_area_id,action='delete',
+                    before_json=json.dumps({'primary_store_id':store.id}),after_json='{}',operator_user_id=operator_id))
+                await db.execute(update(ServiceAreaAssignmentLog).where(ServiceAreaAssignmentLog.assignment_id == assigned.id).values(assignment_id=None))
+                await db.delete(assigned)
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
+    return await store_coverage(db, store)

@@ -536,7 +536,7 @@ async function loadOverview() {
 
   const storeSummary = table([
     { label: "门店", key: "name" },
-    { label: "所属区域", render: row => escapeHtml(regions.find(r => r.id === row.region_id)?.name || "未设置") },
+    { label: "所属区县", render: row => escapeHtml(regionChoices(regions.filter(r => r.id === row.region_id),regions)[0]?.label || "未设置") },
     { label: "负责人", key: "manager_id" },
     { label: "默认师傅", key: "default_second_receiver_id" },
     { label: "状态", render: (row) => statusBadge(row.status) }
@@ -644,7 +644,8 @@ async function loadRepairers() {
 
 function addressEditor(areas, row = {}) {
   const field = (key, label, placeholder = '') => `<div class="field"><label>${label}</label><input name="${key}" value="${escapeHtml(row[key] || '')}" placeholder="${escapeHtml(placeholder)}" maxlength="${key === 'door_number' ? 240 : 160}"></div>`;
-  return `<input type="hidden" name="id" value="${row.id || ''}"><div class="field"><label>城市/区域 / 服务社区（决定接单门店）</label><select name="service_area_id" required><option value="">请选择归属区域</option>${areas.map(a => `<option value="${a.id}" ${a.id === row.service_area_id ? 'selected' : ''}>${escapeHtml(`${a.city}/${a.district} · ${a.street} · ${a.name}`)}</option>`).join('')}</select></div>` +
+  const districts=[...new Set(areas.map(a=>`${a.city}/${a.district}`))];
+  return `<input type="hidden" name="id" value="${row.id || ''}"><div class="field"><label>城市/区县</label><select name="city_region" required><option value="">请选择区县</option>${districts.map(text=>`<option value="${escapeHtml(text)}" ${text===`${row.city}/${row.district}`?'selected':''}>${escapeHtml(text)}</option>`).join('')}</select><small>先在门店分配小区服务范围，再在该区县录入具体门牌。</small></div>` +
     field('estate','小区 / 分期（可粘贴贝壳名称）','未来海岸蓝月湾一期') +
     field('building','楼栋','S5栋') + field('unit','单元（无则留空）','1单元') + field('room','房号','2605') +
     field('door_number','标准门牌写法（可选，默认由楼栋单元房号组成）','嵩屿北五里27号2605室') +
@@ -656,9 +657,10 @@ async function loadStores() {
   const [stores, regions, users, repairers, addresses, addressAreas] = await Promise.all([api("/api/v1/stores"), api("/api/v1/regions"), allUsers(), api("/api/v1/repairers?limit=100"), api("/api/v1/stores/addresses"), api("/api/v1/service-areas/address-catalog")]);
   state.cache.addressAreas = addressAreas;
   state.cache.storeAddresses = addresses;
+  state.cache.storeForm = {stores,regions,users,repairers};
   const createForm = form([
     {name:'name', label:'门店名称', required:true, placeholder:'例如：立即修海沧店'},
-    choiceField('region_id', '所属区域', regionChoices(regions), '搜索并选择已创建的区域，例如：厦门市 / 海沧区', true),
+    choiceField('region_id', '所属区县', regionChoices(regions.filter(r => r.level === 2), regions), '搜索并选择已创建的区域，例如：厦门市 / 海沧区', true),
     choiceField('manager_id', '门店负责人', userChoices(users, ['store_manager']), '搜索店长姓名或手机号，选择负责人', true),
     choiceField('city_manager_id', '城市经理', userChoices(users, ['city_manager']), '选填：搜索城市经理姓名或手机号'),
     choiceField('default_second_receiver_id', '默认接单师傅', repairers.filter(r => users.some(u => u.id === r.user_id && u.is_active)).map(r => ({value:r.id,label:`${users.find(u => u.id === r.user_id)?.name} · ${users.find(u => u.id === r.user_id)?.phone}`})), '选填：先在师傅页创建档案，再选择默认接单师傅'),
@@ -667,7 +669,7 @@ async function loadStores() {
   const body = createForm + table([
     { label: "ID", key: "id" },
     { label: "名称", key: "name" },
-    { label: "所属区域", render: row => escapeHtml(regions.find(r => r.id === row.region_id)?.name || "未设置") },
+    { label: "所属区县", render: row => escapeHtml(regionChoices(regions.filter(r => r.id === row.region_id),regions)[0]?.label || "未设置") },
     { label: "负责人", render: row => escapeHtml(users.find(u => u.id === row.manager_id)?.name || "未设置") },
     { label: "城市经理", render: row => escapeHtml(users.find(u => u.id === row.city_manager_id)?.name || "未设置") },
     { label: "默认师傅", render: (row) => row.default_second_receiver_id || "-" },
@@ -676,7 +678,8 @@ async function loadStores() {
       label: "操作",
       render: (row) => `<div class="actions">
         ${actionButton(row.enabled && row.status === "active" ? "停用门店" : "启用并开通", "store-enabled", { id: row.id, enabled: row.enabled && row.status === "active" ? "1" : "0" })}
-        ${actionButton("分配服务范围", "store-coverage", {id:row.id})}
+        ${actionButton("修改", "edit-store", {id:row.id})}
+        ${actionButton("分配小区服务范围", "store-coverage", {id:row.id})}
         ${actionButton("默认师傅", "store-default-repairer", { id: row.id })}
       </div>`
     }
@@ -1123,9 +1126,19 @@ async function handleForm(formEl) {
     const option = Array.from(document.getElementById(input.getAttribute('list')).options).find(o => o.value === input.value.trim());
     if (option) data[input.name] = Number(option.dataset.value);
   }
+  if (action === 'edit-store') {
+    await api(`/api/v1/stores/${Number(data.id)}`, {method:'PATCH',body:{name:data.name,region_id:Number(data.region_id),manager_id:Number(data.manager_id),city_manager_id:data.city_manager_id?Number(data.city_manager_id):null,default_second_receiver_id:data.default_second_receiver_id?Number(data.default_second_receiver_id):null,remark:data.remark || ''}});
+    els.modal.hidden=true; await loadStores();notify('门店已保存');return;
+  }
+  if (action === 'store-coverage') {
+    await api(`/api/v1/stores/${Number(data.id)}/coverage`, {method:'PUT',body:{estates:String(data.estates || '').split(/\n|；|;/).map(s=>s.trim()).filter(Boolean)}});
+    els.modal.hidden=true;await loadStores();notify('小区服务范围已保存');return;
+  }
   if (action === "create-store-address" || action === "edit-store-address") {
     const me = await api('/api/v1/auth/me');
-    const fields = {service_area_id:Number(data.service_area_id),estate:data.estate.trim(),building:data.building || '', unit:data.unit || '',room:data.room || '', aliases:data.aliases || '', detail_hint:data.detail_hint || '',source_name:data.source_name || '',source_ref:data.source_ref || '',catalog_published:true};
+    const area=(state.cache.addressAreas || []).find(a=>`${a.city}/${a.district}`===data.city_region && a.name===data.estate.trim());
+    if (!area) throw new Error('该区县的小区尚未分配门店，请先在门店分配小区服务范围；小区名称需与分配名称一致');
+    const fields = {service_area_id:area.id,estate:data.estate.trim(),building:data.building || '', unit:data.unit || '',room:data.room || '', aliases:data.aliases || '', detail_hint:data.detail_hint || '',source_name:data.source_name || '',source_ref:data.source_ref || '',catalog_published:true};
     if (!fields.estate || (!data.door_number && !fields.room)) throw new Error('请填写小区，以及房号或标准门牌写法');
     // Empty door is synthesized from the structural fields; PATCH must send the resulting value.
     fields.door_number = data.door_number || [fields.building,fields.unit,fields.room && `${fields.room}室`].filter(Boolean).join('');
@@ -1223,7 +1236,18 @@ async function handleAction(button) {
     return;
   }
   if (action === 'guide-view') return loadView(button.dataset.target);
-  if (action === 'store-coverage') {state.addressLibraryOpen = true;await loadView('regions');document.querySelector('.address-library')?.scrollIntoView({behavior:'smooth',block:'start'});return;}
+  if (action === 'store-coverage') {
+    const id = Number(button.dataset.id);
+    const row = state.cache.storeForm.stores.find(item => item.id === id);
+    const assigned = await api(`/api/v1/stores/${id}/coverage`);
+    showModal('分配小区服务范围', `<form class="form-grid" data-form="store-coverage"><input type="hidden" name="id" value="${id}"><p>${escapeHtml(row.name)}：只分配本门店所属区县内的小区，同一区县可以有多家门店。</p><p>原街道/社区范围（仅供迁移参考，保存后由下面的小区列表替换）：${escapeHtml(assigned.filter(a=>a.area_type!=='estate').map(a=>a.name).join('、') || '无')}</p><div class="field"><label>小区 / 分期名称（一行一个）</label><textarea name="estates" rows="12" placeholder="蓝月湾一期&#10;浪琴湾">${escapeHtml(assigned.filter(a=>a.area_type==='estate').map(a=>a.name).join('\n'))}</textarea><small>保存会替换本店原服务范围。留空保存表示清空。已属于其他门店的小区不能重复分配。</small></div><button class="btn primary" type="submit">保存小区服务范围</button></form>`);return;
+  }
+  if (action === 'edit-store') {
+    const {stores,regions,users,repairers}=state.cache.storeForm;
+    const row=stores.find(item=>item.id===Number(button.dataset.id));
+    const options=(items,value,empty=true)=>(empty?'<option value="">未设置</option>':'')+items.map(item=>`<option value="${item.value}" ${Number(item.value)===Number(value)?'selected':''}>${escapeHtml(item.label)}</option>`).join('');
+    showModal('修改门店', `<form class="form-grid" data-form="edit-store"><input type="hidden" name="id" value="${row.id}"><div class="field"><label>门店名称</label><input name="name" required value="${escapeHtml(row.name)}"></div><div class="field"><label>所属区县</label><select name="region_id" required>${options(regionChoices(regions.filter(r=>r.level===2),regions),row.region_id)}</select></div><div class="field"><label>店长</label><select name="manager_id" required>${options(users.filter(u=>u.is_active).map(u=>({value:u.id,label:u.name})),row.manager_id,false)}</select></div><div class="field"><label>城市经理</label><select name="city_manager_id">${options(userChoices(users,['city_manager']),row.city_manager_id)}</select></div><div class="field"><label>默认师傅</label><select name="default_second_receiver_id">${options(repairers.map(r=>({value:r.id,label:users.find(u=>u.id===r.user_id)?.name || String(r.id)})),row.default_second_receiver_id)}</select></div><div class="field"><label>备注</label><textarea name="remark">${escapeHtml(row.remark || '')}</textarea></div><button class="btn primary" type="submit">保存门店</button></form>`);return;
+  }
   if (action === "filter-orders") return loadOrders();
   if (action === "service-area-filter") return loadRegions();
   if (action === "service-area-sync") {

@@ -17,6 +17,7 @@ from ..schemas.store import (
     StoreStaffCreate,
     StoreStaffOut,
     StoreUpdate,
+    StoreCoverageUpdate,
 )
 from ..services import store as store_service
 
@@ -29,7 +30,10 @@ async def create_store(
     db: AsyncSession = Depends(get_db),
     _staff: User = Depends(require_admin),
 ):
-    return await store_service.create_store(db, data)
+    try:
+        return await store_service.create_store(db, data)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
 
 
 @router.get("", response_model=list[StoreOut])
@@ -51,7 +55,12 @@ async def update_store(
     store = await store_service.get_store(db, store_id)
     if not store:
         raise HTTPException(404, "Store not found")
-    return await store_service.update_store(db, store, data)
+    if 'platform_admin' not in _staff.business_roles and store.manager_id != _staff.id:
+        raise HTTPException(403, "只能修改本人负责的门店")
+    try:
+        return await store_service.update_store(db, store, data)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
 
 
 @router.post("/{store_id}/staff", response_model=StoreStaffOut, status_code=201)
@@ -152,3 +161,20 @@ async def delete_address(address_id: int, db: AsyncSession = Depends(get_db),
     address.enabled = False
     await db.commit()
     return {"id": address.id, "deleted": True}
+
+
+@router.get("/{store_id}/coverage")
+async def get_store_coverage(store_id:int, db:AsyncSession=Depends(get_db), admin:User=Depends(require_roles('platform_admin'))):
+    store = await store_service.get_store(db,store_id)
+    if not store: raise HTTPException(404,"门店不存在")
+    return await store_service.store_coverage(db,store)
+
+
+@router.put("/{store_id}/coverage")
+async def put_store_coverage(store_id:int,data:StoreCoverageUpdate,db:AsyncSession=Depends(get_db),admin:User=Depends(require_roles('platform_admin'))):
+    store = await store_service.get_store(db,store_id)
+    if not store: raise HTTPException(404,"门店不存在")
+    try:
+        return await store_service.save_store_coverage(db,store,data.estates,admin.id)
+    except ValueError as exc:
+        raise HTTPException(400,str(exc))

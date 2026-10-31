@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.service_area import (
@@ -243,6 +243,10 @@ async def bulk_assign_service_areas(
             select(ServiceArea).where(ServiceArea.id.in_(data.service_area_ids))
         )).scalars().all()
     }
+    from .store import district_region
+    city, district = await district_region(db, primary_store.region_id)
+    if any(area.area_type != 'estate' or area.city != city.name or area.district != district.name for area in areas.values()):
+        raise ValueError("服务范围必须为本店所属区县的小区，请在门店后点击分配小区服务范围")
     assignments = {
         item.service_area_id: item
         for item in (await db.execute(
@@ -362,6 +366,7 @@ async def bulk_clear_service_areas(db: AsyncSession, data: BulkClearRequest) -> 
             after_json=json.dumps({"remark": data.remark}, ensure_ascii=False),
             operator_user_id=data.operator_user_id,
         ))
+        await db.execute(update(ServiceAreaAssignmentLog).where(ServiceAreaAssignmentLog.assignment_id == assignment.id).values(assignment_id=None))
         await db.delete(assignment)
     await db.commit()
     return result
@@ -486,7 +491,7 @@ async def customer_options(db, *, include_order_estates=True):
             StoreAddress.estate != ""))).scalars().all()))
         ordered_estates = (await db.execute(select(Order.estate).where(
             Order.service_area_id == area.id, Order.estate.is_not(None), Order.estate != ""))).scalars().all() if include_order_estates else []
-        estates = sorted(set(estates + list(ordered_estates)))
+        estates = sorted(set(estates + list(ordered_estates) + ([area.name] if area.area_type == "estate" else [])))
         result.append(dict(id=area.id, service_area_id=area.id, name=area.name,
             label=f"{area.district} / {area.street} / {area.name}",
             province=area.province, city=area.city, district=area.district, street=area.street,
