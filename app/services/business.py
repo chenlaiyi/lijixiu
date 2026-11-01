@@ -57,7 +57,7 @@ async def _attach_address(db, address):
             setattr(address, key, getattr(standard, key))
         address.door_number = door_number(standard.door_number, standard.building, standard.unit, standard.room)
         if standard.estate and address.door_number:
-            set_committed_value(address, "address", full_address(standard.city, standard.district, standard.estate, address.door_number))
+            set_committed_value(address, "address", standard.full_address)
     return address
 
 

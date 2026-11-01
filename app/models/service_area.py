@@ -13,6 +13,10 @@ class ServiceArea(Base):
     __table_args__ = (UniqueConstraint("code", name="uq_service_areas_code"),)
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    community_code: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
+    source_community_id: Mapped[str] = mapped_column(String(80), default='')
+    estate_aliases: Mapped[str] = mapped_column(Text, default='')
+    business_circle: Mapped[str] = mapped_column(String(160), default='')
     code: Mapped[str] = mapped_column(String(32), index=True, comment="Stable area code")
     province: Mapped[str] = mapped_column(String(40), comment="Province name (Chinese)")
     city: Mapped[str] = mapped_column(String(40), index=True, comment="City name (Chinese)")

@@ -1,5 +1,6 @@
 """Administrative catalog is the only address authoring entry point."""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,6 +25,10 @@ class Entry(BaseModel):
     detail_hint:str=Field(default='',max_length=300)
     source_name:str=Field(default='',max_length=80)
     source_ref:str=Field(default='',max_length=240)
+    entrance_type:str=Field(default='普通单元',max_length=30)
+    entrance_name:str=Field(default='',max_length=160)
+    road_number:str=Field(default='',max_length=160)
+    review_required:bool=False
     enabled:bool=True
 
 
@@ -34,6 +39,7 @@ class ImportEntries(BaseModel):
 class Scope(BaseModel):
     service_area_id:int
     building:str|None=Field(default=None,max_length=80)
+    entrance_name:str|None=Field(default=None,max_length=160)
     address_id:int|None=None
 
 
@@ -41,9 +47,40 @@ class Scopes(BaseModel):
     items:list[Scope]=Field(default_factory=list,max_length=2000)
 
 
+@router.get('/template.csv')
+async def download_template(user=admin):
+    from ..services.catalog_files import template_csv
+    return Response(template_csv(),media_type='text/csv; charset=utf-8',headers={
+        'Content-Disposition':'attachment; filename="address-catalog-template.csv"'})
+
+
+@router.post('/import-file')
+async def import_file(file:UploadFile=File(...),apply:bool=Form(False),expected_hash:str=Form(''),
+        db:AsyncSession=Depends(get_db),user=admin):
+    from ..services.catalog_import import make_plan,apply_plan
+    content=await file.read(15*1024*1024+1)
+    try:
+        if apply:
+            return await apply_plan(db,file.filename or '',content,user.id,expected_hash)
+        report,_=await make_plan(db,file.filename or '',content)
+        return report
+    except (ValueError,UnicodeError,KeyError) as exc:
+        await db.rollback()
+        raise HTTPException(400,str(exc))
+    except Exception:
+        await db.rollback()
+        raise
+
+
 @router.get('',response_model=list[StoreAddressOut])
 async def entries(db:AsyncSession=Depends(get_db),user=admin):
-    return (await db.execute(select(StoreAddress).order_by(StoreAddress.id.desc()))).scalars().all()
+    from ..models.service_area import ServiceArea
+    rows=(await db.execute(select(StoreAddress).order_by(StoreAddress.id.desc()))).scalars().all()
+    areas={a.id:a for a in (await db.execute(select(ServiceArea))).scalars().all()}
+    for row in rows:
+        area=areas.get(row.service_area_id)
+        row.community_code=area.community_code if area else None
+    return rows
 
 
 @router.post('',response_model=StoreAddressOut)

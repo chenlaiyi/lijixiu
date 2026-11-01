@@ -76,6 +76,25 @@ async def init_db():
 
     async with engine.connect() as conn:
         migrations = [
+            ('service_areas', 'community_code', 'VARCHAR(64)'),
+            ('service_areas', 'source_community_id', "VARCHAR(80) DEFAULT ''"),
+            ('service_areas', 'estate_aliases', "TEXT DEFAULT ''"),
+            ('service_areas', 'business_circle', "VARCHAR(160) DEFAULT ''"),
+            ('address_coverage', 'entrance_name', 'VARCHAR(160)'),
+            ('store_addresses', 'entrance_type', "VARCHAR(30) DEFAULT '普通单元'"),
+            ('store_addresses', 'entrance_name', "VARCHAR(160) DEFAULT ''"),
+            ('store_addresses', 'road_number', "VARCHAR(160) DEFAULT ''"),
+            ('store_addresses', 'raw_unit', "VARCHAR(160) DEFAULT ''"),
+            ('store_addresses', 'source_building_id', "VARCHAR(100) DEFAULT ''"),
+            ('store_addresses', 'source_unit_id', "VARCHAR(100) DEFAULT ''"),
+            ('store_addresses', 'source_house_id', "VARCHAR(160) DEFAULT ''"),
+            ('store_addresses', 'source_key', 'VARCHAR(64)'),
+            ('store_addresses', 'property_type', "VARCHAR(30) DEFAULT '住宅'"),
+            ('store_addresses', 'verification_status', "VARCHAR(100) DEFAULT '人工录入，未实地核验'"),
+            ('store_addresses', 'review_required', 'BOOLEAN DEFAULT 0'),
+            ('store_addresses', 'collected_at', "VARCHAR(40) DEFAULT ''"),
+            ('store_addresses', 'source_record_json', "TEXT DEFAULT '{}'"),
+            ('store_addresses', 'search_aliases', "TEXT DEFAULT ''"),
             ("users", "active_business_role", "VARCHAR(30)"),
             ("orders", "door_number", "VARCHAR(240)"),
             ("store_addresses", "door_number", "VARCHAR(240)"),
@@ -220,6 +239,8 @@ async def init_db():
             "transfer_out_bill_no IS NOT NULL",
         )
 
+        await _create_optional_unique_index(conn, 'uq_catalog_community_code', 'service_areas', 'community_code', 'community_code IS NOT NULL')
+        await _create_optional_unique_index(conn, 'uq_catalog_source_key', 'store_addresses', 'source_key', 'source_key IS NOT NULL')
         await conn.commit()
 
 

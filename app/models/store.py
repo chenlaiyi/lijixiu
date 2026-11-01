@@ -110,6 +110,20 @@ class StoreAddress(Base):
     building: Mapped[str] = mapped_column(
         String(80), default="", comment="Building number"
     )
+    entrance_type: Mapped[str] = mapped_column(String(30), default='普通单元')
+    entrance_name: Mapped[str] = mapped_column(String(160), default='')
+    road_number: Mapped[str] = mapped_column(String(160), default='')
+    raw_unit: Mapped[str] = mapped_column(String(160), default='')
+    source_building_id: Mapped[str] = mapped_column(String(100), default='')
+    source_unit_id: Mapped[str] = mapped_column(String(100), default='')
+    source_house_id: Mapped[str] = mapped_column(String(160), default='')
+    source_key: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
+    property_type: Mapped[str] = mapped_column(String(30), default='住宅')
+    verification_status: Mapped[str] = mapped_column(String(100), default='人工录入，未实地核验')
+    review_required: Mapped[bool] = mapped_column(Boolean, default=False)
+    collected_at: Mapped[str] = mapped_column(String(40), default='')
+    source_record_json: Mapped[str] = mapped_column(Text, default='{}')
+    search_aliases: Mapped[str] = mapped_column(Text, default='')
     door_number: Mapped[str | None] = mapped_column(String(240), nullable=True)
     aliases: Mapped[str] = mapped_column(Text, default="")
     source_name: Mapped[str] = mapped_column(String(80), default="")
@@ -172,6 +186,17 @@ class AddressCoverage(Base):
     store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), index=True)
     service_area_id: Mapped[int] = mapped_column(ForeignKey("service_areas.id"), index=True)
     building: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    entrance_name: Mapped[str | None] = mapped_column(String(160), nullable=True)
     address_id: Mapped[int | None] = mapped_column(ForeignKey("store_addresses.id"), nullable=True)
     operator_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class CatalogImportBatch(Base):
+    __tablename__ = 'catalog_import_batches'
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    operator_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    filename: Mapped[str] = mapped_column(String(240))
+    file_hash: Mapped[str] = mapped_column(String(64))
+    report_json: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

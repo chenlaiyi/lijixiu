@@ -12,7 +12,7 @@ await c.load();c.selectRegion({detail:{value:0}});c.selectNeighborhood({detail:{
 assert.strictEqual(c.data.buildings[0],'S5栋');
 c.selectBuilding({detail:{value:0}});c.selectUnit({detail:{value:0}});c.selectRoom({detail:{value:0}});
 assert.strictEqual(c.value.address_book_id,77);assert.strictEqual(c.value.store_id,3);
-c.selectNeighborhood({detail:{value:1}});assert.strictEqual(c.value.address_book_id,77);assert.strictEqual(c.value.estate,'蓝月湾一期');
+c.inputEstate({detail:{value:'蓝月湾一期S5栋2605室'}});c.selectNeighborhood({detail:{value:0}});assert.strictEqual(c.value.address_book_id,77);assert.strictEqual(c.value.estate,'蓝月湾一期');
 c.selectBuilding({detail:{value:0}});assert.strictEqual(c.value.address_book_id,null);assert.strictEqual(c.value.store_id,null);
 c.properties.value={service_area_id:123,service_address_id:77};c.syncValue();assert.strictEqual(c.value.address_book_id,77);assert.strictEqual(c.value.store_id,3);
 c.selectAddress({detail:{value:0}});assert.strictEqual(c.value.address_book_id,77);

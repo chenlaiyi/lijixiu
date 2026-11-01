@@ -138,7 +138,7 @@ async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
             payload["proxy_creator_id"] and payload["proxy_creator_id"] == data.customer_id
         )
     door = door_number(service_address.door_number, service_address.building, service_address.unit, service_address.room)
-    normalized_address = format_address(matched_area.city,matched_area.district,service_address.estate,door)
+    normalized_address = service_address.full_address
     payload.update(address=normalized_address,customer_address_snapshot=normalized_address,
         estate=service_address.estate,door_number=door,building=service_address.building,
         unit=service_address.unit,room=service_address.room,region_id=store.region_id,store_id=store.id,

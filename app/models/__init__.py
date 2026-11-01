@@ -62,4 +62,4 @@ __all__ = [
 
 from .user import UserRoleGrant
 
-from .store import AddressCoverage
+from .store import AddressCoverage, CatalogImportBatch

@@ -1,0 +1,20 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');let definition;
+const rows=['28','30'].map((n,i)=>({id:i+1,estate:'未来海岸蓝月湾一期',building:'S6号楼',unit:'',entrance_name:`嵩屿北五里${n}号`,room:'101',door_number:`嵩屿北五里${n}号101室`,full_address:`厦门市海沧区嵩屿北五里${n}号101室`,store_id:i+10,region_id:2,aliases:`S6号楼${n}号入口101室`,search_aliases:'S6号楼101室'}));
+const areas=[{id:1,name:'未来海岸蓝月湾一期',estate_aliases:'蓝月湾',city:'厦门市',district:'海沧区',addresses:rows}];
+vm.runInNewContext(fs.readFileSync('miniprogram/components/address-fields/address-fields.js','utf8'),{Component:d=>definition=d,require:()=>({get:async()=>areas})});
+const p={...definition.methods,data:{...definition.data},properties:{value:{}},setData(v){Object.assign(this.data,v);},triggerEvent(n,v){this.value=v;}};
+const ctx={document:{addEventListener(){}}};vm.runInNewContext(fs.readFileSync('h5/address-fields.js','utf8'),ctx);
+(async()=>{
+await p.load();p.selectRegion({detail:{value:0}});p.inputEstate({detail:{value:'蓝月湾'}});
+assert.strictEqual(p.value.address_book_id,null);assert(p.data.neighborhoods[0].label.includes('未来海岸'));
+p.selectNeighborhood({detail:{value:0}});p.selectBuilding({detail:{value:0}});assert.strictEqual(p.data.units.length,2);
+p.selectUnit({detail:{value:0}});p.selectRoom({detail:{value:0}});assert.strictEqual(p.value.address_book_id,1);assert.strictEqual(p.value.store_id,10);
+p.selectUnit({detail:{value:1}});assert.strictEqual(p.value.address_book_id,null);assert.strictEqual(p.value.door_number,'');
+p.selectRoom({detail:{value:0}});assert.strictEqual(p.value.address_book_id,2);assert.strictEqual(p.value.store_id,11);
+p.inputEstate({detail:{value:'S6号楼101室'}});assert.strictEqual(p.data.neighborhoods.length,2);assert.strictEqual(p.value.address_book_id,null);
+assert(!p.data.neighborhoods[0].area,'setData must not duplicate full catalog');
+for(let i=0;i<2;i++)assert.strictEqual(ctx.AddressFields.resolve(areas,{city_region:'厦门市/海沧区',estate:'蓝月湾',building:'S6号楼',unit:rows[i].entrance_name,room:'101'}).address_book_id,i+1);
+assert.throws(()=>ctx.AddressFields.resolve(areas,{city_region:'厦门市/海沧区',estate:'未来海岸',building:'S6号楼',room:'101'}));
+assert.throws(()=>ctx.AddressFields.resolve(areas,{city_region:'厦门市/海沧区',estate:'蓝月湾',building:'S6号楼',room:'101'}));
+console.log('PASS mini keyword requires candidate confirmation; S6 entrance-specific rooms and stores; web/mini share IDs; ambiguous short labels never auto-select');
+})().catch(e=>{console.error(e);process.exitCode=1;});

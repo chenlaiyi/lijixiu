@@ -96,6 +96,20 @@ class StoreAddressUpdate(BaseModel):
 
 
 class StoreAddressOut(BaseModel):
+    community_code: str | None = None
+    entrance_type: str = '普通单元'
+    entrance_name: str = ''
+    road_number: str = ''
+    raw_unit: str = ''
+    source_building_id: str = ''
+    source_unit_id: str = ''
+    source_house_id: str = ''
+    property_type: str = '住宅'
+    verification_status: str = ''
+    review_required: bool = False
+    collected_at: str = ''
+    search_aliases: str = ''
+
     aliases: str = ""
     source_name: str = ""
     source_ref: str = ""
