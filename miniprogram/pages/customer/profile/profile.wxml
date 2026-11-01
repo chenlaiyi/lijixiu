@@ -153,6 +153,12 @@
     </view>
   </view>
 
+  <view class="referral-card">
+    <text class="referral-title">我的推荐码</text>
+    <view wx:if="{{referral}}"><text class="referral-code" selectable>{{referral.code}}</text><view class="referral-actions"><button bindtap="copyReferral">复制推荐码</button><button bindtap="showReferralQr">查看推荐二维码</button><button open-type="share">分享给好友</button></view></view>
+    <button wx:else bindtap="loadReferral">{{referralError ? '加载失败，点击重试' : '加载推荐码'}}</button>
+    <text class="referral-title">填写推荐人的推荐码（选填）</text><input value="{{bindCode}}" bindinput="inputBindCode" placeholder="输入推荐码" maxlength="32"/><button bindtap="bindReferral">绑定推荐人</button>
+  </view>
   <button class="logout-btn" bindtap="handleLogout" hover-class="button-hover">
     <image class="logout-icon" src="/assets/ui/logout.png" mode="aspectFit" />
     <text>退出</text>

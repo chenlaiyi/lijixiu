@@ -41,6 +41,7 @@ class ServicePackage(Base):
 
 
 class CustomerPackage(Base):
+    address_book_id: Mapped[int | None] = mapped_column(ForeignKey("store_addresses.id"), nullable=True)
     __tablename__ = "customer_packages"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)

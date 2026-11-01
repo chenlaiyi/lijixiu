@@ -8,7 +8,7 @@
     <text class="section-title">联系与服务信息</text>
     <view class="field"><text>联系人</text><input value="{{form.contactName}}" data-field="contactName" bindinput="inputField" placeholder="怎么称呼您" /></view>
     <view class="field"><text>联系电话</text><input type="number" value="{{form.contactPhone}}" data-field="contactPhone" bindinput="inputField" placeholder="用于沟通匹配" /></view>
-    <view class="field vertical"><text>服务地址</text><textarea value="{{form.address}}" data-field="address" bindinput="inputField" placeholder="填写详细地址" maxlength="300" /></view>
+    <view class="field vertical"><address-fields value="{{addressValue}}" bindchange="addressChange" /></view>
     <view class="field"><text>开始日期</text><picker mode="date" value="{{form.startDate}}" data-field="startDate" bindchange="dateChange"><view class="picker-value">{{form.startDate || '请选择'}}</view></picker></view>
     <view class="budget-row"><view class="field"><text>预算最低</text><input type="digit" value="{{form.budgetMin}}" data-field="budgetMin" bindinput="inputField" placeholder="元" /></view><view class="field"><text>预算最高</text><input type="digit" value="{{form.budgetMax}}" data-field="budgetMax" bindinput="inputField" placeholder="元" /></view></view>
   </view>

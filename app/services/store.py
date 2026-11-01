@@ -79,9 +79,10 @@ async def update_store(db: AsyncSession, store: Store, data: StoreUpdate) -> Sto
         raise ValueError("门店名称、区县、负责人及状态不能为空")
     if data.region_id is not None:
         await district_region(db, data.region_id)
-        assigned = (await db.execute(select(ServiceAreaAssignment).where(ServiceAreaAssignment.primary_store_id == store.id))).scalars().first()
+        from ..models.store import AddressCoverage
+        assigned=(await db.execute(select(AddressCoverage.id).where(AddressCoverage.store_id==store.id))).first()
         if data.region_id != store.region_id and assigned:
-            raise ValueError("请先清空该门店的小区服务范围，再修改所属区县")
+            raise ValueError('请先清空门店服务地址范围，再修改所属区县')
     if data.city_manager_id is not None and not await db.get(User, data.city_manager_id):
         raise ValueError("城市经理不存在")
     if data.manager_id is not None and not await db.get(User, data.manager_id):

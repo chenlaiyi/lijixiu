@@ -724,7 +724,7 @@
   box-shadow: none;
 }
 .safe-page.order-page .submit-bar {
-  bottom: calc(120rpx + env(safe-area-inset-bottom));
+  bottom: calc(128rpx + env(safe-area-inset-bottom));
   z-index: 70;
   min-height: 104rpx;
   padding: 12rpx 24rpx;

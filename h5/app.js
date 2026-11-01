@@ -289,6 +289,7 @@ async function loadCurrent() {
 
 async function loadBusiness(tab) {
   if (tab === "domestic") {
+    state.cache.addressAreas=await api("/api/v1/service-areas/address-catalog");
     const [workers, demands, contracts, stores, regions] = await Promise.all([
       safeList("/api/v1/business/domestic/workers?active=true"),
       safeList("/api/v1/business/domestic/demands"),
@@ -338,6 +339,7 @@ async function loadCustomer(tab) {
     );
   }
   if (tab === "packages") {
+    state.cache.packageAddressAreas=await api("/api/v1/service-areas/address-catalog");
     const [packages, mine, stores] = await Promise.all([
       safeList("/api/v1/service-packages"),
       safeList(`/api/v1/service-packages/customer?user_id=${state.user.id}`),
@@ -783,18 +785,12 @@ function packageCard(pkg, stores) {
       <p class="small">${pkg.service_years} 年 · 每年 ${pkg.annual_times} 次 · ${pkg.device_count} 台设备</p>
       <form class="form-grid" data-form="buyPackage" style="margin-top:12px">
         <input type="hidden" name="package_id" value="${pkg.id}" />
-        <div class="field">
-          <label>服务门店</label>
-          <select name="store_id" required>${stores.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join("")}</select>
-        </div>
+
         <div class="field">
           <label>开始日期</label>
           <input type="date" name="start_date" value="${todayISO()}" required />
         </div>
-        <div class="field wide">
-          <label>服务地址</label>
-          <input name="address" required placeholder="套餐服务地址" />
-        </div>
+        ${AddressFields.render(state.cache.packageAddressAreas || [])}
         <div class="field">
           <label>联系电话</label>
           <input name="contact_phone" value="${escapeHtml(state.user.phone || "")}" required />
@@ -1094,9 +1090,7 @@ function domesticPanel() {
         <div class="field"><label>开始日期</label><input type="date" name="service_start" required></div>
         <div class="field"><label>联系人</label><input name="contact_name" value="${escapeHtml(state.user.name)}" required></div>
         <div class="field"><label>联系电话</label><input name="contact_phone" value="${escapeHtml(state.user.phone)}" required></div>
-        <div class="field"><label>服务区域</label><select name="region_id" required>${regions.map((r) => `<option value="${r.id}">${escapeHtml(r.name)}</option>`).join("")}</select></div>
-        <div class="field"><label>匹配门店</label><select name="store_id"><option value="">自动匹配</option>${stores.filter((s) => s.enabled).map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join("")}</select></div>
-        <div class="field wide"><label>服务地址</label><input name="address" required></div>
+        ${AddressFields.render(state.cache.addressAreas || [])}
         <div class="field wide"><label>需求说明</label><textarea name="description" required></textarea></div>
         <div class="field"><label>最低预算</label><input type="number" name="budget_min" min="0"></div>
         <div class="field"><label>最高预算</label><input type="number" name="budget_max" min="0"></div>
@@ -1625,8 +1619,8 @@ async function handleForm(type, data) {
       method: "POST",
       body: {
         customer_id: state.user.id,
-        region_id: serviceAddress.region_id,
-        store_id: serviceAddress.store_id,
+        region_id: serviceAddress.addresses.find(r=>r.id===addressFields.address_book_id).region_id,
+        store_id: serviceAddress.addresses.find(r=>r.id===addressFields.address_book_id).store_id,
         service_area_id: serviceAddress.id,
         ...addressFields,
         category: data.category,
@@ -1640,13 +1634,17 @@ async function handleForm(type, data) {
   }
 
   if (type === "buyPackage") {
+    const chosen=AddressFields.resolve(state.cache.packageAddressAreas || [],data);
+    const area=state.cache.packageAddressAreas.find(a=>a.id===chosen.service_area_id);
+    const row=area.addresses.find(r=>r.id===chosen.address_book_id);
     await api("/api/v1/service-packages/purchase", {
       method: "POST",
       body: {
         package_id: Number(data.package_id),
         user_id: state.user.id,
-        store_id: Number(data.store_id),
-        address: data.address,
+        address_book_id:chosen.address_book_id,
+        store_id:row.store_id,
+        address:[area.city,area.district,chosen.estate,chosen.door_number].join(' '),
         contact_phone: data.contact_phone,
         start_date: data.start_date,
       },
@@ -1806,17 +1804,21 @@ async function handleForm(type, data) {
   }
 
   if (type === "createDomesticDemand") {
+    const selected=AddressFields.resolve(state.cache.addressAreas || [],data);
+    const selectedArea=(state.cache.addressAreas || []).find(a=>a.id===selected.service_area_id);
+    const selectedRow=selectedArea.addresses.find(r=>r.id===selected.address_book_id);
     await api("/api/v1/business/domestic/demands", {
       method: "POST",
       body: {
         customer_id: state.user.id,
         created_by_user_id: state.user.id,
-        store_id: numberOrNull(data.store_id),
-        region_id: Number(data.region_id),
+        address_book_id:selected.address_book_id,
+        store_id:selectedRow.store_id,
+        region_id:selectedRow.region_id,
         service_type: data.service_type,
         contact_name: data.contact_name,
         contact_phone: data.contact_phone,
-        address: data.address,
+        address:[selectedArea.city,selectedArea.district,selected.estate,selected.door_number].join(' '),
         description: data.description,
         detail_json: "{}",
         budget_min: Number(data.budget_min || 0),

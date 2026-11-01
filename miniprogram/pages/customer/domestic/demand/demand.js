@@ -6,6 +6,7 @@ const recorder = wx.getRecorderManager();
 Page({
   ...share.create({ title: '立即修｜发布家政需求' }),
   data: {
+    addressValue:{},
     serviceType: 'maternity',
     title: '发布月嫂需求',
     userInfo: null,
@@ -43,21 +44,12 @@ Page({
     if (!wx.getStorageSync('token')) return;
     const user = this.data.userInfo;
     try {
-      const [addresses, stores, regions] = await Promise.all([
-        api.get('/api/v1/business/addresses', { user_id: user.id }),
-        api.get('/api/v1/stores'),
-        api.get('/api/v1/regions'),
-      ]);
-      const address = (addresses || []).find(item => item.is_default) || (addresses || [])[0];
-      this.store = (stores || []).find(item => item.enabled) || (stores || [])[0];
-      this.regionId = (this.store && this.store.region_id) || ((regions || [])[0] && regions[0].id);
-      if (address) this.setData({
-        'form.address': address.address,
-        'form.contactName': address.contact_name || this.data.form.contactName,
-        'form.contactPhone': address.contact_phone || this.data.form.contactPhone,
-      });
+      const addresses=await api.get('/api/v1/business/addresses',{user_id:user.id});
+      const address=(addresses || []).find(item=>item.is_default) || (addresses || [])[0];
+      if(address)this.setData({addressValue:address,'form.contactName':address.contact_name || this.data.form.contactName,'form.contactPhone':address.contact_phone || this.data.form.contactPhone});
     } catch (e) {}
   },
+  addressChange(e){this.setData({addressValue:e.detail,'form.address':e.detail.address});this.regionId=e.detail.region_id;},
   inputField(e) { this.setData({ [`form.${e.currentTarget.dataset.field}`]: e.detail.value }); },
   switchField(e) { this.setData({ [`form.${e.currentTarget.dataset.field}`]: e.detail.value }); },
   dateChange(e) { this.setData({ [`form.${e.currentTarget.dataset.field}`]: e.detail.value }); },
@@ -154,6 +146,7 @@ Page({
       : { service_mode: f.serviceMode, family_size: f.familySize, schedule: f.schedule, tasks: f.tasks, pets: f.pets };
   },
   async submit() {
+    if(this.data.submitting)return;
     if (!wx.getStorageSync('token')) {
       wx.showModal({ title: '登录后发布需求', content: '浏览服务无需登录，发布需求时需登录以便门店联系。', confirmText: '去登录', cancelText: '继续浏览', success: (res) => { if (res.confirm) wx.navigateTo({ url: '/pages/login/login?intent=login' }); } });
       return;
@@ -162,13 +155,14 @@ Page({
     if (!f.contactName || !f.contactPhone || !f.address || !f.startDate) {
       wx.showToast({ title: '请完整填写联系人、地址和开始日期', icon: 'none' }); return;
     }
-    if (!this.regionId) { wx.showToast({ title: '当前地区暂未开通', icon: 'none' }); return; }
+    if (!this.regionId || !this.data.addressValue.address_book_id) { wx.showToast({ title: '当前地区暂未开通', icon: 'none' }); return; }
     this.setData({ submitting: true });
     try {
       const demand = await api.post('/api/v1/business/domestic/demands', {
+        address_book_id:this.data.addressValue.address_book_id,
         customer_id: this.data.userInfo.id,
         created_by_user_id: this.data.userInfo.id,
-        store_id: this.store && this.store.id,
+        store_id: this.data.addressValue.store_id,
         region_id: this.regionId,
         service_type: this.data.serviceType,
         contact_name: f.contactName,

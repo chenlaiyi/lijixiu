@@ -11,7 +11,9 @@ from app.models.region import Region
 from app.models.user import User, UserRole
 from app.schemas.store import StoreCreate, StoreUpdate
 from app.schemas.order import OrderCreate
-from app.services.store import create_store, update_store, save_store_coverage, store_coverage
+from app.services.store import create_store, update_store
+from app.services.address_catalog import save_entry,save_coverage,coverage
+from app.routers.address_catalog import Entry,Scope
 from app.services.service_area import customer_options
 from app.services.order import create_order
 
@@ -35,23 +37,27 @@ async def main():
         for name in ['店A','店B']:
             store=await create_store(db,StoreCreate(name=name,region_id=district.id,manager_id=manager.id))
             await update_store(db,store,StoreUpdate(enabled=True));stores.append(store)
-        assigned=await save_store_coverage(db,stores[0],['蓝月湾一期','浪琴湾'],manager.id)
-        await save_store_coverage(db,stores[1],['蓝月湾二期'],manager.id)
+        entries=[]
+        for estate in ['蓝月湾一期','浪琴湾','蓝月湾二期']:
+            entry=await save_entry(db,Entry(region_id=district.id,estate=estate,building='S5栋',room='2605'),manager.id)
+            entries.append(entry)
+        await db.commit()
+        await save_coverage(db,stores[0],[Scope(service_area_id=e.service_area_id) for e in entries[:2]],manager.id)
+        await save_coverage(db,stores[1],[Scope(service_area_id=entries[2].service_area_id)],manager.id)
         assert len(await customer_options(db))==3
         try:
-            await save_store_coverage(db,stores[1],['蓝月湾一期','冲突时不应创建'],manager.id)
+            await save_coverage(db,stores[1],[Scope(service_area_id=entries[0].service_area_id)],manager.id)
             raise AssertionError('Conflicting coverage accepted')
         except ValueError: pass
-        assert len(await store_coverage(db,stores[1]))==1
-        area=next(a for a in assigned if a['name']=='蓝月湾一期')
-        args=dict(customer_id=customer.id,region_id=district.id,service_area_id=area['id'],estate='蓝月湾一期',door_number='S5栋2605室',description='repair',address='ignored')
+        assert len(await coverage(db,stores[1].id))==1
+        args=dict(customer_id=customer.id,region_id=district.id,address_book_id=entries[0].id,description='repair',address='ignored')
         old=await create_order(db,OrderCreate(**args));assert old.store_id==stores[0].id
         try:
             await update_store(db,stores[0],StoreUpdate(region_id=other.id))
             raise AssertionError('District moved while assigned')
         except ValueError: pass
-        await save_store_coverage(db,stores[0],[],manager.id)
-        await save_store_coverage(db,stores[1],['蓝月湾一期','蓝月湾二期'],manager.id)
+        await save_coverage(db,stores[0],[],manager.id)
+        await save_coverage(db,stores[1],[Scope(service_area_id=e.service_area_id) for e in [entries[0],entries[2]]],manager.id)
         new=await create_order(db,OrderCreate(**args));assert new.store_id==stores[1].id
         assert old.store_id==stores[0].id
         await update_store(db,stores[0],StoreUpdate(region_id=other.id,name='新店名',remark='saved'))

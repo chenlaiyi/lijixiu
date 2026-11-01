@@ -101,7 +101,7 @@ class StoreAddressOut(BaseModel):
     source_ref: str = ""
     catalog_published: bool = False
     id: int
-    store_id: int
+    store_id: int | None
     region_id: int
     service_area_id: int | None
     address_code: str | None

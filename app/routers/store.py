@@ -103,11 +103,7 @@ async def create_address(
     db: AsyncSession = Depends(get_db),
     _staff: User = Depends(require_roles("platform_admin", "store_manager")),
 ):
-    await _check_address_scope(db, _staff, data.service_area_id)
-    try:
-        return await store_service.create_address(db, data.model_copy(update={"created_by_user_id": _staff.id}))
-    except ValueError as exc:
-        raise HTTPException(400, str(exc)) from exc
+    raise HTTPException(400, "请在城市区域地址库创建地址")
 
 
 @router.get("/addresses", response_model=list[StoreAddressOut])
@@ -132,15 +128,7 @@ async def update_address(
     db: AsyncSession = Depends(get_db),
     _staff: User = Depends(require_roles("platform_admin", "store_manager")),
 ):
-    address = await store_service.find_address(db, address_id)
-    if not address:
-        raise HTTPException(404, "Address not found")
-    await _check_address_scope(db, _staff, address.service_area_id)
-    await _check_address_scope(db, _staff, data.service_area_id or address.service_area_id)
-    try:
-        return await store_service.update_address(db, address, data)
-    except ValueError as exc:
-        raise HTTPException(400, str(exc)) from exc
+    raise HTTPException(400, "请在城市区域地址库修改地址")
 
 
 @router.post("/area-open-requests", response_model=AreaOpenRequestOut, status_code=201)
@@ -155,12 +143,7 @@ async def create_area_open_request(
 @router.delete("/addresses/{address_id}")
 async def delete_address(address_id: int, db: AsyncSession = Depends(get_db),
     admin: User = Depends(require_roles("platform_admin"))):
-    address = await store_service.find_address(db, address_id)
-    if not address:
-        raise HTTPException(404, "Address not found")
-    address.enabled = False
-    await db.commit()
-    return {"id": address.id, "deleted": True}
+    raise HTTPException(400, "请在城市区域地址库修改地址")
 
 
 @router.get("/{store_id}/coverage")
@@ -172,9 +155,4 @@ async def get_store_coverage(store_id:int, db:AsyncSession=Depends(get_db), admi
 
 @router.put("/{store_id}/coverage")
 async def put_store_coverage(store_id:int,data:StoreCoverageUpdate,db:AsyncSession=Depends(get_db),admin:User=Depends(require_roles('platform_admin'))):
-    store = await store_service.get_store(db,store_id)
-    if not store: raise HTTPException(404,"门店不存在")
-    try:
-        return await store_service.save_store_coverage(db,store,data.estates,admin.id)
-    except ValueError as exc:
-        raise HTTPException(400,str(exc))
+    raise HTTPException(400, '请从城市区域地址库分配门店服务地址范围')

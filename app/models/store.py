@@ -85,7 +85,7 @@ class StoreAddress(Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), index=True)
+    store_id: Mapped[int | None] = mapped_column(ForeignKey("stores.id"), nullable=True, index=True)
     region_id: Mapped[int] = mapped_column(ForeignKey("regions.id"), index=True)
     service_area_id: Mapped[int | None] = mapped_column(
         ForeignKey("service_areas.id"), nullable=True, index=True
@@ -163,3 +163,15 @@ class AreaOpenRequest(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class AddressCoverage(Base):
+    """A store references a catalog estate, building, or individual address."""
+    __tablename__ = "address_coverage"
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), index=True)
+    service_area_id: Mapped[int] = mapped_column(ForeignKey("service_areas.id"), index=True)
+    building: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    address_id: Mapped[int | None] = mapped_column(ForeignKey("store_addresses.id"), nullable=True)
+    operator_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

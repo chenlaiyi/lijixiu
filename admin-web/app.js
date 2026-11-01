@@ -644,18 +644,19 @@ async function loadRepairers() {
 
 function addressEditor(areas, row = {}) {
   const field = (key, label, placeholder = '') => `<div class="field"><label>${label}</label><input name="${key}" value="${escapeHtml(row[key] || '')}" placeholder="${escapeHtml(placeholder)}" maxlength="${key === 'door_number' ? 240 : 160}"></div>`;
-  const districts=[...new Set(areas.map(a=>`${a.city}/${a.district}`))];
-  return `<input type="hidden" name="id" value="${row.id || ''}"><div class="field"><label>城市/区县</label><select name="city_region" required><option value="">请选择区县</option>${districts.map(text=>`<option value="${escapeHtml(text)}" ${text===`${row.city}/${row.district}`?'selected':''}>${escapeHtml(text)}</option>`).join('')}</select><small>先在门店分配小区服务范围，再在该区县录入具体门牌。</small></div>` +
+  const districts=(state.cache.catalogRegions || []).filter(r=>r.level===2).map(r=>({id:r.id,label:`${(state.cache.catalogRegions || []).find(c=>c.id===r.parent_id)?.name || ''}/${r.name}`}));
+  return `<input type="hidden" name="id" value="${row.id || ''}"><div class="field"><label>城市/区县</label><select name="region_id" required><option value="">请选择区县</option>${districts.map(r=>`<option value="${r.id}" ${r.id===row.region_id?'selected':''}>${escapeHtml(r.label)}</option>`).join('')}</select><small>地址先入总库，再分配给门店。</small></div>` +
     field('estate','小区 / 分期（可粘贴贝壳名称）','未来海岸蓝月湾一期') +
     field('building','楼栋','S5栋') + field('unit','单元（无则留空）','1单元') + field('room','房号','2605') +
     field('door_number','标准门牌写法（可选，默认由楼栋单元房号组成）','嵩屿北五里27号2605室') +
     `<div class="field"><label>同址别名（一行一种写法，不新增实体地址）</label><textarea name="aliases" maxlength="4000" placeholder="厦门市海沧区蓝月湾一期S5栋2605室">${escapeHtml(row.aliases || '')}</textarea></div><div class="field"><label>内部备注（不向游客公开）</label><textarea name="detail_hint" maxlength="300">${escapeHtml(row.detail_hint || '')}</textarea></div>` +
-    field('source_name','来源名称','贝壳 / 人工核验') + field('source_ref','来源小区编号或链接（选填）');
+    field('source_name','来源名称','贝壳 / 人工核验') + field('source_ref','来源小区编号或链接（选填）') + `<div class="field"><label>地址状态</label><select name="catalog_enabled"><option value="1" ${row.enabled!==false?'selected':''}>有效</option><option value="0" ${row.enabled===false?'selected':''}>停用</option></select></div>`;
 }
 
 async function loadStores() {
-  const [stores, regions, users, repairers, addresses, addressAreas] = await Promise.all([api("/api/v1/stores"), api("/api/v1/regions"), allUsers(), api("/api/v1/repairers?limit=100"), api("/api/v1/stores/addresses"), api("/api/v1/service-areas/address-catalog")]);
+  const [stores, regions, users, repairers, addresses, addressAreas] = await Promise.all([api("/api/v1/stores"), api("/api/v1/regions"), allUsers(), api("/api/v1/repairers?limit=100"), api("/api/v1/address-catalog"), api("/api/v1/service-areas/address-catalog")]);
   state.cache.addressAreas = addressAreas;
+  state.cache.catalogRegions = regions;
   state.cache.storeAddresses = addresses;
   state.cache.storeForm = {stores,regions,users,repairers};
   const createForm = form([
@@ -679,45 +680,27 @@ async function loadStores() {
       render: (row) => `<div class="actions">
         ${actionButton(row.enabled && row.status === "active" ? "停用门店" : "启用并开通", "store-enabled", { id: row.id, enabled: row.enabled && row.status === "active" ? "1" : "0" })}
         ${actionButton("修改", "edit-store", {id:row.id})}
-        ${actionButton("分配小区服务范围", "store-coverage", {id:row.id})}
+        ${actionButton("分配门店服务地址范围", "store-coverage", {id:row.id})}
         ${actionButton("默认师傅", "store-default-repairer", { id: row.id })}
       </div>`
     }
   ], stores, "暂无门店");
   els.content.innerHTML = section("创建与开通门店", "1. 选择区域和店长 → 2. 新增门店 → 3. 启用并开通 → 4. 分配服务范围", body);
-  els.content.innerHTML += section('门店地址库', '小区 / 楼栋 / 单元 / 房号；同址别名共用一个地址。删除后不影响历史订单' ,
-    `<form class="form-grid" data-form="create-store-address">${addressEditor(addressAreas)}<button class="btn primary" type="submit">新增地址</button></form>` +
-    table([{label:'城市/区域',render: row => escapeHtml(`${row.city}/${row.district}`)},
-      {label:'小区',key:'estate'}, {label:'门牌号',render: row => escapeHtml(row.door_number || [row.building,row.unit,row.room].filter(Boolean).join(''))},
-      {label:'楼栋 / 单元 / 房号',render:row => escapeHtml([row.building,row.unit,row.room].filter(Boolean).join(' / '))},
-      {label:'同址别名 / 备注',render:row => escapeHtml([row.aliases,row.detail_hint].filter(Boolean).join('；'))},
-      {label:'接单门店',render: row => escapeHtml(stores.find(store => store.id === row.store_id)?.name || '')},
-      {label:'操作',render:row => actionButton('修改','edit-store-address',{id:row.id}) + actionButton('删除','delete-store-address',{id:row.id})}], addresses.filter(row => row.enabled), '暂无地址'));
+  const selectedStore=state.cache.selectedCoverageStore || '';
+  els.content.innerHTML += section('门店服务地址范围', '查询城市、区县、门店后查看；添加和移除仅调整服务关系，地址统一在城市区域地址库维护。',
+    `<div class="toolbar"><input id="coverage-query" placeholder="输入城市、区县或门店名称查询"><button class="btn" data-action="coverage-search">查询</button><select id="coverage-store"><option value="">请选择门店</option>${stores.map(store=>`<option value="${store.id}" ${String(selectedStore)===String(store.id)?'selected':''}>${escapeHtml(regionChoices(regions.filter(r=>r.id===store.region_id),regions)[0]?.label || '')} / ${escapeHtml(store.name)}</option>`).join('')}</select><button class="btn primary" data-action="view-store-coverage">查看及修改服务范围</button></div><div id="coverage-summary"></div>`);
+  if(selectedStore) await renderCoverageSummary(Number(selectedStore));
 
 
 }
 
 async function loadRegions() {
-  const currentDistrict = document.querySelector("#service-area-district")?.value || "";
-  const currentStreet = document.querySelector("#service-area-street")?.value || "";
-  const currentStatus = document.querySelector("#service-area-status")?.value || "";
-  const currentQuery = document.querySelector("#service-area-query")?.value?.trim() || "";
-  const [regions, filters, stores, users] = await Promise.all([
-    api("/api/v1/regions"),
-    api("/api/v1/service-areas/filters"),
-    api("/api/v1/stores"),
-    allUsers(),
-  ]);
-  const areaData = await api(query("/api/v1/service-areas", {
-    district: currentDistrict,
-    street: currentStreet,
-    assignment_status: currentStatus,
-    q: currentQuery,
-    limit: 1000,
-  }));
-  const logs = await api("/api/v1/service-areas/assignment-logs?limit=30");
-  regionFormData = {regions, filters};
-  state.cache.regionEditors = {regions,users};
+  const [regions,users,addresses]=await Promise.all([api('/api/v1/regions'),allUsers(),api('/api/v1/address-catalog')]);
+  const filters={city:'',districts:[]};
+  regionFormData={regions,filters};
+  state.cache.regionEditors={regions,users};
+  state.cache.catalogRegions=regions;
+  state.cache.storeAddresses=addresses;
   const createForm = form([
     {name:'level',label:'区域层级',type:'select',options:[{value:'1',label:'一级：城市'},{value:'2',label:'二级：区县'}],hint:'先新增厦门市，再新增其下属区县'},
     choiceField('parent_id','上级区域',[], '二级区县选择上级城市；一级城市无需上级'),
@@ -740,89 +723,36 @@ async function loadRegions() {
     }
   ], regions, "暂无区域");
 
-  const districts = filters.districts || [];
-  const selectedDistrict = districts.find((item) => item.name === currentDistrict);
-  const districtOptions = districts.map((item) =>
-    `<option value="${escapeHtml(item.name)}" ${item.name === currentDistrict ? "selected" : ""}>${escapeHtml(item.name)}（${item.count}）</option>`
-  ).join("");
-  const streetOptions = (selectedDistrict?.streets || []).map((item) =>
-    `<option value="${escapeHtml(item.name)}" ${item.name === currentStreet ? "selected" : ""}>${escapeHtml(item.name)}（${item.count}）</option>`
-  ).join("");
-  const activeStores = stores.filter((item) => item.enabled && item.status === "active");
-  const storeOptions = stores.map(item => `<option value="${item.id}" ${item.enabled && item.status === 'active' ? '' : 'disabled'}>${escapeHtml(item.name)}${item.enabled && item.status === 'active' ? '' : '（未开通，请到门店页开通）'}</option>`).join('');
-  const statusLabel = { assigned: "已分配", unassigned: "未分配", conflict: "需处理" };
-  const selectedCount = state.selectedServiceAreas.size;
-
-  const filterToolbar = `
-    <select id="service-area-district" aria-label="行政区"><option value="">全部行政区</option>${districtOptions}</select>
-    <select id="service-area-street" aria-label="街道或镇"><option value="">全部街道/镇</option>${streetOptions}</select>
-    <select id="service-area-status" aria-label="分配状态">
-      <option value="">全部状态</option>
-      <option value="unassigned" ${currentStatus === "unassigned" ? "selected" : ""}>未分配</option>
-      <option value="assigned" ${currentStatus === "assigned" ? "selected" : ""}>已分配</option>
-      <option value="conflict" ${currentStatus === "conflict" ? "selected" : ""}>需处理</option>
-    </select>
-    <input id="service-area-query" value="${escapeHtml(currentQuery)}" placeholder="搜索社区、村、街道或编码">
-    <button class="btn primary" data-action="service-area-filter">查询</button>
-    <button class="btn" data-action="service-area-sync">同步厦门地址库</button>
-  `;
-  const assignmentToolbar = `
-    <label class="check-control"><input id="service-area-select-all" type="checkbox"> 全选当前结果</label>
-    <span class="selection-count">已选择 <strong>${selectedCount}</strong> 条</span>
-    <select id="service-area-primary-store" aria-label="主服务门店"><option value="">选择主服务门店</option>${storeOptions}</select>
-    <select id="service-area-backup-store" aria-label="备用服务门店"><option value="">选择备用门店</option>${storeOptions}</select>
-    <select id="service-area-conflict-mode" aria-label="冲突处理">
-      <option value="skip">跳过已有分配</option>
-      <option value="fill_empty">只补充空缺项</option>
-      <option value="replace">覆盖原分配</option>
-    </select>
-    <input id="service-area-remark" placeholder="分配备注">
-    <button class="btn primary" data-action="service-area-assign">确认分配所选地址</button>
-    <button class="btn danger" data-action="service-area-clear">清除分配</button>
-    <button class="btn" data-action="service-area-clear-selection">取消选择</button>
-  `;
-  const summary = `
-    <div class="area-summary">
-      <span>查询结果 <strong>${areaData.total}</strong></span>
-      <span>已分配 <strong>${areaData.assigned_count}</strong></span>
-      <span>未分配 <strong>${areaData.unassigned_count}</strong></span>
-      <span class="${areaData.conflict_count ? "text-danger" : ""}">需处理 <strong>${areaData.conflict_count}</strong></span>
-      <span>数据源：${escapeHtml(areaData.source_name)}，发布于 ${escapeHtml(areaData.source_published_at)}</span>
-    </div>`;
-  const areaTable = table([
-    {
-      label: "选择",
-      render: (row) => `<input class="area-checkbox" type="checkbox" data-service-area-id="${row.id}" ${state.selectedServiceAreas.has(row.id) ? "checked" : ""} aria-label="选择${escapeHtml(row.name)}">`,
-    },
-    { label: "行政区", key: "district" },
-    { label: "街道/镇", key: "street" },
-    { label: "社区/村", render: (row) => `${escapeHtml(row.name)} ${badge(row.area_type === "community" ? "社区" : "村", "")}` },
-    { label: "主服务门店", render: (row) => row.primary_store_name ? escapeHtml(row.primary_store_name) : "-" },
-    { label: "备用门店", render: (row) => row.backup_store_name ? escapeHtml(row.backup_store_name) : "-" },
-    { label: "负责人", render: (row) => row.manager_name ? escapeHtml(row.manager_name) : "-" },
-    { label: "状态", render: (row) => badge(statusLabel[row.assignment_status] || row.assignment_status, row.assignment_status === "assigned" ? "ok" : row.assignment_status === "conflict" ? "danger" : "warn") },
-    { label: "生效时间", render: (row) => fmtDate(row.effective_from) },
-    { label: "备注", render: (row) => escapeHtml(row.remark || "-"), wrap: true },
-  ], areaData.items, "没有符合条件的厦门地址");
-  const logTable = table([
-    { label: "时间", render: (row) => fmtDate(row.created_at) },
-    { label: "地址", key: "area_name", wrap: true },
-    { label: "动作", render: (row) => badge(row.action) },
-    { label: "操作人", render: (row) => row.operator_user_id || "-" },
-    { label: "修改前", render: (row) => escapeHtml(row.before_json || "-"), wrap: true },
-    { label: "修改后", render: (row) => escapeHtml(row.after_json || "-"), wrap: true },
-  ], logs, "暂无分配记录");
-
-  els.content.innerHTML = `
-    ${section("区域列表", "现有城市、区域和负责人", regionBody)}
-    <section class="section address-library"><div class="section-head"><h2>厦门地址库</h2><button class="btn" data-action="toggle-address-library" aria-expanded="${state.addressLibraryOpen}">${state.addressLibraryOpen ? '收起' : '展开'}</button></div>
-    <div id="address-library-body" ${state.addressLibraryOpen ? '' : 'hidden'}>
-      <div class="workflow-note"><strong>分配服务范围</strong><p>第一步：选择行政区和街道，查询需要服务的社区。第二步：勾选社区，选择已开通的主服务门店。第三步：确认分配，客户即可选择社区并填写小区、楼栋、单元和房号下单。负责人跟随门店，操作人记录当前登录账号。</p>${activeStores.length ? '' : '<p class="text-danger">当前没有已开通门店。请到门店页点击“启用并开通”，再分配服务范围。</p>'}<button class="btn" data-action="guide-view" data-target="stores">去门店管理</button></div>
-      <div class="toolbar area-filters">${filterToolbar}</div>${summary}<div class="assignment-bar">${assignmentToolbar}</div>${areaTable}
-      <details class="audit-fold"><summary>查看分配记录</summary>${logTable}</details>
-    </div></section>
-  `;
+  els.content.innerHTML=section('城市区域列表','统一管理城市及其所属区县',regionBody)+
+    section('城市区域地址库','全系统唯一地址源；先录入或导入，再分配门店。别名共用同一地址编号，备注仅内部可见。',
+      `<form class="form-grid" data-form="create-store-address">${addressEditor([])}<button class="btn primary" type="submit">新增地址</button></form>
+      <div class="toolbar"><input id="catalog-query" placeholder="搜索城市、区县、小区、门牌或别名"><button class="btn" data-action="catalog-search">查询</button><button class="btn" data-action="catalog-import">批量导入地址</button></div><div id="catalog-table"></div>`);
+  renderCatalogTable(addresses);
   updateRegionChoices(false);
+}
+
+function renderCatalogTable(rows){
+ document.querySelector('#catalog-table').innerHTML=table([
+ {label:'城市/区县',render:r=>escapeHtml(`${r.city}/${r.district}`)}, {label:'小区',key:'estate'},
+ {label:'楼栋 / 单元 / 房号',render:r=>escapeHtml([r.building,r.unit,r.room].filter(Boolean).join(' / '))},
+ {label:'标准门牌',key:'door_number'},{label:'同址别名',key:'aliases'},{label:'内部备注',key:'detail_hint'},
+ {label:'状态',render:r=>r.enabled?'有效':'已停用'},
+ {label:'操作',render:r=>actionButton('修改','edit-store-address',{id:r.id})+(r.enabled?actionButton('删除','delete-store-address',{id:r.id}):'')}],rows,'暂无地址');
+}
+async function renderCoverageSummary(id){
+ const rules=await api(`/api/v1/address-catalog/coverage/${id}`);
+ const rows=state.cache.storeAddresses.filter(r=>r.enabled && rules.some(c=>c.service_area_id===r.service_area_id && (c.address_id?c.address_id===r.id:c.building!=null?c.building===r.building:true)));
+ document.querySelector('#coverage-summary').innerHTML=`<p>已分配 ${rules.length} 项范围，共 ${rows.length} 个有效地址。整小区及整栋楼会自动包含今后新增的下级地址。</p>`+table([{label:'城市/区县',render:r=>escapeHtml(`${r.city}/${r.district}`)},{label:'小区',key:'estate'},{label:'楼栋',key:'building'},{label:'门牌',key:'door_number'}],rows,'尚无服务地址');
+}
+function coverageChoices(rows){
+ const result=[];
+ for(const row of rows.filter(r=>r.enabled)){
+  const push=(value,label)=>{if(!result.some(x=>JSON.stringify(x.value)===JSON.stringify(value))) result.push({value,label});};
+  push({service_area_id:row.service_area_id,building:null,address_id:null},`${row.estate} / 整小区（含未来新增地址）`);
+  push({service_area_id:row.service_area_id,building:row.building,address_id:null},`${row.estate} / ${row.building || '无楼栋编号'} / 整栋（含未来新增地址）`);
+  push({service_area_id:row.service_area_id,building:null,address_id:row.id},`${row.estate} / ${row.building} / ${row.unit} / ${row.room || row.door_number}`);
+ }
+ return result;
 }
 
 async function loadWallet() {
@@ -1143,21 +1073,24 @@ async function handleForm(formEl) {
     els.modal.hidden=true; await loadStores();notify('门店已保存');return;
   }
   if (action === 'store-coverage') {
-    await api(`/api/v1/stores/${Number(data.id)}/coverage`, {method:'PUT',body:{estates:String(data.estates || '').split(/\n|；|;/).map(s=>s.trim()).filter(Boolean)}});
-    els.modal.hidden=true;await loadStores();notify('小区服务范围已保存');return;
+    const choices=state.cache.coverageChoices || [];
+    const items=[...formEl.querySelectorAll('[name="scope"]:checked')].map(el=>choices[Number(el.value)].value);
+    await api(`/api/v1/address-catalog/coverage/${Number(data.id)}`,{method:'PUT',body:{items}});
+    state.cache.selectedCoverageStore=Number(data.id);els.modal.hidden=true;await loadStores();notify('门店服务地址范围已保存');return;
   }
-  if (action === "create-store-address" || action === "edit-store-address") {
-    const me = await api('/api/v1/auth/me');
-    const area=(state.cache.addressAreas || []).find(a=>`${a.city}/${a.district}`===data.city_region && a.name===data.estate.trim());
-    if (!area) throw new Error('该区县的小区尚未分配门店，请先在门店分配小区服务范围；小区名称需与分配名称一致');
-    const fields = {service_area_id:area.id,estate:data.estate.trim(),building:data.building || '', unit:data.unit || '',room:data.room || '', aliases:data.aliases || '', detail_hint:data.detail_hint || '',source_name:data.source_name || '',source_ref:data.source_ref || '',catalog_published:true};
-    if (!fields.estate || (!data.door_number && !fields.room)) throw new Error('请填写小区，以及房号或标准门牌写法');
-    // Empty door is synthesized from the structural fields; PATCH must send the resulting value.
-    fields.door_number = data.door_number || [fields.building,fields.unit,fields.room && `${fields.room}室`].filter(Boolean).join('');
-    if (action === 'edit-store-address') await api(`/api/v1/stores/addresses/${Number(data.id)}`, {method:'PATCH',body:fields});
-    else await api('/api/v1/stores/addresses', {method:'POST',body:{...fields,created_by_user_id:me.id}});
-    els.modal.hidden = true;
-    await loadStores(); return;
+  if(action==='catalog-import'){
+    const region_id=Number(data.region_id);
+    const lines=String(data.rows || '').trim().split(/\r?\n/).filter(Boolean);
+    const keys=['estate','building','unit','room','door_number','aliases','detail_hint','source_name','source_ref'];
+    const items=lines.map(line=>{const cols=line.split('\t');const entry={region_id};keys.forEach((key,i)=>entry[key]=cols[i] || '');return entry;});
+    await api('/api/v1/address-catalog/import',{method:'POST',body:{items}});
+    els.modal.hidden=true;await loadRegions();notify(`已导入 ${items.length} 个地址`);return;
+  }
+  if (action === 'create-store-address' || action === 'edit-store-address') {
+    const fields={region_id:Number(data.region_id),enabled:data.catalog_enabled!=='0'};
+    for(const key of ['estate','building','unit','room','door_number','aliases','detail_hint','source_name','source_ref']) fields[key]=data[key] || '';
+    await api(action==='edit-store-address'?`/api/v1/address-catalog/${Number(data.id)}`:'/api/v1/address-catalog',{method:action==='edit-store-address'?'PUT':'POST',body:fields});
+    els.modal.hidden=true;await loadRegions();notify('地址已保存');return;
   }
   if (action === "create-domestic-worker") {
     await api("/api/v1/business/domestic/workers", {
@@ -1218,6 +1151,26 @@ async function handleAction(button) {
   const action = button.dataset.action;
   const id = button.dataset.id;
 
+  if(action==='catalog-search'){
+    const q=document.querySelector('#catalog-query').value.trim().toLowerCase();
+    renderCatalogTable(state.cache.storeAddresses.filter(r=>[r.city,r.district,r.estate,r.building,r.door_number,r.aliases].join(' ').toLowerCase().includes(q)));return;
+  }
+  if(action==='catalog-import'){
+    const regions=state.cache.catalogRegions;
+    showModal('批量导入城市区域地址',`<form data-form="catalog-import"><div class="field"><label>城市/区县</label><select name="region_id" required>${regionChoices(regions.filter(r=>r.level===2),regions).map(r=>`<option value="${r.value}">${escapeHtml(r.label)}</option>`).join('')}</select></div><p>从表格复制粘贴，每行一个地址，Tab分列，不含表头。列顺序：小区、楼栋、单元、房号、标准门牌、同址别名、内部备注、来源名称、来源链接。别名用分号隔开。重复地址会提示行号，整批不写入，请在原地址上修改。</p><textarea name="rows" rows="14" required style="width:100%"></textarea><button class="btn primary" type="submit">导入地址</button></form>`);return;
+  }
+  if(action==='coverage-search'){
+    const q=document.querySelector('#coverage-query').value.trim();
+    for(const option of document.querySelector('#coverage-store').options) option.hidden=Boolean(option.value)&&!option.textContent.includes(q);
+    return;
+  }
+  if(action==='view-store-coverage'){
+    const storeId=Number(document.querySelector('#coverage-store').value);
+    if(!storeId)throw new Error('请先选择门店');
+    state.cache.selectedCoverageStore=storeId;
+    await renderCoverageSummary(storeId);
+    return handleAction({dataset:{action:'store-coverage',id:storeId}});
+  }
   if (action === 'edit-store-address') {
     const row = (state.cache.storeAddresses || []).find(item => item.id === Number(button.dataset.id));
     if (!row) throw new Error('地址不存在，请刷新');
@@ -1225,8 +1178,8 @@ async function handleAction(button) {
   }
   if (action === 'delete-store-address') {
     if (!confirm('删除后客户端不能再选择此地址；历史订单保留原地址。确认删除？')) return;
-    await api(`/api/v1/stores/addresses/${Number(button.dataset.id)}`, {method:'DELETE'});
-    await loadStores(); return;
+    await api(`/api/v1/address-catalog/${Number(button.dataset.id)}`, {method:'DELETE'});
+    await loadRegions(); return;
   }
   if (action === 'edit-region') {
     const {regions,users}=state.cache.regionEditors;
@@ -1261,10 +1214,14 @@ async function handleAction(button) {
   }
   if (action === 'guide-view') return loadView(button.dataset.target);
   if (action === 'store-coverage') {
-    const id = Number(button.dataset.id);
-    const row = state.cache.storeForm.stores.find(item => item.id === id);
-    const assigned = await api(`/api/v1/stores/${id}/coverage`);
-    showModal('分配小区服务范围', `<form class="form-grid" data-form="store-coverage"><input type="hidden" name="id" value="${id}"><p>${escapeHtml(row.name)}：只分配本门店所属区县内的小区，同一区县可以有多家门店。</p><p>原街道/社区范围（仅供迁移参考，保存后由下面的小区列表替换）：${escapeHtml(assigned.filter(a=>a.area_type!=='estate').map(a=>a.name).join('、') || '无')}</p><div class="field"><label>小区 / 分期名称（一行一个）</label><textarea name="estates" rows="12" placeholder="蓝月湾一期&#10;浪琴湾">${escapeHtml(assigned.filter(a=>a.area_type==='estate').map(a=>a.name).join('\n'))}</textarea><small>保存会替换本店原服务范围。留空保存表示清空。已属于其他门店的小区不能重复分配。</small></div><button class="btn primary" type="submit">保存小区服务范围</button></form>`);return;
+    const id=Number(button.dataset.id);
+    const {stores,regions}=state.cache.storeForm;
+    const store=stores.find(r=>r.id===id);
+    const district=regions.find(r=>r.id===store.region_id),city=regions.find(r=>r.id===district?.parent_id);
+    const rows=state.cache.storeAddresses.filter(r=>r.city===city?.name && r.district===district?.name);
+    const choices=coverageChoices(rows);state.cache.coverageChoices=choices;
+    const assigned=await api(`/api/v1/address-catalog/coverage/${id}`);
+    showModal('分配门店服务地址范围',`<form data-form="store-coverage"><input type="hidden" name="id" value="${id}"><p>${escapeHtml(store.name)}：勾选添加、取消勾选移除，保存后生效。同一地址不能跨店重复分配。</p><input data-coverage-filter placeholder="搜索小区、楼栋、门牌"><div style="max-height:55vh;overflow:auto">${choices.map((c,i)=>`<label class="identity-choice" data-scope-label><input type="checkbox" name="scope" value="${i}" ${assigned.some(r=>JSON.stringify(r)===JSON.stringify(c.value))?'checked':''}>${escapeHtml(c.label)}</label>`).join('') || '<p>本区县还没有地址，请先到城市区域地址库录入或导入。</p>'}</div><button class="btn primary" type="submit">保存门店服务地址范围</button></form>`);return;
   }
   if (action === 'edit-store') {
     const {stores,regions,users,repairers}=state.cache.storeForm;
@@ -1723,7 +1680,7 @@ handleAction = async function handleWechatFinanceAction(button) {
 };
 
 const WORKFLOW_GUIDES = {
-  stores:{title:'创建门店与开通服务',steps:[['users','第一步：准备店长账号','新成员先在小程序注册，在人员页搜索手机号，点击“业务身份”勾选店长。已有基础店长可直接使用。兼任身份保存后，重新登录客户端即可切换。'],['regions','第二步：创建城市和区县','先创建厦门市，再选择上级厦门市创建海沧区等区县。'],['stores','第三步：创建并开通门店','选择所属区域和店长，新增门店后点击“启用并开通”。'],['regions','第四步：分配社区并开通下单','展开厦门地址库，筛选行政区及街道，勾选社区，选择已开通的主服务门店并确认分配。完成后客户即可选择该社区及小区，填写楼栋、单元和房号下单，无需逐户录入。'],['repairers','第五步：准备师傅接单','在用户页勾选师傅身份，再到师傅页建立档案并选择服务区域；店长也可兼任师傅。下单开通无需等待逐户地址录入，实际派单前应备好师傅。']]},
+  stores:{title:'创建门店与开通服务',steps:[['users','第一步：准备店长账号','新成员先在小程序注册，在人员页搜索手机号，点击“业务身份”勾选店长。已有基础店长可直接使用。兼任身份保存后，重新登录客户端即可切换。'],['regions','第二步：创建城市和区县','先创建厦门市，再选择上级厦门市创建海沧区等区县。'],['stores','第三步：创建并开通门店','选择所属区域和店长，新增门店后点击“启用并开通”。'],['regions','第四步：录入地址并分配门店','先在城市区域地址库创建或导入地址，再到门店分配服务地址范围；可选择整小区、整栋楼或具体门牌。客户端仅能选择开通门店覆盖的地址。'],['repairers','第五步：准备师傅接单','在用户页勾选师傅身份，再到师傅页建立档案并选择服务区域；店长也可兼任师傅。下单开通无需等待逐户地址录入，实际派单前应备好师傅。']]},
   users:{title:'添加与管理人员',steps:[['users','第一步：本人真实注册','请新成员在小程序主动使用手机号快捷登录完成注册。'],['users','第二步：搜索并授权','在用户页按手机号查找。用“业务身份”勾选店长、师傅、推广经理，可兼任；扫个人推广码注册的客户会绑定推荐人。admin保留最高管理权限。'],['stores','第三步：绑定业务','店长选择为门店负责人；师傅需建立师傅档案，工作人员按所负责业务进入对应页面。'],['users','第四步：账号管理','离职或暂停使用时停用账号；恢复后可以重新登录。基础账号的名称、手机号和角色保持原设置。']]},
   orders:{title:'订单服务与结算',steps:[['stores','第一步：确保地址可下单','门店已开通、社区已分配，即可接收客户订单。'],['orders','第二步：客户提交订单','客户选择服务社区及小区，填写楼栋、单元和房号，再提交问题。门店自动匹配。'],['orders','第三步：接单与派单','门店确认订单并安排师傅，师傅接单上门并提交服务内容与费用。'],['orders','第四步：客户确认与支付','客户确认服务单和金额后付款，门店完成复核。'],['warranties','第五步：完工与售后','核对服务结果和保修凭证，按实际问题处理售后。'],['payroll','第六步：工资与提现','核对工资和资金流水，再审核提现；实际收付款以支付结果为准。']]}
 };
@@ -1766,3 +1723,5 @@ setupWorkflowGuide();
     renderAuthGate(error.message || "登录已失效,请重新登录");
   }
 })();
+
+document.addEventListener('input',e=>{if(e.target.matches('[data-coverage-filter]')){const q=e.target.value.trim();for(const label of e.target.closest('form').querySelectorAll('[data-scope-label]'))label.hidden=!label.textContent.includes(q);}});

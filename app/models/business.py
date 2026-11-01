@@ -121,6 +121,7 @@ class DomesticWorker(Base):
 
 
 class DomesticDemand(Base):
+    address_book_id: Mapped[int | None] = mapped_column(ForeignKey("store_addresses.id"), nullable=True)
     __tablename__ = "domestic_demands"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)

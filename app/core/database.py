@@ -61,6 +61,12 @@ async def init_db():
         Withdrawal,
     )
 
+    from ..models.store import AddressCoverage  # noqa: F401
+    if engine.dialect.name == "sqlite":
+        import asyncio
+        from .catalog_migration import migrate_catalog
+        await asyncio.to_thread(migrate_catalog, engine.url.database)
+
     # Never reuse archived business IDs in newly created SQLite databases.
     if engine.dialect.name == "sqlite":
         for table in Base.metadata.tables.values():
@@ -96,6 +102,8 @@ async def init_db():
             ("orders", "building", "VARCHAR(80)"),
             ("orders", "unit", "VARCHAR(80)"),
             ("orders", "room", "VARCHAR(80)"),
+            ("customer_packages", "address_book_id", "INTEGER REFERENCES store_addresses(id)"),
+            ("domestic_demands", "address_book_id", "INTEGER REFERENCES store_addresses(id)"),
             ("orders", "address_book_id", "INTEGER REFERENCES store_addresses(id)"),
             ("orders", "address_code_snapshot", "VARCHAR(40)"),
             ("orders", "address_owner_user_id", "INTEGER REFERENCES users(id)"),

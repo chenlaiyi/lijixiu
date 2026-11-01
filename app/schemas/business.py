@@ -164,6 +164,7 @@ class DomesticWorkerOut(DomesticWorkerCreate):
 
 
 class DomesticDemandCreate(BaseModel):
+    address_book_id: int | None = None
     customer_id: int
     created_by_user_id: int | None = None
     proxy_creator_id: int | None = None

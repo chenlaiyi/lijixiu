@@ -14,7 +14,8 @@ App({
     navMetrics: null,
   },
 
-  onLaunch() {
+  onLaunch(options) {
+    this.captureReferral(options);
     // 尝试恢复登录态
     const token = wx.getStorageSync('token');
     const cachedUser = wx.getStorageSync('userInfo');
@@ -26,6 +27,14 @@ App({
     }
   },
 
+  onShow(options){this.captureReferral(options);},
+  captureReferral(options={}){
+    const query=options.query || {};
+    let scene=query.scene || '';
+    try{scene=decodeURIComponent(scene);}catch(e){}
+    const code=query.ref || scene;
+    if(/^[A-Za-z0-9_-]{8,32}$/.test(code)){wx.setStorageSync('pendingReferralCode',code);if(wx.getStorageSync('token'))require('./utils/referral').bindPending();}
+  },
   /**
    * 登录：wx.login → 后端换取 token
    */

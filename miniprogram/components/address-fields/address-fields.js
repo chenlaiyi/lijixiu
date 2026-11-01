@@ -12,7 +12,7 @@ function choices(areas) {
 Component({
   properties: { value: { type: Object, value: {}, observer() { this.syncValue(); } } },
   data: { regions: [], regionIndex: -1, neighborhoods: [], areaIndex: -1,
-    buildings: [], units: [], rooms: [], building: '', unit: '', room: '', aliases: '',
+    addressOptions: [], buildings: [], units: [], rooms: [], building: '', unit: '', room: '', aliases: '',
     regionText: '', estate: '', doorNumber: '', loading: true, error: '' },
   lifetimes: { attached() { this.load(); } },
   methods: {
@@ -28,7 +28,7 @@ Component({
       const v = this.properties.value || {};
       this.selectedAddress = null;
       const area = this.areas.find(item => Number(item.id) === Number(v.service_area_id));
-      if (!area) return;
+      if (!area) { this.selectedArea=null;this.clearHierarchy();this.setData({regionText:'',regionIndex:-1,estate:'',areaIndex:-1});return; }
       const text = regionLabel(area);
       this.selectedArea = area;
       const neighborhoods = choices(this.areas.filter(item => regionLabel(item) === text));
@@ -39,6 +39,7 @@ Component({
         estate: v.estate || '', doorNumber: v.door_number || '',
         areaIndex: neighborhoods.findIndex(item => item.area.id === area.id && item.label === v.estate) });
       this.refreshHierarchy();
+      if(selected && (v.address_book_id!==selected.id || v.store_id!==selected.store_id || v.region_id!==selected.region_id))this.emit();
     },
     selectRegion(e) {
       const i = Number(e.detail.value), text = this.data.regions[i];
@@ -51,9 +52,12 @@ Component({
     selectNeighborhood(e) {
       const i = Number(e.detail.value), item = this.data.neighborhoods[i];
       if (!item) return;
+      this.clearHierarchy();
       this.selectedArea = item.area;
-      this.setData({ areaIndex: i, estate: item.label });
-      this.emit();
+      const row=item.address;
+      this.selectedAddress=row || null;
+      this.setData({areaIndex:i,estate:row?row.estate:item.label,building:row?row.building:'',unit:row?row.unit:'',room:row?row.room:'',doorNumber:row?row.door_number:'',aliases:row?row.aliases:''});
+      this.refreshHierarchy();this.emit();
     },
     inputEstate(e) {
       const estate = e.detail.value;
@@ -67,13 +71,13 @@ Component({
     },
     clearHierarchy() {
       this.selectedAddress = null;
-      this.setData({ building: '', unit: '', room: '', doorNumber: '', aliases: '', buildings: [], units: [], rooms: [] });
+      this.setData({ building: '', unit: '', room: '', doorNumber: '', aliases: '', addressOptions: [], buildings: [], units: [], rooms: [] });
     },
     refreshHierarchy() {
       const rows = ((this.selectedArea || {}).addresses || []).filter(row => row.estate === this.data.estate);
       const unique = key => [...new Set(rows.filter(row => key === 'building' || row.building === this.data.building)
         .filter(row => key !== 'room' || row.unit === this.data.unit).map(row => row[key]))];
-      this.setData({ buildings: unique('building'), units: unique('unit'), rooms: unique('room') });
+      this.setData({ buildings: unique('building'), units: unique('unit'), rooms: unique('room'), addressOptions:rows.filter(row=>!this.data.building || row.building===this.data.building).filter(row=>!this.data.unit || row.unit===this.data.unit).map(row=>({label:row.door_number || [row.building,row.unit,row.room].join(' '),row})) });
     },
     selectBuilding(e) {
       this.selectedAddress = null;
@@ -87,10 +91,17 @@ Component({
     },
     selectRoom(e) {
       const room = this.data.rooms[Number(e.detail.value)];
-      const row = ((this.selectedArea || {}).addresses || []).find(item => item.estate === this.data.estate && item.building === this.data.building && item.unit === this.data.unit && item.room === room);
+      const matches = ((this.selectedArea || {}).addresses || []).filter(item => item.estate === this.data.estate && item.building === this.data.building && item.unit === this.data.unit && item.room === room);
+      const row=matches.length===1?matches[0]:null;
       this.selectedAddress = row || null;
       this.setData({ room, doorNumber: row ? row.door_number : '', aliases: row ? row.aliases : '' });
       this.emit();
+    },
+    selectAddress(e){
+      const option=this.data.addressOptions[Number(e.detail.value)];if(!option)return;
+      const row=option.row;this.selectedAddress=row;
+      this.setData({building:row.building,unit:row.unit,room:row.room,doorNumber:row.door_number,aliases:row.aliases});
+      this.refreshHierarchy();this.emit();
     },
     inputDoor(e) { this.selectedAddress = null; this.setData({ doorNumber: e.detail.value, aliases: '' }); this.emit(); },
     emit() {
@@ -99,8 +110,8 @@ Component({
         address_book_id: this.selectedAddress ? this.selectedAddress.id : null,
         building: this.data.building, unit: this.data.unit, room: this.data.room,
         service_area_id: area ? area.id : null, estate: this.data.estate.trim(),
-        door_number: this.data.doorNumber.trim(), region_id: area ? area.region_id : null,
-        store_id: area ? area.store_id : null, store_name: area ? area.store_name : '',
+        door_number: this.data.doorNumber.trim(), region_id: this.selectedAddress ? this.selectedAddress.region_id : null,
+        store_id: this.selectedAddress ? this.selectedAddress.store_id : null, store_name: this.selectedAddress ? this.selectedAddress.store_name : '',
         city: area ? area.city : '', district: area ? area.district : '',
         address: area ? [area.city, area.district, this.data.estate.trim(), this.data.doorNumber.trim()].join(' ') : '',
       });

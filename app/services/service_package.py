@@ -34,13 +34,18 @@ async def buy_package(db: AsyncSession, data: CustomerPackageCreate) -> Customer
     if not package or not package.enabled:
         raise ValueError("Service package is not available")
 
+    from ..models.store import StoreAddress
+    from .address_catalog import resolve_address
+    address=await db.get(StoreAddress,data.address_book_id) if data.address_book_id else None
+    _,_,store=await resolve_address(db,address)
     end_date = data.start_date.replace(year=data.start_date.year + package.service_years)
     total_times = package.service_years * package.annual_times * package.device_count
     customer_package = CustomerPackage(
         package_id=data.package_id,
         user_id=data.user_id,
-        store_id=data.store_id,
-        address=data.address,
+        address_book_id=address.id,
+        store_id=store.id,
+        address=address.full_address,
         contact_phone=data.contact_phone,
         start_date=data.start_date,
         end_date=end_date,

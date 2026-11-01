@@ -62,19 +62,9 @@ async def _attach_address(db, address):
 
 
 async def _resolve_customer_address(db, data, user_id):
-    from .store import create_address as create_standard
-    from .service_area import resolve_open_area
-    from ..schemas.store import StoreAddressCreate
-    if data.service_area_id and not data.service_address_id:
-        area, assignment, store = await resolve_open_area(db, data.service_area_id)
-        return await create_standard(db, StoreAddressCreate(
-            service_area_id=area.id, estate=data.estate or '', door_number=data.door_number,
-            created_by_user_id=user_id, store_id=store.id,
-        ), customer_address=True)
+    from .address_catalog import resolve_address
     standard = await db.get(StoreAddress, data.service_address_id) if data.service_address_id else None
-    if not standard or not standard.enabled or not standard.full_address:
-        raise ValueError('请填写城市/区域、小区和门牌号')
-    await resolve_open_area(db, standard.service_area_id)
+    await resolve_address(db, standard)
     return standard
 
 
@@ -404,7 +394,11 @@ async def create_demand(db: AsyncSession, data: DomesticDemandCreate) -> Domesti
     customer = await db.get(User, data.customer_id)
     if not customer:
         raise ValueError("Customer not found")
+    from .address_catalog import resolve_address
+    standard=await db.get(StoreAddress,data.address_book_id) if data.address_book_id else None
+    _,_,store=await resolve_address(db,standard)
     payload = data.model_dump()
+    payload.update(address=standard.full_address,region_id=store.region_id,store_id=store.id)
     payload["created_by_user_id"] = data.created_by_user_id or data.customer_id
     payload["channel_manager_id_snapshot"] = customer.promotion_manager_id
     if data.is_proxy_order:
@@ -500,6 +494,7 @@ async def create_contract(
         stages = [PaymentStageInput(stage_name="全款", amount=total, due_date=data.service_start)]
 
     order = Order(
+        address_book_id=demand.address_book_id,
         customer_id=demand.customer_id,
         created_by_user_id=data.created_by_user_id,
         proxy_creator_id=demand.proxy_creator_id,

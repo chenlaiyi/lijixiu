@@ -58,10 +58,7 @@ async def bulk_assign(
     db: AsyncSession = Depends(get_db),
     _admin: User = Depends(require_admin),  # 2026-10-05
 ):
-    try:
-        return await service.bulk_assign_service_areas(db, data.model_copy(update={"operator_user_id": _admin.id}))
-    except ValueError as exc:
-        raise HTTPException(400, str(exc)) from exc
+    raise HTTPException(400, "请在门店服务地址范围中分配地址")
 
 
 @router.post("/assignments/bulk-clear", response_model=BulkAssignmentResult)
@@ -70,7 +67,7 @@ async def bulk_clear(
     db: AsyncSession = Depends(get_db),
     _admin: User = Depends(require_admin),  # 2026-10-05
 ):
-    return await service.bulk_clear_service_areas(db, data.model_copy(update={"operator_user_id": _admin.id}))
+    raise HTTPException(400, "请在门店服务地址范围中移除地址")
 
 
 @router.get("/assignment-logs", response_model=list[AssignmentLogOut])
@@ -98,17 +95,5 @@ async def public_options(db: AsyncSession = Depends(get_db)):
 
 @router.get("/address-catalog")
 async def address_catalog(db: AsyncSession = Depends(get_db)):
-    from sqlalchemy import select
-    from ..models.store import StoreAddress
-    areas = await service.customer_options(db, include_order_estates=False)
-    rows = (await db.execute(select(StoreAddress).where(StoreAddress.enabled == True,
-        StoreAddress.catalog_published == True))).scalars().all()
-    fields = {"id", "service_area_id", "name", "city", "district", "street", "estates"}
-    result = []
-    for area in areas:
-        item = {key: value for key, value in area.items() if key in fields}
-        item["addresses"] = [dict(id=row.id, estate=row.estate, building=row.building,
-            unit=row.unit, room=row.room, door_number=row.door_number or "", aliases=row.aliases or "")
-            for row in rows if row.service_area_id == area["id"]]
-        result.append(item)
-    return result
+    from ..services.address_catalog import public_catalog
+    return await public_catalog(db)

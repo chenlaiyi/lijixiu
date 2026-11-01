@@ -1,0 +1,20 @@
+const vm=require('vm'),fs=require('fs'),assert=require('assert');
+const storage={};let calls=0,app;
+const wx={getStorageSync:k=>storage[k],setStorageSync:(k,v)=>storage[k]=v,removeStorageSync:k=>delete storage[k]};
+let fail=false;
+const api={post:async()=>{calls++;if(fail)throw Error('offline');return {bound:true};}};
+const moduleObject={exports:{}};
+vm.runInNewContext(fs.readFileSync('miniprogram/utils/referral.js','utf8'),{module:moduleObject,require:()=>api,wx});
+const referral=moduleObject.exports;
+vm.runInNewContext(fs.readFileSync('miniprogram/app.js','utf8'),{App:d=>app=d,require:n=>n==='./utils/referral'?referral:{},wx});
+(async()=>{
+app.captureReferral({query:{scene:'TEST_CODE_123'}});assert.strictEqual(storage.pendingReferralCode,'TEST_CODE_123');assert.strictEqual(calls,0);
+storage.token='test';await referral.bindPending();assert.strictEqual(calls,1);assert.strictEqual(storage.pendingReferralCode,undefined);
+app.captureReferral({query:{ref:'bad value'}});assert.strictEqual(storage.pendingReferralCode,undefined);
+fail=true;storage.pendingReferralCode='TEST_CODE_123';await referral.bindPending();assert.strictEqual(storage.pendingReferralCode,'TEST_CODE_123');
+fail=false;await referral.bindPending();assert.strictEqual(storage.pendingReferralCode,undefined);
+let page,copied,previewed;
+vm.runInNewContext(fs.readFileSync('miniprogram/pages/customer/profile/profile.js','utf8'),{Page:d=>page=d,require:n=>n.endsWith('/share')?{create:()=>({})}:n.endsWith('/api')?{get:async()=>({code:'MYCODE_123',qr_image_url:'/api/v1/referrals/MYCODE_123/qrcode.png'})}:{},getApp:()=>({globalData:{baseURL:'https://x.iddg.cn'}}),wx:{...wx,setClipboardData:o=>copied=o.data,previewImage:o=>previewed=o.current}});
+page.setData=v=>Object.assign(page.data,v);await page.loadReferral();page.copyReferral();page.showReferralQr();assert.strictEqual(copied,'MYCODE_123');assert(previewed.endsWith('/MYCODE_123/qrcode.png'));
+console.log('PASS referral scan/link capture, deferred login binding, retry preservation, profile display/copy/QR actions');
+})().catch(e=>{console.error(e);process.exitCode=1;});

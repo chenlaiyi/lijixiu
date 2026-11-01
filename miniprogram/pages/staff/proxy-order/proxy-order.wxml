@@ -184,6 +184,7 @@
     <text wx:if="{{optionsFailed}}" class="field-tip warning">暂无已开通标准地址，请先由平台补充地址库</text>
   </view>
 
+  <button id="submit-proxy-inline" class="proxy-inline-submit" bindtap="submitOrder" loading="{{submitting}}" disabled="{{submitting}}">提交订单</button>
   <view class="proxy-submit-bar">
     <view class="submit-copy">
       <text class="submit-label">{{categoryName}}</text>

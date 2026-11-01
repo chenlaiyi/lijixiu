@@ -476,24 +476,5 @@ async def resolve_open_area(db, area_id):
 
 
 async def customer_options(db, *, include_order_estates=True):
-    from ..models.store import StoreAddress
-    from ..models.order import Order
-    areas = (await db.execute(select(ServiceArea).join(ServiceAreaAssignment,
-        ServiceAreaAssignment.service_area_id == ServiceArea.id).where(ServiceArea.active == True))).scalars().all()
-    result = []
-    for area in areas:
-        try:
-            _, assignment, store = await resolve_open_area(db, area.id)
-        except ValueError:
-            continue
-        estates = sorted(set((await db.execute(select(StoreAddress.estate).where(
-            StoreAddress.service_area_id == area.id, StoreAddress.enabled == True,
-            StoreAddress.estate != ""))).scalars().all()))
-        ordered_estates = (await db.execute(select(Order.estate).where(
-            Order.service_area_id == area.id, Order.estate.is_not(None), Order.estate != ""))).scalars().all() if include_order_estates else []
-        estates = sorted(set(estates + list(ordered_estates) + ([area.name] if area.area_type == "estate" else [])))
-        result.append(dict(id=area.id, service_area_id=area.id, name=area.name,
-            label=f"{area.district} / {area.street} / {area.name}",
-            province=area.province, city=area.city, district=area.district, street=area.street,
-            store_id=store.id, store_name=store.name, region_id=store.region_id, estates=estates))
-    return result
+    from .address_catalog import public_catalog
+    return await public_catalog(db)

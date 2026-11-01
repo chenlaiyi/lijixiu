@@ -27,6 +27,7 @@
     }
     const area = candidates[0].area;
     const row = (area.addresses || []).find(item => item.estate === estate && item.building === (data.building || '') && item.unit === (data.unit || '') && item.room === (data.room || '') && (!data.door_number || item.door_number === data.door_number));
+    if (!row) throw new Error('请从已开通门店的地址候选中选择完整门牌');
     const door = String(data.door_number || (row && row.door_number) || [data.building, data.unit, data.room && `${data.room}室`].filter(Boolean).join('')).trim();
     if (!door) throw new Error('请填写门牌号或选择楼栋、单元、房号');
     return { service_area_id: area.id, estate, door_number: door, building: data.building || '', unit: data.unit || '', room: data.room || '', address_book_id: row ? row.id : null, service_address_id: row ? row.id : null };

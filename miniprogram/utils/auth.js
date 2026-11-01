@@ -57,11 +57,12 @@ async function loginForReview(account, password, extra = {}) {
   return persistLogin(res);
 }
 
-function persistLogin(res) {
+async function persistLogin(res) {
   // 保存登录态
   wx.setStorageSync('token', res.token);
   wx.setStorageSync('userInfo', res.user);
   wx.removeStorageSync('reviewExperience');
+  await require('./referral').bindPending();
   return res.user;
 }
 

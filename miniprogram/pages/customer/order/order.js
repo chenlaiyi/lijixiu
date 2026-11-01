@@ -690,8 +690,8 @@ Page({
     if (!description.trim() && this.data.mediaList.length === 0) {
       validationErrors.description = '填描述或加素材';
     }
-    if (!this.data.serviceAreaId || !this.data.estate || !this.data.doorNumber) {
-      validationErrors.address = '请选择城市/区域和小区，填写门牌号';
+    if (!this.data.addressBookId || !this.data.serviceAreaId || !this.data.estate || !this.data.doorNumber) {
+      validationErrors.address = '请从已开通服务范围选择完整地址';
     }
     if (validationErrors.description || validationErrors.address) {
       this.setData({ validationErrors });

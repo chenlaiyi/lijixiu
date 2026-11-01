@@ -115,18 +115,11 @@ async def transition_status(
 async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
     payload = data.model_dump()
     payload.pop("respect_service_area", None)
-    controlled_sources = {
-        OrderSource.REPAIR,
-        OrderSource.PACKAGE,
-        OrderSource.AFTER_SALES,
-    }
-    service_address = None
-    if data.address_book_id or (data.source in controlled_sources and not data.service_area_id):
-        if not data.address_book_id:
-            raise ValueError("请选择地址库中的标准上门地址，联系电话不能代替地址归属")
-        service_address = await find_address(db, data.address_book_id)
-        if not service_address or not service_address.enabled or not service_address.full_address:
-            raise ValueError("所选标准地址无效或尚未开通服务")
+    if not data.address_book_id:
+        raise ValueError('请选择已开通门店服务范围中的标准地址')
+    service_address = await find_address(db, data.address_book_id)
+    from .address_catalog import resolve_address
+    matched_area, area_assignment, store = await resolve_address(db,service_address)
 
     customer = await db.get(User, data.customer_id)
     if customer:
@@ -144,57 +137,13 @@ async def create_order(db: AsyncSession, data: OrderCreate) -> Order:
         payload["risk_review_required"] = bool(
             payload["proxy_creator_id"] and payload["proxy_creator_id"] == data.customer_id
         )
-    matched_area = None
-    area_assignment = None
-    store = None
-    if data.service_area_id and not service_address:
-        matched_area, area_assignment, store = await resolve_open_area(db, data.service_area_id)
-        door = door_number(data.door_number, data.building, data.unit, data.room)
-        full_address = format_address(matched_area.city, matched_area.district, data.estate, door)
-        payload.update(estate=clean(data.estate), door_number=door,
-                       building=data.building, unit=data.unit, room=data.room)
-        payload.update(address=full_address, customer_address_snapshot=full_address,
-            region_id=store.region_id, store_id=store.id, address_book_id=None,
-            address_code_snapshot=matched_area.code, address_owner_user_id=store.manager_id,
-            channel_manager_id_snapshot=store.manager_id)
-    elif service_address:
-        matched_area = (
-            await db.get(ServiceArea, service_address.service_area_id)
-            if service_address.service_area_id else None
-        )
-        if not matched_area or not matched_area.active:
-            raise ValueError("标准地址对应的服务区域已停用")
-        area_assignment = (
-            await db.execute(
-                select(ServiceAreaAssignment).where(
-                    ServiceAreaAssignment.service_area_id == matched_area.id
-                )
-            )
-        ).scalar_one_or_none()
-        matched_area, area_assignment, store = await resolve_open_area(db, service_address.service_area_id)
-        door = door_number(service_address.door_number, service_address.building, service_address.unit, service_address.room)
-        normalized_address = format_address(matched_area.city, matched_area.district, service_address.estate, door)
-        payload.update({
-            "address": normalized_address,
-            "customer_address_snapshot": normalized_address,
-            "estate": service_address.estate, "door_number": door,
-            "building": service_address.building, "unit": service_address.unit, "room": service_address.room,
-            "region_id": store.region_id,
-            "store_id": store.id,
-            "address_code_snapshot": service_address.address_code,
-            "address_owner_user_id": service_address.business_owner_user_id,
-            "channel_manager_id_snapshot": (
-                service_address.business_owner_user_id
-                or (area_assignment.manager_id if area_assignment else None)
-            ),
-        })
-    else:
-        matched_area, area_assignment, matched_store = await match_service_area(db, data.address)
-        store = matched_store if data.respect_service_area else None
-        if store is None and data.store_id:
-            store = await db.get(Store, data.store_id)
-        if store is None:
-            store = await find_active_store_by_region(db, data.region_id)
+    door = door_number(service_address.door_number, service_address.building, service_address.unit, service_address.room)
+    normalized_address = format_address(matched_area.city,matched_area.district,service_address.estate,door)
+    payload.update(address=normalized_address,customer_address_snapshot=normalized_address,
+        estate=service_address.estate,door_number=door,building=service_address.building,
+        unit=service_address.unit,room=service_address.room,region_id=store.region_id,store_id=store.id,
+        address_code_snapshot=service_address.address_code,address_owner_user_id=store.manager_id,
+        channel_manager_id_snapshot=store.manager_id,service_area_manager_id=store.manager_id)
 
     if matched_area:
         payload["service_area_id"] = matched_area.id

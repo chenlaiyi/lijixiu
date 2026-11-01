@@ -1,4 +1,5 @@
 // pages/customer/profile/profile.js
+const api = require('../../../utils/api');
 const auth = require('../../../utils/auth');
 const share = require('../../../utils/share');
 const role = require('../../../utils/role');
@@ -82,10 +83,12 @@ function accountHint(businessRole) {
 
 Page({
   ...share.create({
-    title: '立即修｜我的',
+    title: '立即修｜我的推荐',
+    path() { return this.data.referral ? this.data.referral.share_path : '/pages/customer/home/home'; },
   }),
 
   data: {
+    referral:null, referralError:false, bindCode:"",
     ready: false,
     userInfo: null,
     userName: '未设置',
@@ -114,8 +117,14 @@ Page({
     accountHint: accountHint('customer'),
   },
 
+  async loadReferral(){try{const referral=await api.get('/api/v1/referrals/me');this.setData({referral,referralError:false});}catch(e){this.setData({referralError:true});}},
+  copyReferral(){if(this.data.referral)wx.setClipboardData({data:this.data.referral.code});},
+  showReferralQr(){if(this.data.referral){const url=`${getApp().globalData.baseURL}${this.data.referral.qr_image_url}`;wx.previewImage({urls:[url],current:url});}},
+  inputBindCode(e){this.setData({bindCode:e.detail.value});},
+  async bindReferral(){const code=this.data.bindCode.trim();if(!code)return;try{const result=await api.post('/api/v1/referrals/bind',{code});this.setData({bindCode:''});wx.showToast({title:result.bound?'推荐关系已绑定':'无法绑定，请核对推荐码',icon:'none'});}catch(e){}},
   onShow() {
     share.enable();
+    if(wx.getStorageSync('token'))this.loadReferral();
     const userInfo = wx.getStorageSync('userInfo');
     const businessRole = role.getBusinessRole(userInfo || {});
     const businessRoles = role.getBusinessRoles(userInfo || {});

@@ -36,6 +36,7 @@ class ServicePackageOut(BaseModel):
 
 
 class CustomerPackageCreate(BaseModel):
+    address_book_id: int | None = None
     package_id: int
     user_id: int
     store_id: int

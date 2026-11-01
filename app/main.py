@@ -121,6 +121,8 @@ if _ADMIN_DIR.exists():
 app.mount("/uploads", StaticFiles(directory=_UPLOAD_DIR), name="uploads")
 
 # 路由
+from .routers import address_catalog
+app.include_router(address_catalog.router)
 app.include_router(auth.router)
 app.include_router(business.router)
 app.include_router(user.router)
