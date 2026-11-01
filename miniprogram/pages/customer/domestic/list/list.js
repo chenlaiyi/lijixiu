@@ -25,7 +25,7 @@ Page({
       title: serviceType === 'maternity' ? '月嫂服务' : '保姆服务',
       subtitle: serviceType === 'maternity'
         ? '根据档期、经验和技能匹配合适人选'
-        : '住家、白班、钟点和长期服务均可发布',
+        : '住家、白班、钟点和长期服务均可预约',
     });
     wx.setNavigationBarTitle({ title: serviceType === 'maternity' ? '月嫂服务' : '保姆服务' });
     this.loadWorkers();

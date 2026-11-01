@@ -1,3 +1,5 @@
 {
-  "navigationBarTitleText": "发布家政需求"
+  "navigationBarTitleText": "家政服务预约",
+  "enableShareAppMessage": false,
+  "enableShareTimeline": false
 }
