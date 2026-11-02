@@ -22,8 +22,9 @@ Component({
    buildings:[],units:[],unitLabels:[],rooms:[],building:'',unit:'',room:'',doorNumber:'',aliases:'',
    addressOptions:[],loading:true,error:''},
  lifetimes:{attached(){this.load();}},
+ pageLifetimes:{show(){this.load();}},
  methods:{
-  async load(){try{this.areas=await api.get('/api/v1/service-areas/address-catalog');this.setData({regions:sorted(this.areas.map(regionLabel)),loading:false,error:''});this.syncValue();}catch(e){this.setData({loading:false,error:'地址加载失败，请重试'});}},
+  async load(){if(this.loadingRequest)return;this.loadingRequest=true;this.setData({loading:true,error:''});try{this.areas=await api.get('/api/v1/service-areas/address-catalog');this.setData({regions:sorted(this.areas.map(regionLabel)),loading:false,error:''});this.syncValue();}catch(e){this.setData({loading:false,error:'地址加载失败，请重试'});}finally{this.loadingRequest=false;}},
   syncValue(){
    if(!this.areas)return;
    const v=this.properties.value || {},area=this.areas.find(a=>Number(a.id)===Number(v.service_area_id));

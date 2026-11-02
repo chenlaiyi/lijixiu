@@ -18,5 +18,5 @@
  <text class="label">确认服务地址</text><view class="field">{{doorNumber || '请从候选逐级选择完整地址'}}</view>
  <text wx:if="{{loading}}" class="tip">地址加载中</text>
  <text wx:if="{{!loading && !regions.length && !error}}" class="tip">暂无已分配给开通门店的服务地址</text>
- <button wx:if="{{error}}" bindtap="load">{{error}}</button>
+ <button wx:if="{{!loading}}" bindtap="load">{{error || '刷新可选服务地址'}}</button>
 </view>
