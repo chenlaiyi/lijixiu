@@ -81,6 +81,7 @@ async def init_db():
             ('service_areas', 'estate_aliases', "TEXT DEFAULT ''"),
             ('service_areas', 'business_circle', "VARCHAR(160) DEFAULT ''"),
             ('address_coverage', 'entrance_name', 'VARCHAR(160)'),
+            ('address_coverage', 'property_type', 'VARCHAR(30)'),
             ('store_addresses', 'entrance_type', "VARCHAR(30) DEFAULT '普通单元'"),
             ('store_addresses', 'entrance_name', "VARCHAR(160) DEFAULT ''"),
             ('store_addresses', 'road_number', "VARCHAR(160) DEFAULT ''"),

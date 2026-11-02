@@ -646,8 +646,8 @@ function addressEditor(areas, row = {}) {
   const field = (key, label, placeholder = '') => `<div class="field"><label>${label}</label><input name="${key}" value="${escapeHtml(row[key] || '')}" placeholder="${escapeHtml(placeholder)}" maxlength="${key === 'door_number' ? 240 : 160}"></div>`;
   const districts=(state.cache.catalogRegions || []).filter(r=>r.level===2).map(r=>({id:r.id,label:`${(state.cache.catalogRegions || []).find(c=>c.id===r.parent_id)?.name || ''}/${r.name}`}));
   return `<input type="hidden" name="id" value="${row.id || ''}"><div class="field"><label>城市/区县</label><select name="region_id" required><option value="">请选择区县</option>${districts.map(r=>`<option value="${r.id}" ${r.id===row.region_id?'selected':''}>${escapeHtml(r.label)}</option>`).join('')}</select><small>地址先入总库，再分配给门店。</small></div>` +
-    field('estate','小区 / 分期（可粘贴贝壳名称）','未来海岸蓝月湾一期') +
-    field('building','楼栋','S5号楼') + `<div class="field"><label>入口类型</label><select name="entrance_type">${['普通单元','道路门牌','待确认'].map(t=>`<option ${t===(row.entrance_type || '普通单元')?'selected':''}>${t}</option>`).join('')}</select></div>` + field('unit','普通单元（无则留空）','1单元') + field('road_number','道路门牌（道路门牌类型必填）','嵩屿北五里28号') + field('room','房号','2605') +
+    field('estate','小区 / 分期（可粘贴贝壳名称）','未来海岸蓝月湾一期') + `<div class="field"><label>地址类别</label><select name="property_type">${['住宅','商业','车位'].map(t=>`<option ${t===(row.property_type || '住宅')?'selected':''}>${t}</option>`).join('')}</select></div>` +
+    field('building','楼栋','S5号楼') + `<div class="field"><label>入口类型</label><select name="entrance_type">${['普通单元','道路门牌','待确认'].map(t=>`<option ${t===(row.entrance_type || '普通单元')?'selected':''}>${t}</option>`).join('')}</select></div>` + field('unit','普通单元（无则留空）','1单元') + field('road_number','道路门牌（道路门牌类型必填）','嵩屿北五里28号') + field('room','房号／车位编号','2605') +
     field('door_number','标准门牌写法（可选，默认由楼栋单元房号组成）','嵩屿北五里27号2605室') +
     `<div class="field"><label>同址别名（一行一种写法，不新增实体地址）</label><textarea name="aliases" maxlength="4000" placeholder="厦门市海沧区蓝月湾一期S5栋2605室">${escapeHtml(row.aliases || '')}</textarea></div><div class="field"><label>内部备注（不向游客公开）</label><textarea name="detail_hint" maxlength="300">${escapeHtml(row.detail_hint || '')}</textarea></div>` +
     field('source_name','来源名称','贝壳 / 人工核验') + field('source_ref','来源小区编号或链接（选填）') + `<div class="field"><label>核对状态（待确认地址不向客户开放）</label><select name="review_required"><option value="1" ${row.review_required?'selected':''}>待确认，暂不开放</option><option value="0" ${!row.review_required?'selected':''}>允许按门店服务范围开放</option></select></div><div class="field"><label>地址状态</label><select name="catalog_enabled"><option value="1" ${row.enabled!==false?'selected':''}>有效</option><option value="0" ${row.enabled===false?'selected':''}>停用</option></select></div>`;
@@ -725,36 +725,57 @@ async function loadRegions() {
 
   els.content.innerHTML=section('城市区域列表','统一管理城市及其所属区县',regionBody)+
     section('城市区域地址库','全系统唯一地址源；先录入或导入，再分配门店。别名共用同一地址编号，备注仅内部可见。',
-      `<form class="form-grid" data-form="create-store-address">${addressEditor([])}<button class="btn primary" type="submit">新增地址</button></form>
-      <div class="toolbar"><input id="catalog-query" placeholder="搜索城市、区县、小区、门牌或别名"><button class="btn" data-action="catalog-search">查询</button><button class="btn primary" data-action="catalog-file">导入地址库（文件）</button><button class="btn" data-action="catalog-template">下载CSV模板</button><button class="btn" data-action="catalog-import">粘贴简易地址</button></div><div id="catalog-table"></div>`);
+      `<div class="toolbar"><button class="btn primary" data-action="catalog-add-global">新增地址</button><label><input type="checkbox" id="catalog-show-disabled" ${state.cache.catalogShowDisabled?'checked':''}> 显示已停用地址</label></div>
+      <div class="toolbar"><input id="catalog-query" value="${escapeHtml(state.cache.catalogQuery || '')}" placeholder="搜索城市、区县、小区、楼栋、入口或房号"><button class="btn" data-action="catalog-search">查询</button><button class="btn primary" data-action="catalog-file">导入地址库（文件）</button><button class="btn" data-action="catalog-template">下载CSV模板</button><button class="btn" data-action="catalog-import">粘贴简易地址</button></div><div id="catalog-table"></div>`);
   renderCatalogTable(addresses);
   updateRegionChoices(false);
 }
 
+function catalogStatus(row){return !row.enabled?'已停用':row.review_required?'待确认，暂不可下单':'有效';}
 function renderCatalogTable(rows){
- state.cache.catalogFiltered=rows;const page=Math.max(0,Math.min(state.cache.catalogPage || 0,Math.ceil(rows.length/100)-1));state.cache.catalogPage=page;
- document.querySelector('#catalog-table').innerHTML=`<p>共 ${rows.length} 条；第 ${page+1} / ${Math.max(1,Math.ceil(rows.length/100))} 页 <button class="btn" data-action="catalog-prev">上一页</button><button class="btn" data-action="catalog-next">下一页</button></p>`+table([
- {label:'城市/区县',render:r=>escapeHtml(`${r.city}/${r.district}`)}, {label:'小区',key:'estate'},
- {label:'小区编号',key:'community_code'}, {label:'楼栋 / 入口 / 房号',render:r=>escapeHtml([r.building,r.entrance_name || r.unit,r.room].filter(Boolean).join(' / '))},
- {label:'标准门牌',key:'door_number'},{label:'同址别名',key:'aliases'},{label:'内部备注',key:'detail_hint'},
- {label:'类型 / 状态',render:r=>escapeHtml(`${r.property_type || '住宅'} / ${!r.enabled?'已停用':r.review_required?'待确认':'有效'}`)},
- {label:'操作',render:r=>actionButton('修改','edit-store-address',{id:r.id})+(r.enabled?actionButton('删除','delete-store-address',{id:r.id}):'')}],rows.slice(page*100,page*100+100),'暂无地址');
+ const q=(state.cache.catalogQuery || '').toLowerCase();
+ const shown=rows.filter(r=>(state.cache.catalogShowDisabled || r.enabled) && (!q || [r.city,r.district,r.estate,r.community_code,r.property_type,r.building,r.entrance_name,r.room,r.door_number,r.aliases,r.search_aliases].join(' ').toLowerCase().includes(q)));
+ const tree=AddressTree.group(shown);state.cache.catalogNodes=new Map();state.cache.catalogLeafPages=state.cache.catalogLeafPages || {};state.cache.catalogOpen=state.cache.catalogOpen || new Set();
+ const detail=(key,title,body,leaf=false)=>{const open=(q && !(state.cache.catalogNodes.get(key)?.searchText || '').toLowerCase().includes(q)) || state.cache.catalogOpen.has(key);return `<details class="address-tree-node" data-catalog-node="${escapeHtml(key)}" ${leaf?'data-catalog-leaf="1"':''} ${open?'open':''}><summary>${title}</summary>${leaf?`<div data-catalog-leaf-body>${open?catalogLeafTable(key):''}</div>`:body}</details>`;};
+ const body=tree.map(e=>{
+  state.cache.catalogNodes.set(e.key,{rows:e.rows,searchText:[e.name,e.city,e.district,e.code].join(' '),seed:{region_id:e.rows[0].region_id,estate:e.name}});
+  const categories=e.categories.map(c=>{
+   const ck=e.key+'|'+c.type;state.cache.catalogNodes.set(ck,{rows:c.rows,searchText:[e.name,e.city,e.district,e.code,c.type].join(' '),seed:{region_id:e.rows[0].region_id,estate:e.name,property_type:c.type}});
+   const groups=c.groups.map(g=>{const first=g.rows[0];state.cache.catalogNodes.set(g.key,{rows:g.rows,searchText:[e.name,e.city,e.district,e.code,c.type,g.building,g.entrance].join(' '),seed:{region_id:first.region_id,estate:e.name,property_type:c.type,building:g.building,unit:g.entrance===null?'':first.unit,road_number:first.road_number,entrance_type:first.entrance_type,review_required:first.review_required}});
+    return detail(g.key,`<span>${escapeHtml([g.building,g.entrance].filter(Boolean).join(' / '))}</span><small>${g.rows.length}个门牌</small>${actionButton('添加门牌','catalog-add-node',{key:g.key})}`,'',true);}).join('');
+   return detail(ck,`<span>${c.type}</span><small>${c.rows.length}条${c.rows.some(r=>r.review_required)?' · 含待确认地址':''}</small>${actionButton('添加地址','catalog-add-node',{key:ck})}`,groups || '<p class="tree-empty">暂无此类地址，可添加或导入。</p>');
+  }).join('');
+  return detail(e.key,`<strong>${escapeHtml(e.name)}整小区</strong><small>${escapeHtml(e.city+'/'+e.district)} · ${e.rows.length}条${e.code?' · 编号 '+escapeHtml(e.code):''}</small>${actionButton('添加地址','catalog-add-node',{key:e.key})}`,categories);
+ }).join('');
+ document.querySelector('#catalog-table').innerHTML=`<p class="tree-hint">${tree.length}个小区，${shown.length}条地址。点击小区 → 类别 → 楼栋／入口后查看门牌。${q?'当前为关键词匹配结果，清空搜索恢复全部。':''}停用仅停止新下单，历史订单保留。</p>`+(body || '<p class="tree-empty">暂无匹配地址</p>');
+}
+function catalogLeafTable(key){
+ const node=state.cache.catalogNodes.get(key);if(!node)return '';
+ const page=Math.max(0,Math.min(state.cache.catalogLeafPages[key] || 0,Math.ceil(node.rows.length/50)-1));state.cache.catalogLeafPages[key]=page;
+ return `<p>第 ${page+1} / ${Math.max(1,Math.ceil(node.rows.length/50))} 页 ${actionButton('上一页','catalog-leaf-prev',{key})}${actionButton('下一页','catalog-leaf-next',{key})}</p>`+table([
+ {label:'单元',render:r=>escapeHtml(r.entrance_type==='道路门牌'?'—':r.unit || '—')},{label:'房号／车位号',render:r=>escapeHtml(r.room || r.door_number)}, {label:'完整地址',key:'full_address'},
+ {label:'同址别名 / 备注',render:r=>escapeHtml([r.aliases,r.detail_hint].filter(Boolean).join('；'))},
+ {label:'状态',render:r=>escapeHtml(catalogStatus(r))},
+ {label:'操作',render:r=>actionButton(r.enabled?'修改':'修改／启用','edit-store-address',{id:r.id})+(r.enabled?actionButton('删除','delete-store-address',{id:r.id}):'')}],node.rows.slice(page*50,page*50+50),'暂无门牌');
 }
 async function renderCoverageSummary(id){
  const rules=await api(`/api/v1/address-catalog/coverage/${id}`);
- const rows=state.cache.storeAddresses.filter(r=>r.enabled && !r.review_required && rules.some(c=>c.service_area_id===r.service_area_id && (c.address_id?c.address_id===r.id:(c.building==null || c.building===r.building) && (c.entrance_name==null || c.entrance_name===(r.entrance_name || r.unit)))));
- document.querySelector('#coverage-summary').innerHTML=`<p>已分配 ${rules.length} 项范围，共 ${rows.length} 个有效地址。整小区及整栋楼会自动包含今后新增的下级地址。</p>`+table([{label:'城市/区县',render:r=>escapeHtml(`${r.city}/${r.district}`)},{label:'小区',key:'estate'},{label:'楼栋',key:'building'},{label:'门牌',key:'door_number'}],rows,'尚无服务地址');
+ const rows=state.cache.storeAddresses.filter(r=>r.enabled && rules.some(c=>AddressTree.matches(c,r)));
+ document.querySelector('#coverage-summary').innerHTML=`<p>已保存 ${rules.length}项范围，覆盖 ${rows.length}条地址，其中 ${rows.filter(r=>r.review_required).length}条待确认，暂不可下单。展开查看楼栋／入口；修改请使用上方按钮。</p>`+AddressTree.group(rows).map(e=>`<details class="address-tree-node"><summary><strong>${escapeHtml(e.name)}整小区</strong></summary>${e.categories.map(c=>`<details class="address-tree-node"><summary>${c.type}（${c.rows.length}条）</summary>${c.groups.map(g=>`<p class="tree-scope-line">${escapeHtml([g.building,g.entrance].filter(Boolean).join(' / '))} · ${g.rows.length}个门牌</p>`).join('') || '<p class="tree-empty">暂无服务地址</p>'}</details>`).join('')}</details>`).join('');
 }
-function coverageChoices(rows){
- const result=[];
- for(const row of rows.filter(r=>r.enabled && !r.review_required)){
-  const push=(value,label)=>{if(!result.some(x=>JSON.stringify(x.value)===JSON.stringify(value))) result.push({value,label});};
-  push({service_area_id:row.service_area_id,building:null,entrance_name:null,address_id:null},`${row.estate} / 整小区（含未来新增地址）`);
-  push({service_area_id:row.service_area_id,building:row.building,entrance_name:null,address_id:null},`${row.estate} / ${row.building || '无楼栋编号'} / 整栋（含未来新增地址）`);
-  if(row.entrance_name || row.unit)push({service_area_id:row.service_area_id,building:row.building,entrance_name:row.entrance_name || row.unit,address_id:null},`${row.estate} / ${row.building} / ${row.entrance_name || row.unit} / 整个入口`);
-  push({service_area_id:row.service_area_id,building:null,entrance_name:null,address_id:row.id},`${row.estate} / ${row.building} / ${row.entrance_name || row.unit} / ${row.room || row.door_number}`);
- }
- return result;
+function renderCoverageTree(){
+ const editor=state.cache.coverageEditor;if(!editor)return;
+ const check=(nodes,level,label)=>{const ids=nodes.map(n=>n.id).join(',');return `<input type="checkbox" data-scope-nodes="${ids}" data-scope-level="${level}" aria-label="${escapeHtml(label)}" ${!nodes.some(n=>!n.blocked)?'disabled':''}>`;};
+ const body=editor.tree.map(e=>`<details class="address-tree-node" data-tree-search="${escapeHtml(e.name+' '+e.city+' '+e.district)}"><summary>${check(e.categories.flatMap(c=>c.groups),'estate',e.name+'整小区')}<strong>${escapeHtml(e.name)}整小区</strong><small>${e.rows.length}条</small></summary>${e.categories.map(c=>`<details class="address-tree-node" data-tree-search="${c.type}"><summary>${check(c.groups,'category',e.name+c.type)}<span>${c.type}</span><small>${c.rows.length}条${c.rows.some(r=>r.review_required)?' · 含待确认地址，暂不可下单':''}</small></summary>${c.groups.map(n=>`<label class="tree-scope-line" data-tree-search="${escapeHtml(e.name+' '+c.type+' '+n.building+' '+n.entrance)}">${check([n],'group',[n.building,n.entrance].join(' / '))}<span>${escapeHtml([n.building,n.entrance].filter(Boolean).join(' / '))}整栋（含未来新增地址）</span><small>${n.rows.length}个门牌${n.partial?' · 原为部分门牌，未修改则保留':''}${n.blocked?' · 已由 '+escapeHtml(n.ownerNames)+'服务':''}</small></label>`).join('') || '<p class="tree-empty">暂无此类地址</p>'}</details>`).join('')}</details>`).join('');
+ document.querySelector('#coverage-tree').innerHTML=body || '<p class="tree-empty">本区县暂无有效地址，请先在总库添加或导入。</p>';
+ updateCoverageChecks();
+}
+function updateCoverageChecks(){
+ const editor=state.cache.coverageEditor;
+ for(const input of document.querySelectorAll('[data-scope-nodes]')){const nodes=input.dataset.scopeNodes.split(',').map(id=>editor.nodes.get(id)).filter(Boolean),full=nodes.filter(n=>n.selected).length;
+  input.checked=nodes.length>0 && full===nodes.length;input.indeterminate=!input.checked && (full>0 || nodes.some(n=>n.partial));}
+ const count=[...editor.nodes.values()].filter(n=>n.selected || n.partial).length;
+ document.querySelector('#coverage-draft-count').textContent=`当前草稿选中 ${count}个楼栋／入口，保存后生效。`;
 }
 
 async function loadWallet() {
@@ -1075,9 +1096,9 @@ async function handleForm(formEl) {
     els.modal.hidden=true; await loadStores();notify('门店已保存');return;
   }
   if (action === 'store-coverage') {
-    const choices=state.cache.coverageChoices || [];
-    const items=[...formEl.querySelectorAll('[name="scope"]:checked')].map(el=>choices[Number(el.value)].value);
-    await api(`/api/v1/address-catalog/coverage/${Number(data.id)}`,{method:'PUT',body:{items}});
+    if(formEl.dataset.saving==='1')return;formEl.dataset.saving='1';
+    const items=state.cache.coverageEditor.items();
+    try{await api(`/api/v1/address-catalog/coverage/${Number(data.id)}`,{method:'PUT',body:{items}});}finally{formEl.dataset.saving='0';}
     state.cache.selectedCoverageStore=Number(data.id);els.modal.hidden=true;await loadStores();notify('门店服务地址范围已保存');return;
   }
   if(action==='catalog-import'){
@@ -1089,7 +1110,7 @@ async function handleForm(formEl) {
     els.modal.hidden=true;await loadRegions();notify(`已导入 ${items.length} 个地址`);return;
   }
   if (action === 'create-store-address' || action === 'edit-store-address') {
-    const fields={region_id:Number(data.region_id),enabled:data.catalog_enabled!=='0',entrance_type:data.entrance_type || '普通单元',road_number:data.road_number || '',review_required:data.review_required==='1'};
+    const fields={region_id:Number(data.region_id),enabled:data.catalog_enabled!=='0',entrance_type:data.entrance_type || '普通单元',road_number:data.road_number || '',property_type:data.property_type || '住宅',review_required:data.review_required==='1'};
     for(const key of ['estate','building','unit','room','door_number','aliases','detail_hint','source_name','source_ref']) fields[key]=data[key] || '';
     await api(action==='edit-store-address'?`/api/v1/address-catalog/${Number(data.id)}`:'/api/v1/address-catalog',{method:action==='edit-store-address'?'PUT':'POST',body:fields});
     els.modal.hidden=true;await loadRegions();notify('地址已保存');return;
@@ -1153,7 +1174,13 @@ async function handleAction(button) {
   const action = button.dataset.action;
   const id = button.dataset.id;
 
-  if(action==='catalog-prev' || action==='catalog-next'){state.cache.catalogPage=(state.cache.catalogPage || 0)+(action==='catalog-next'?1:-1);renderCatalogTable(state.cache.catalogFiltered || state.cache.storeAddresses);return;}
+  if(action==='catalog-leaf-prev' || action==='catalog-leaf-next'){
+    const key=button.dataset.key;state.cache.catalogLeafPages[key]=(state.cache.catalogLeafPages[key] || 0)+(action==='catalog-leaf-next'?1:-1);button.closest('[data-catalog-leaf-body]').innerHTML=catalogLeafTable(key);return;
+  }
+  if(action==='catalog-add-global' || action==='catalog-add-node'){
+    const seed=action==='catalog-add-node'?(state.cache.catalogNodes.get(button.dataset.key)?.seed || {}):{};
+    showModal('新增总库地址',`<form class="form-grid" data-form="create-store-address">${addressEditor([],seed)}<button class="btn primary" type="submit">保存新增地址</button></form>`);return;
+  }
   if(action==='catalog-template'){
     const response=await fetch('/api/v1/address-catalog/template.csv',{headers:authHeaders()});if(!response.ok)throw new Error('模板下载失败');
     const url=URL.createObjectURL(await response.blob()),a=document.createElement('a');a.href=url;a.download='城市区域地址库模板.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return;
@@ -1179,8 +1206,7 @@ async function handleAction(button) {
     return;
   }
   if(action==='catalog-search'){
-    state.cache.catalogPage=0;const q=document.querySelector('#catalog-query').value.trim().toLowerCase();
-    renderCatalogTable(state.cache.storeAddresses.filter(r=>[r.city,r.district,r.estate,r.community_code,r.building,r.entrance_name,r.door_number,r.aliases,r.search_aliases].join(' ').toLowerCase().includes(q)));return;
+    state.cache.catalogQuery=document.querySelector('#catalog-query').value.trim();renderCatalogTable(state.cache.storeAddresses);return;
   }
   if(action==='catalog-import'){
     const regions=state.cache.catalogRegions;
@@ -1246,9 +1272,10 @@ async function handleAction(button) {
     const store=stores.find(r=>r.id===id);
     const district=regions.find(r=>r.id===store.region_id),city=regions.find(r=>r.id===district?.parent_id);
     const rows=state.cache.storeAddresses.filter(r=>r.city===city?.name && r.district===district?.name);
-    const choices=coverageChoices(rows);state.cache.coverageChoices=choices;
-    const assigned=await api(`/api/v1/address-catalog/coverage/${id}`);
-    showModal('分配门店服务地址范围',`<form data-form="store-coverage"><input type="hidden" name="id" value="${id}"><p>${escapeHtml(store.name)}：勾选添加、取消勾选移除，保存后生效。同一地址不能跨店重复分配。</p><input data-coverage-filter placeholder="搜索小区、楼栋、门牌"><div style="max-height:55vh;overflow:auto">${choices.map((c,i)=>`<label class="identity-choice" data-scope-label><input type="checkbox" name="scope" value="${i}" ${assigned.some(r=>r.service_area_id===c.value.service_area_id && (r.building || null)===(c.value.building || null) && (r.entrance_name || null)===(c.value.entrance_name || null) && (r.address_id || null)===(c.value.address_id || null))?'checked':''}>${escapeHtml(c.label)}</label>`).join('') || '<p>本区县还没有地址，请先到城市区域地址库录入或导入。</p>'}</div><button class="btn primary" type="submit">保存门店服务地址范围</button></form>`);return;
+    const scopes=await Promise.all(stores.map(async s=>({store:s,rules:await api(`/api/v1/address-catalog/coverage/${s.id}`)})));
+    const assigned=scopes.find(s=>s.store.id===id)?.rules || [],others=scopes.filter(s=>s.store.id!==id).flatMap(s=>s.rules.map(r=>({...r,store_name:s.store.name})));
+    state.cache.coverageEditor=AddressTree.editor(rows,assigned,others);
+    showModal('分配门店服务地址范围',`<form data-form="store-coverage"><input type="hidden" name="id" value="${id}"><p>${escapeHtml(store.name)}：展开小区 → 住宅／商业／车位 → 楼栋／入口进行勾选；不再逐户勾选。</p><p class="tree-hint">新分配的小区默认勾选住宅、商业，车位默认不勾选；已保存范围按实际回显。其他门店已覆盖的整栋不可重复分配。待确认地址即使分配也暂不可下单。</p><input data-coverage-filter placeholder="搜索小区、类别、楼栋、道路门牌"><p id="coverage-draft-count"></p><div id="coverage-tree" class="coverage-tree-scroll"></div><button class="btn primary" type="submit">保存门店服务地址范围</button></form>`);renderCoverageTree();return;
   }
   if (action === 'edit-store') {
     const {stores,regions,users,repairers}=state.cache.storeForm;
@@ -1751,8 +1778,30 @@ setupWorkflowGuide();
   }
 })();
 
-document.addEventListener('input',e=>{if(e.target.matches('[data-coverage-filter]')){const q=e.target.value.trim();for(const label of e.target.closest('form').querySelectorAll('[data-scope-label]'))label.hidden=!label.textContent.includes(q);}});
+
 
 document.addEventListener('change',e=>{if(e.target.id==='catalog-file-input'){state.cache.catalogFile=null;state.cache.catalogPreview=null;document.querySelector('[data-action="catalog-apply-file"]').disabled=true;document.querySelector('#catalog-import-result').textContent='文件已选择，请先预览校验';}});
 
 els.modal.addEventListener('click',async event=>{const button=event.target.closest('[data-action]');if(!button || button.disabled)return;try{await handleAction(button);}catch(error){notify(error.message);}});
+
+document.addEventListener('toggle',event=>{
+ const detail=event.target;if(!detail.isConnected || !detail.matches('details[data-catalog-node]'))return;
+ state.cache.catalogOpen=state.cache.catalogOpen || new Set();const key=detail.dataset.catalogNode;
+ if(detail.open){state.cache.catalogOpen.add(key);if(detail.dataset.catalogLeaf)detail.querySelector('[data-catalog-leaf-body]').innerHTML=catalogLeafTable(key);}else state.cache.catalogOpen.delete(key);
+},true);
+document.addEventListener('change',event=>{
+ const input=event.target;
+ if(input.id==='catalog-show-disabled'){state.cache.catalogShowDisabled=input.checked;renderCatalogTable(state.cache.storeAddresses);}
+ if(input.matches('[data-scope-nodes]')){state.cache.coverageEditor.toggle(input.dataset.scopeNodes.split(','),input.checked,input.dataset.scopeLevel);updateCoverageChecks();}
+});
+document.addEventListener('keydown',event=>{if(event.target.id==='catalog-query' && event.key==='Enter'){event.preventDefault();state.cache.catalogQuery=event.target.value.trim();renderCatalogTable(state.cache.storeAddresses);}});
+document.addEventListener('input',event=>{
+ if(!event.target.matches('[data-coverage-filter]'))return;const q=event.target.value.trim().toLowerCase(),tree=document.querySelector('#coverage-tree');
+ for(const line of tree.querySelectorAll('label.tree-scope-line'))line.hidden=Boolean(q)&&!(line.dataset.treeSearch || '').toLowerCase().includes(q);
+ for(const detail of [...tree.querySelectorAll('details')].reverse()){
+  const own=(detail.dataset.treeSearch || '').toLowerCase().includes(q);
+  if(own)for(const line of detail.querySelectorAll('label.tree-scope-line'))line.hidden=false;
+  detail.hidden=Boolean(q)&&!own&&![...detail.querySelectorAll('label.tree-scope-line')].some(line=>!line.hidden);
+  if(q&&!detail.hidden)detail.open=true;
+ }
+});

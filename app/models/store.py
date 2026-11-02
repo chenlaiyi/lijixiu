@@ -187,6 +187,7 @@ class AddressCoverage(Base):
     service_area_id: Mapped[int] = mapped_column(ForeignKey("service_areas.id"), index=True)
     building: Mapped[str | None] = mapped_column(String(80), nullable=True)
     entrance_name: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    property_type: Mapped[str | None] = mapped_column(String(30), nullable=True)
     address_id: Mapped[int | None] = mapped_column(ForeignKey("store_addresses.id"), nullable=True)
     operator_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -28,6 +28,7 @@ class Entry(BaseModel):
     entrance_type:str=Field(default='普通单元',max_length=30)
     entrance_name:str=Field(default='',max_length=160)
     road_number:str=Field(default='',max_length=160)
+    property_type:str=Field(default='住宅',pattern='^(住宅|商业|车位)$')
     review_required:bool=False
     enabled:bool=True
 
@@ -37,6 +38,7 @@ class ImportEntries(BaseModel):
 
 
 class Scope(BaseModel):
+    property_type:str|None=Field(default=None,pattern='^(住宅|商业|车位)$')
     service_area_id:int
     building:str|None=Field(default=None,max_length=80)
     entrance_name:str|None=Field(default=None,max_length=160)
@@ -88,6 +90,7 @@ async def create(data:Entry,db:AsyncSession=Depends(get_db),user=admin):
     try:
         row=await service.save_entry(db,data,user.id)
         await db.commit()
+        await db.refresh(row)
         return row
     except ValueError as exc:
         await db.rollback()
@@ -116,6 +119,7 @@ async def update(address_id:int,data:Entry,db:AsyncSession=Depends(get_db),user=
     try:
         await service.save_entry(db,data,user.id,row)
         await db.commit()
+        await db.refresh(row)
         return row
     except ValueError as exc:
         await db.rollback()

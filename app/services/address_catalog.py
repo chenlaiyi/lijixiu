@@ -33,9 +33,11 @@ async def save_entry(db, data, operator_id, address=None):
     if road and road[-1:].isdigit():road+='号'
     entrance=road or clean(data.entrance_name or data.unit)
     door = door_number(data.door_number, data.building, data.unit, data.room)
+    if data.property_type=='车位' and not clean(data.door_number):
+        door=clean(data.building)+clean(data.unit)+clean(data.room)+('' if clean(data.room).endswith('位') else '车位')
     if data.entrance_type=='道路门牌':
         if not road or not clean(data.room):raise ValueError('道路门牌类型必须填写道路门牌和房号')
-        door=road+clean(data.room)+('' if clean(data.room).endswith(('室','号','铺','房')) else '室')
+        door=road+clean(data.room)+('' if clean(data.room).endswith(('室','号','铺','房','位')) else ('车位' if data.property_type=='车位' else '室'))
     if not door:
         raise ValueError('请填写门牌号，或楼栋及房号')
     _, key, code = _address_identity([area.city, area.district, area.name, door])
@@ -55,7 +57,7 @@ async def save_entry(db, data, operator_id, address=None):
             city=area.city,district=area.district,street='',community=area.name,estate=area.name,
             building=clean(data.building),unit=clean(data.unit),room=clean(data.room),door_number=door,
             canonical_key=key,address_code=code,full_address=(clean(area.city)+clean(area.district)+door if data.entrance_type=='道路门牌' else full_address(area.city,area.district,area.name,door)),
-            entrance_type=data.entrance_type,entrance_name=entrance,road_number=road,review_required=data.review_required,
+            entrance_type=data.entrance_type,entrance_name=entrance,road_number=road,review_required=data.review_required,property_type=data.property_type,
             aliases=data.aliases,detail_hint=data.detail_hint,source_name=data.source_name,
             source_ref=data.source_ref,catalog_published=True,enabled=data.enabled).items():
         setattr(address,k,v)
@@ -64,7 +66,7 @@ async def save_entry(db, data, operator_id, address=None):
 
 
 def matches(rule, address):
-    return rule.service_area_id == address.service_area_id and (rule.address_id == address.id if rule.address_id
+    return rule.service_area_id == address.service_area_id and (rule.property_type is None or rule.property_type==address.property_type) and (rule.address_id == address.id if rule.address_id
         else (rule.building is None or rule.building==address.building) and (rule.entrance_name is None or rule.entrance_name==(address.entrance_name or address.unit)))
 
 
@@ -84,7 +86,7 @@ async def resolve_address(db, address):
 
 async def coverage(db, store_id):
     rules = (await db.execute(select(AddressCoverage).where(AddressCoverage.store_id == store_id))).scalars().all()
-    return [dict(service_area_id=r.service_area_id,building=r.building,entrance_name=r.entrance_name,address_id=r.address_id) for r in rules]
+    return [dict(service_area_id=r.service_area_id,building=r.building,entrance_name=r.entrance_name,property_type=r.property_type,address_id=r.address_id) for r in rules]
 
 
 async def save_coverage(db, store, items, operator_id):
@@ -101,24 +103,31 @@ async def save_coverage(db, store, items, operator_id):
         area=await db.get(ServiceArea,item.service_area_id)
         if not area or not area.active or area.area_type != 'estate' or (area.city,area.district)!=(city.name,district.name):
             raise ValueError('只能分配本门店所属区县的有效地址库小区')
+        kind=item.property_type
+        if kind is not None:
+            available=(await db.execute(select(StoreAddress.id).where(StoreAddress.service_area_id==area.id,StoreAddress.property_type==kind,StoreAddress.enabled==True))).first()
+            if not available:raise ValueError('该小区尚无此类有效地址，不能分配空类别')
         address=await db.get(StoreAddress,item.address_id) if item.address_id else None
         if item.address_id and (not address or not address.enabled or address.review_required or address.service_area_id != area.id):
             raise ValueError('门牌不存在或不属于所选小区')
         building=clean(item.building) if item.building is not None else None
         entrance=clean(item.entrance_name) if item.entrance_name is not None else None
         if entrance is not None and building is None:raise ValueError('分配入口时必须同时选择楼栋')
-        if address: building=None;entrance=None
+        if address:
+            if kind is not None and kind!=address.property_type:raise ValueError('地址类型与服务范围不一致')
+            building=None;entrance=None
         if building is not None:
             found=(await db.execute(select(StoreAddress.id).where(StoreAddress.service_area_id==area.id,
-                StoreAddress.building==building,StoreAddress.enabled==True))).first()
+                StoreAddress.building==building,StoreAddress.enabled==True,StoreAddress.property_type==kind if kind else True))).first()
             if not found: raise ValueError('楼栋不在城市区域地址库中')
             if entrance is not None:
-                found=(await db.execute(select(StoreAddress).where(StoreAddress.service_area_id==area.id,StoreAddress.building==building,StoreAddress.enabled==True))).scalars().all()
+                found=(await db.execute(select(StoreAddress).where(StoreAddress.service_area_id==area.id,StoreAddress.building==building,StoreAddress.enabled==True,StoreAddress.property_type==kind if kind else True))).scalars().all()
                 if not any((r.entrance_name or r.unit)==entrance for r in found):raise ValueError('入口不在城市区域地址库中')
         rule=AddressCoverage(store_id=store.id,service_area_id=area.id,building=building,
-            entrance_name=entrance,address_id=address.id if address else None,operator_id=operator_id)
+            entrance_name=entrance,property_type=kind,address_id=address.id if address else None,operator_id=operator_id)
         for other in all_rules:
             if other.store_id == store.id or other.service_area_id != area.id: continue
+            if other.property_type is not None and kind is not None and other.property_type!=kind:continue
             overlap=False
             if other.address_id:
                 target=await db.get(StoreAddress,other.address_id)
@@ -128,8 +137,8 @@ async def save_coverage(db, store, items, operator_id):
             else:
                 overlap=(other.building is None or building is None or other.building==building) and (other.entrance_name is None or entrance is None or other.entrance_name==entrance)
             if overlap: raise ValueError(f'{area.name}的服务范围与其他门店重叠，请先从原门店移除')
-        identity=(rule.service_area_id,rule.building,rule.entrance_name,rule.address_id)
-        if identity not in {(r.service_area_id,r.building,r.entrance_name,r.address_id) for r in desired}: desired.append(rule)
+        identity=(rule.service_area_id,rule.building,rule.entrance_name,rule.property_type,rule.address_id)
+        if identity not in {(r.service_area_id,r.building,r.entrance_name,r.property_type,r.address_id) for r in desired}: desired.append(rule)
     await db.execute(delete(AddressCoverage).where(AddressCoverage.store_id==store.id))
     db.add_all(desired)
     await db.commit()
