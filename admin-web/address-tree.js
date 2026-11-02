@@ -25,6 +25,10 @@
  function covers(rule,node){return !rule.address_id && rule.service_area_id===node.estateId && (!rule.property_type || rule.property_type===node.type) &&
   (rule.building==null || rule.building===node.building) && (rule.entrance_name==null || rule.entrance_name===node.entrance);}
  function editor(rows,rules,others=[]){
+  // Disabled/deleted/pending precise addresses cannot be saved by the coverage API.
+  // Discard these obsolete assignments before replaying hidden legacy scopes.
+  const validRule=rule=>!rule.address_id || rows.some(row=>row.id===rule.address_id && row.enabled && !row.review_required && row.service_area_id===rule.service_area_id);
+  rules=rules.filter(validRule);others=others.filter(validRule);
   const tree=group(rows.filter(r=>r.enabled));let id=0;const nodes=new Map();
   for(const estate of tree){
    estate.dirty=false;estate.original=rules.filter(r=>r.service_area_id===estate.id);
