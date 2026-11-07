@@ -219,6 +219,10 @@ async def create_payroll(
     db: AsyncSession = Depends(get_db),
     _staff: User = Depends(require_staff),
 ):
+    from ..models.store import Store
+    store=await db.get(Store,data.store_id)
+    if not store or ('platform_admin' not in _staff.business_roles and store.manager_id!=_staff.id):raise HTTPException(403,'只能编制本人门店工资')
+    data.manager_id=store.manager_id
     period = await service.create_payroll(db, data)
     return {"period_id": period.id, "month": period.month, "status": period.status.value}
 
@@ -265,7 +269,10 @@ async def pay_payroll(
     _staff: User = Depends(require_staff),
 ):
     try:
-        period = await service.pay_payroll(db, period_id, data.store_id, data.manager_id)
+        from ..models.store import Store
+        store=await db.get(Store,data.store_id)
+        if not store or ('platform_admin' not in _staff.business_roles and store.manager_id!=_staff.id):raise HTTPException(403,'只能发放本人门店工资')
+        period = await service.pay_payroll(db, period_id, data.store_id, store.manager_id)
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     return {"period_id": period.id, "month": period.month, "status": period.status.value}

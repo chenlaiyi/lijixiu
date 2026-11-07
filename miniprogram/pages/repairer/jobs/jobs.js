@@ -49,15 +49,17 @@ Page({
         });
         return;
       }
-      const [assigned, dispatched, servicing, billSubmitted, waitPayment] = await Promise.all([
+      const [assigned, dispatched, servicing, billSubmitted, waitPayment, accepted, legacyAccepted] = await Promise.all([
         api.get(`/api/v1/orders?assigned_repairer_id=${repairer.id}&status=assigned&limit=100`).catch(() => []),
         api.get(`/api/v1/orders?assigned_repairer_id=${repairer.id}&status=dispatched&limit=100`).catch(() => []),
         api.get(`/api/v1/orders?repairer_id=${repairer.id}&status=servicing&limit=100`).catch(() => []),
         api.get(`/api/v1/orders?repairer_id=${repairer.id}&status=bill_submitted&limit=100`).catch(() => []),
         api.get(`/api/v1/orders?repairer_id=${repairer.id}&status=wait_payment&limit=100`).catch(() => []),
+        api.get(`/api/v1/orders?repairer_id=${repairer.id}&status=repairer_accepted&limit=100`).catch(() => []),
+        api.get(`/api/v1/orders?repairer_id=${repairer.id}&status=accepted&limit=100`).catch(() => []),
       ]);
       const pendingOrders = [...assigned, ...dispatched].map(item => this.formatOrder(item));
-      const workingOrders = [...servicing, ...billSubmitted, ...waitPayment].map(item => this.formatOrder(item));
+      const workingOrders = [...accepted, ...legacyAccepted, ...servicing, ...billSubmitted, ...waitPayment].map(item => this.formatOrder(item));
       this.setData({
         repairer,
         orders: pendingOrders,

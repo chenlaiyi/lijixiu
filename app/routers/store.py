@@ -73,6 +73,12 @@ async def add_staff(
     store = await store_service.get_store(db, store_id)
     if not store:
         raise HTTPException(404, "Store not found")
+    if 'platform_admin' not in _staff.business_roles and store.manager_id!=_staff.id:raise HTTPException(403,'只能管理本人门店')
+    if data.repairer_id:
+        from ..services.store_team import city_id
+        from ..models.repairer import Repairer
+        r=await db.get(Repairer,data.repairer_id)
+        if not r or r.user_id!=data.user_id or await city_id(db,r.region_id)!=await city_id(db,store.region_id):raise HTTPException(400,'师傅账号或所属城市不匹配')
     return await store_service.add_store_staff(db, store_id, data)
 
 
@@ -156,3 +162,70 @@ async def get_store_coverage(store_id:int, db:AsyncSession=Depends(get_db), admi
 @router.put("/{store_id}/coverage")
 async def put_store_coverage(store_id:int,data:StoreCoverageUpdate,db:AsyncSession=Depends(get_db),admin:User=Depends(require_roles('platform_admin'))):
     raise HTTPException(400, '请从城市区域地址库分配门店服务地址范围')
+
+
+class TeamUpdate(__import__('pydantic').BaseModel):
+    repairer_ids: list[int]
+
+async def _team_store(db, store_id, user):
+    store=await store_service.get_store(db,store_id)
+    if not store:raise HTTPException(404,'门店不存在')
+    if 'platform_admin' not in user.business_roles and store.manager_id!=user.id:
+        raise HTTPException(403,'只能管理本人门店师傅')
+    return store
+
+@router.get('/{store_id}/technicians')
+async def technicians(store_id:int,db:AsyncSession=Depends(get_db),user:User=Depends(require_roles('platform_admin','store_manager'))):
+    from ..services.store_team import team
+    from ..schemas.repairer import RepairerOut
+    store=await _team_store(db,store_id,user)
+    result=[]
+    for r in await team(db,store):
+        account=await db.get(User,r.user_id)
+        result.append({**RepairerOut.model_validate(r).model_dump(),'display_name':account.name if account else '师傅'})
+    return result
+
+@router.put('/{store_id}/technicians')
+async def save_technicians(store_id:int,data:TeamUpdate,db:AsyncSession=Depends(get_db),user:User=Depends(require_roles('platform_admin','store_manager'))):
+    from sqlalchemy import select
+    from ..models.store import StoreStaff,StoreStaffRole
+    from ..models.repairer import Repairer
+    from ..services.store_team import city_id
+    store=await _team_store(db,store_id,user)
+    city=await city_id(db,store.region_id)
+    selected=[]
+    for rid in set(data.repairer_ids):
+        r=await db.get(Repairer,rid)
+        if not r or not r.region_id or await city_id(db,r.region_id)!=city:raise HTTPException(400,'只能添加与门店同市的师傅，请先完善城市')
+        selected.append(r)
+    members=(await db.execute(select(StoreStaff).where(StoreStaff.store_id==store_id,StoreStaff.role==StoreStaffRole.TECHNICIAN))).scalars().all()
+    for m in members:m.active=m.repairer_id in data.repairer_ids
+    for r in selected:
+        if not any(m.repairer_id==r.id for m in members):db.add(StoreStaff(store_id=store_id,user_id=r.user_id,repairer_id=r.id,role=StoreStaffRole.TECHNICIAN,active=True))
+    store.default_second_receiver_id=None
+    await db.commit()
+    return {'saved':len(selected)}
+
+
+@router.get('/order-alerts/pending')
+async def order_alerts(db:AsyncSession=Depends(get_db),user:User=Depends(require_roles('platform_admin','store_manager'))):
+    from sqlalchemy import select
+    from ..models.order import Order,OrderStatus
+    from ..models.store import Store
+    rows=(await db.execute(select(Order.id,Order.store_id,Order.status).join(Store,Store.id==Order.store_id).where(Store.manager_id==user.id,Order.status.in_([OrderStatus.STORE_PENDING,OrderStatus.PAID_PENDING_REVIEW])).order_by(Order.id.desc()).limit(100))).all()
+    return [{'id':r.id,'store_id':r.store_id,'status':r.status.value} for r in rows]
+
+
+@router.get('/{store_id}/technician-candidates')
+async def technician_candidates(store_id:int,db:AsyncSession=Depends(get_db),user:User=Depends(require_roles('platform_admin','store_manager'))):
+    from sqlalchemy import select
+    from ..models.repairer import Repairer
+    from ..services.store_team import city_id
+    from ..schemas.repairer import RepairerOut
+    store=await _team_store(db,store_id,user);city=await city_id(db,store.region_id)
+    rows=(await db.execute(select(Repairer))).scalars().all();result=[]
+    for r in rows:
+        account=await db.get(User,r.user_id)
+        if account and account.is_active and await city_id(db,r.region_id)==city:
+            result.append({**RepairerOut.model_validate(r).model_dump(),'display_name':account.name})
+    return result

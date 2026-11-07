@@ -85,6 +85,7 @@ module.exports = {
   get: (url, data) => request(url, 'GET', data),
   post: (url, data) => request(url, 'POST', data),
   patch: (url, data) => request(url, 'PATCH', data),
+  put: (url, data) => request(url, 'PUT', data),
   upload,
   resolveURL: (url) => (/^https?:\/\//.test(url || '') ? url : `${getBaseURL()}${url}`),
   setToken: (token) => { /* token 由 app.js 管理 */ },

@@ -125,7 +125,7 @@ Page({
         this.setData({ payErrorText: '服务价格已更新，请核对最新明细和金额后再次支付' });
         return;
       }
-      await this.ensureWechatPayReady();
+      // Payment creation validates readiness server-side; diagnostics are staff-only.
       const loginRes = await callWx('login');
       const payer = wx.getStorageSync('userInfo') || {};
       const payRes = await api.post('/api/v1/payment/create', {

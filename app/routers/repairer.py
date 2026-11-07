@@ -27,7 +27,9 @@ async def create_repairer(
     existing = await repairer_service.get_repairer_by_user(db, data.user_id)
     if existing:
         raise HTTPException(400, "该用户已是师傅")
-    return await repairer_service.create_repairer(db, data)
+    try:
+        return await repairer_service.create_repairer(db, data)
+    except ValueError as exc:raise HTTPException(400,str(exc))
 
 
 @router.get("", response_model=list[RepairerOut])
@@ -68,4 +70,6 @@ async def update_repairer(
     if not r:
         raise HTTPException(404, "师傅不存在")
     require_staff_or_self(r.user_id, user)
-    return await repairer_service.update_repairer(db, r, data)
+    try:
+        return await repairer_service.update_repairer(db, r, data)
+    except ValueError as exc:raise HTTPException(400,str(exc))

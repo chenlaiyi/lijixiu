@@ -61,6 +61,18 @@ Page({
       return;
     }
     this.loadData();
+    this.checkAlerts();
+    clearInterval(this.alertTimer);this.alertTimer=setInterval(()=>{this.checkAlerts();},20000);
+  },
+  onHide(){clearInterval(this.alertTimer);},
+  onUnload(){clearInterval(this.alertTimer);},
+  manageTeam(){if(this.data.store)wx.navigateTo({url:'/pages/store/team/team?storeId='+this.data.store.id});},
+  async checkAlerts(){
+    try{const rows=await api.get('/api/v1/stores/order-alerts/pending');
+      const previous=this.alertKeys || new Set(),fresh=rows.filter(r=>!previous.has(r.id+':'+r.status));
+      this.alertKeys=new Set(rows.map(r=>r.id+':'+r.status));
+      if(fresh.length){wx.vibrateShort({type:'light'});wx.showToast({title:`有${fresh.length}笔订单待处理`,icon:'none'});this.loadData();}
+    }catch(e){}
   },
 
   async loadData() {
@@ -89,9 +101,10 @@ Page({
           billMap[item.id] = await api.get(`/api/v1/orders/${item.id}/service-bill/latest`).catch(() => null);
         }));
       const managerRepairer = repairers.find(item => item.user_id === userInfo.id);
-      const repairerOptions = repairers.map(item => ({
+      const team = store ? await safeGet(`/api/v1/stores/${store.id}/technicians`, [], '门店师傅') : [];
+      const repairerOptions = team.map(item => ({
         id: item.id,
-        label: `#${item.id} ${item.skills || '师傅'}`,
+        label: `${item.display_name || '师傅'} · ${item.skills || '待完善'}`,
       }));
       const formatted = orders.map(item => this.formatOrder(item, repairerOptions, managerRepairer, billMap[item.id]));
       const stats = this.buildStats(formatted);

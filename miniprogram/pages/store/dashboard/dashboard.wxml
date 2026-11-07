@@ -1,3 +1,5 @@
+<button wx:if="{{store}}" bindtap="manageTeam">添加／管理门店师傅</button>
+<view class="tip">门店师傅由后台“门店 → 添加师傅”维护，可关联多家门店；工资按订单所属门店分别核算。</view>
 <view class="safe-page role-page store-dashboard-page">
   <view class="role-hero">
     <view class="role-hero-head">

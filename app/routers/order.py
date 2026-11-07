@@ -153,7 +153,7 @@ async def list_orders(
             raise HTTPException(403, "not your order")
         if repairer_id is not None and repairer_id not in allowed:
             raise HTTPException(403, "not your order")
-        if user.role == UserRole.REPAIRER:
+        if user.role == UserRole.REPAIRER or (own_repairer_id is not None and (repairer_id is not None or assigned_repairer_id is not None)):
             # 师傅侧不传参数时会扫全表(等于泄露全部订单),这里兜底为「自己名下」
             return await order_service.list_orders(
                 db, skip, limit, None, own_repairer_id or user.id, None,
@@ -329,11 +329,16 @@ async def manual_assign_order(
     db: AsyncSession = Depends(get_db),
     _staff: User = Depends(require_staff),
 ):
-    """管理员手动指派师傅"""
+    """门店负责人或平台管理员指派已关联的师傅。"""
     order = await order_service.get_order(db, order_id)
     if not order:
         raise HTTPException(404, "订单不存在")
     try:
+        if 'platform_admin' not in _staff.business_roles:
+            from ..models.store import Store
+            store = await db.get(Store, order.store_id) if order.store_id else None
+            if not store or store.manager_id != _staff.id:
+                raise HTTPException(403, '只能指派本人门店的订单')
         return await order_service.manual_assign(db, order, data.repairer_id)
     except ValueError as e:
         raise HTTPException(400, str(e))
@@ -459,6 +464,11 @@ async def store_review_order(
     if not order:
         raise HTTPException(404, "订单不存在")
     try:
+        from ..models.store import Store
+        store=await db.get(Store,order.store_id) if order.store_id else None
+        if not store or ('platform_admin' not in _staff.business_roles and store.manager_id!=_staff.id):
+            raise HTTPException(403,'只能审核本人门店工资')
+        manager_id=store.manager_id
         return await order_service.store_review_complete(
             db,
             order,

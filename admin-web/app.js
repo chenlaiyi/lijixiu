@@ -8,7 +8,7 @@ const state = {
     orders: ["订单", "派单、改价、状态流转和服务审核"],
     users: ["用户", "客户、师傅账号和推广经理标记"],
     repairers: ["师傅", "师傅资料、接单状态和区域"],
-    stores: ["门店", "服务门店、负责人和默认接单师傅"],
+    stores: ["门店", "服务门店、负责人和多师傅管理"],
     regions: ["区域", "城市/区域层级和负责人"],
     proxy: ["代客订单", "订单认领、代付和协助奖励"],
     domestic: ["家政服务", "月嫂保姆人员、需求和合同"],
@@ -224,7 +224,7 @@ async function verifyToken(token) {
     headers: { Authorization: `Bearer ${token}` }
   });
   if (!response.ok) throw new Error(`Token 无效或已过期(${response.status})`);
-  return response.json();
+  const me=await response.json();state.user=me;return me;
 }
 
 function renderAuthGate(message = "") {
@@ -618,21 +618,21 @@ async function loadRepairers() {
   const createForm = form([
     choiceField('user_id', '师傅账号', userChoices(users.filter(u => !repairers.some(r => r.user_id === u.id)), ['repairer','second_receiver']), '搜索姓名或手机号，选择已注册并获得师傅角色的账号；已有档案的账号不重复显示', true),
     { name: 'skills', label: '技能', placeholder: '例如：水电,家电维修', required:true, hint:'用逗号分隔，例如：水电,家电维修' },
-    choiceField('region_id', '服务区域', regionChoices(regions), '先在区域页新增城市和区县，再搜索选择服务区域'),
+    choiceField('region_id', '所属城市', regionChoices(regions.filter(r=>r.level===1)), '先在区域页新增城市和区县，再搜索选择服务区域'),
     { name:'intro', label:'简介', placeholder:'例如：从事水电维修 8 年，可服务海沧区' }
   ], "create-repairer", "新增师傅");
   const body = createForm + table([
     { label: "ID", key: "id" },
     { label: "姓名 / 手机号", render: row => { const u=users.find(u=>u.id===row.user_id); return escapeHtml(u ? `${u.name} / ${u.phone}` : String(row.user_id)); } },
     { label: "技能", key: "skills", wrap: true },
-    { label: "区域", render: (row) => row.region_id || "-" },
+    { label: "所属城市", render: (row) => escapeHtml(regions.find(r=>r.id===row.region_id)?.name || "未设置") },
     { label: "评分", key: "rating" },
     { label: "接单数", key: "order_count" },
     { label: "状态", render: (row) => badge(({online:"在线",offline:"休息",busy:"服务中"})[row.status] || "待确认", row.status==="online"?"ok":"warn") },
     {
       label: "操作",
       render: (row) => `<div class="actions">
-        ${actionButton("完善资料", "repairer-profile", { id: row.id })}
+        ${actionButton("完善资料", "repairer-profile", { id: row.id })}${actionButton("修改城市", "repairer-profile", { id: row.id })}
         ${actionButton("改状态", "repairer-status", { id: row.id, status: row.status })}
         ${actionButton("改技能", "repairer-skills", { id: row.id, skills: row.skills })}
       </div>`
@@ -664,7 +664,6 @@ async function loadStores() {
     choiceField('region_id', '所属区县', regionChoices(regions.filter(r => r.level === 2), regions), '搜索并选择已创建的区域，例如：厦门市 / 海沧区', true),
     choiceField('manager_id', '门店负责人', userChoices(users, ['store_manager']), '搜索店长姓名或手机号，选择负责人', true),
     choiceField('city_manager_id', '城市经理', userChoices(users, ['city_manager']), '选填：搜索城市经理姓名或手机号'),
-    choiceField('default_second_receiver_id', '默认接单师傅', repairers.filter(r => users.some(u => u.id === r.user_id && u.is_active)).map(r => ({value:r.id,label:`${users.find(u => u.id === r.user_id)?.name} · ${users.find(u => u.id === r.user_id)?.phone}`})), '选填：先在师傅页创建档案，再选择默认接单师傅'),
     {name:'remark',label:'备注',placeholder:'例如：服务海沧区，营业时间 08:00—20:00'}
   ], "create-store", "新增门店");
   const body = createForm + table([
@@ -673,7 +672,7 @@ async function loadStores() {
     { label: "所属区县", render: row => escapeHtml(regionChoices(regions.filter(r => r.id === row.region_id),regions)[0]?.label || "未设置") },
     { label: "负责人", render: row => escapeHtml(users.find(u => u.id === row.manager_id)?.name || "未设置") },
     { label: "城市经理", render: row => escapeHtml(users.find(u => u.id === row.city_manager_id)?.name || "未设置") },
-    { label: "默认师傅", render: (row) => row.default_second_receiver_id || "-" },
+    { label: "师傅管理", render: () => "点击添加师傅查看或修改" },
     { label: "开通状态", render: row => row.enabled && row.status === "active" ? badge("已开通", "ok") : badge("未开通", "warn") },
     {
       label: "操作",
@@ -681,7 +680,7 @@ async function loadStores() {
         ${actionButton(row.enabled && row.status === "active" ? "停用门店" : "启用并开通", "store-enabled", { id: row.id, enabled: row.enabled && row.status === "active" ? "1" : "0" })}
         ${actionButton("修改", "edit-store", {id:row.id})}
         ${actionButton("分配门店服务地址范围", "store-coverage", {id:row.id})}
-        ${actionButton("默认师傅", "store-default-repairer", { id: row.id })}
+        ${actionButton("添加师傅", "store-default-repairer", { id: row.id })}
       </div>`
     }
   ], stores, "暂无门店");
@@ -1249,7 +1248,7 @@ async function handleAction(button) {
   if (action === 'close-modal') { els.modal.hidden=true;return; }
   if (action === 'repairer-profile') {
     const [r, regions] = await Promise.all([api(`/api/v1/repairers/${id}`), api('/api/v1/regions')]);
-    showModal('完善师傅资料', `<form class="form-grid" data-form="repairer-profile"><input type="hidden" name="id" value="${r.id}"><div class="field"><label>技能</label><input name="skills" required value="${escapeHtml(r.skills==='待完善'?'':r.skills)}" placeholder="例如：水电,家电维修"></div><div class="field"><label>服务区域</label><select name="region_id" required><option value="">请选择</option>${regionChoices(regions).map(o=>`<option value="${o.value}" ${Number(o.value)===r.region_id?'selected':''}>${escapeHtml(o.label)}</option>`).join('')}</select></div><div class="field"><label>简介</label><input name="intro" value="${escapeHtml(r.intro || '')}"></div><button class="btn primary" type="submit">保存资料</button></form>`);
+    showModal('完善师傅资料', `<form class="form-grid" data-form="repairer-profile"><input type="hidden" name="id" value="${r.id}"><div class="field"><label>技能</label><input name="skills" required value="${escapeHtml(r.skills==='待完善'?'':r.skills)}" placeholder="例如：水电,家电维修"></div><div class="field"><label>服务区域</label><select name="region_id" required><option value="">请选择</option>${regionChoices(regions.filter(r=>r.level===1)).map(o=>`<option value="${o.value}" ${Number(o.value)===r.region_id?'selected':''}>${escapeHtml(o.label)}</option>`).join('')}</select></div><div class="field"><label>简介</label><input name="intro" value="${escapeHtml(r.intro || '')}"></div><button class="btn primary" type="submit">保存资料</button></form>`);
     return;
   }
   if (action === 'user-business-roles') {
@@ -1391,9 +1390,11 @@ async function handleAction(button) {
   } else if (action === "store-enabled") {
     await api(`/api/v1/stores/${id}`, { method: "PATCH", body: { enabled: button.dataset.enabled !== "1" } });
   } else if (action === "store-default-repairer") {
-    const repairerId = await promptNumber("默认接单师傅ID");
-    if (repairerId === null) return;
-    await api(`/api/v1/stores/${id}`, { method: "PATCH", body: { default_second_receiver_id: repairerId } });
+    const {stores,regions,users,repairers}=state.cache.storeForm;
+    const store=stores.find(s=>s.id===id),county=regions.find(r=>r.id===store.region_id),cityId=county?.level===1?county.id:county?.parent_id;
+    const selected=await api(`/api/v1/stores/${id}/technicians`);
+    const candidates=await api(`/api/v1/stores/${id}/technician-candidates`);
+    showModal('添加门店师傅',`<form data-form="store-technicians"><input type="hidden" name="id" value="${id}"><p>可选本市师傅，同一师傅可关联多个门店。工资按每笔订单所属门店单独核算；取消关联不影响历史工资。</p>${candidates.map(r=>`<label class="field"><input type="checkbox" name="repairer_ids" value="${r.id}" ${selected.some(x=>x.id===r.id)?'checked':''}>${escapeHtml(r.display_name || users.find(u=>u.id===r.user_id)?.name || '师傅')} · ${escapeHtml(r.skills)}</label>`).join('') || '<p>暂无本市师傅，请先完善师傅所属城市。</p>'}<button class="btn primary">保存门店师傅</button></form>`);return;
   } else if (action === "region-name") {
     const name = await promptText("区域名称", button.dataset.name);
     if (!name) return;
@@ -1488,6 +1489,11 @@ document.addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
     const formName = event.target.dataset.form;
+    if(formName==='store-technicians'){
+      const fields=new FormData(event.target);
+      await api(`/api/v1/stores/${fields.get('id')}/technicians`,{method:'PUT',body:{repairer_ids:fields.getAll('repairer_ids').map(Number)}});
+      els.modal.hidden=true;notify('门店师傅已保存');await loadStores();return;
+    }
     if (formName === 'repairer-status') {
       const values=new FormData(event.target);const status=values.get('status');
       if (!['online','offline'].includes(status)) throw new Error('请选择在线或休息');
@@ -1805,3 +1811,15 @@ document.addEventListener('input',event=>{
   if(q&&!detail.hidden)detail.open=true;
  }
 });
+
+// Independent foreground reminders: no shared acknowledgement between phone and PC.
+let managerAlertKeys=new Set();
+setInterval(async()=>{
+  try{
+    if(!state.user || !state.user.business_roles?.includes('store_manager'))return;
+    const rows=await api('/api/v1/stores/order-alerts/pending');
+    const fresh=rows.filter(r=>!managerAlertKeys.has(r.id+':'+r.status));
+    managerAlertKeys=new Set(rows.map(r=>r.id+':'+r.status));
+    if(fresh.length)notify(`有${fresh.length}笔门店订单待受理或审核，请到订单页处理`);
+  }catch(e){}
+},20000);

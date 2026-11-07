@@ -19,6 +19,7 @@
     "pages/common/agreement/agreement",
     "pages/proxy/access/access",
     "pages/store/dashboard/dashboard",
+    "pages/store/team/team",
     "pages/store/payroll/payroll",
     "pages/city/dashboard/dashboard",
     "pages/promotion/dashboard/dashboard",

@@ -8,7 +8,10 @@ from ..schemas.repairer import RepairerCreate, RepairerUpdate
 
 
 async def create_repairer(db: AsyncSession, data: RepairerCreate) -> Repairer:
-    r = Repairer(**data.model_dump())
+    from .store_team import city_id
+    city=await city_id(db,data.region_id)
+    if not city:raise ValueError('请选择师傅所属城市')
+    r = Repairer(**{**data.model_dump(), 'region_id':city})
     db.add(r)
     await db.commit()
     await db.refresh(r)
@@ -46,7 +49,17 @@ async def list_repairers(
 async def update_repairer(
     db: AsyncSession, repairer: Repairer, data: RepairerUpdate
 ) -> Repairer:
-    for key, val in data.model_dump(exclude_unset=True).items():
+    values=data.model_dump(exclude_unset=True)
+    if 'region_id' in values:
+        from .store_team import city_id
+        city=await city_id(db,values['region_id'])
+        if not city:raise ValueError('请选择师傅所属城市')
+        from ..models.store import Store,StoreStaff
+        stores=(await db.execute(select(Store).join(StoreStaff,StoreStaff.store_id==Store.id).where(StoreStaff.repairer_id==repairer.id,StoreStaff.active==True))).scalars().all()
+        defaults=(await db.execute(select(Store).where(Store.default_second_receiver_id==repairer.id))).scalars().all()
+        if any([await city_id(db,s.region_id)!=city for s in list(stores)+list(defaults)]):raise ValueError('请先解除其他城市门店关联，再修改城市')
+        values['region_id']=city
+    for key, val in values.items():
         setattr(repairer, key, val)
     await db.commit()
     await db.refresh(repairer)

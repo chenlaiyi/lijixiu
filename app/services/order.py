@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.business import WageRecord, WarrantyCertificate
@@ -200,7 +200,7 @@ async def list_orders(
     if customer_id:
         stmt = stmt.where(Order.customer_id == customer_id)
     if repairer_id:
-        stmt = stmt.where(Order.repairer_id == repairer_id)
+        stmt = stmt.where(or_(Order.repairer_id == repairer_id, Order.assigned_repairer_id == repairer_id))
     if assigned_repairer_id:
         stmt = stmt.where(Order.assigned_repairer_id == assigned_repairer_id)
     if status:
@@ -231,6 +231,9 @@ async def manual_assign(db: AsyncSession, order: Order, repairer_id: int) -> Ord
     if not repairer:
         raise ValueError(f"Repairer #{repairer_id} not found")
 
+    if order.store_id:
+        from .store_team import validate_member
+        await validate_member(db, order.store_id, repairer_id)
     order.assigned_repairer_id = repairer_id
     target = OrderStatus.DISPATCHED if order.status != OrderStatus.CREATED else OrderStatus.ASSIGNED
     return await transition_status(
