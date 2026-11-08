@@ -1391,7 +1391,7 @@ async function handleAction(button) {
     await api(`/api/v1/stores/${id}`, { method: "PATCH", body: { enabled: button.dataset.enabled !== "1" } });
   } else if (action === "store-default-repairer") {
     const {stores,regions,users,repairers}=state.cache.storeForm;
-    const store=stores.find(s=>s.id===id),county=regions.find(r=>r.id===store.region_id),cityId=county?.level===1?county.id:county?.parent_id;
+    if(!stores.some(s=>Number(s.id)===Number(id)))throw new Error('门店信息已变化，请刷新后重试');
     const selected=await api(`/api/v1/stores/${id}/technicians`);
     const candidates=await api(`/api/v1/stores/${id}/technician-candidates`);
     showModal('添加门店师傅',`<form data-form="store-technicians"><input type="hidden" name="id" value="${id}"><p>可选本市师傅，同一师傅可关联多个门店。工资按每笔订单所属门店单独核算；取消关联不影响历史工资。</p>${candidates.map(r=>`<label class="field"><input type="checkbox" name="repairer_ids" value="${r.id}" ${selected.some(x=>x.id===r.id)?'checked':''}>${escapeHtml(r.display_name || users.find(u=>u.id===r.user_id)?.name || '师傅')} · ${escapeHtml(r.skills)}</label>`).join('') || '<p>暂无本市师傅，请先完善师傅所属城市。</p>'}<button class="btn primary">保存门店师傅</button></form>`);return;

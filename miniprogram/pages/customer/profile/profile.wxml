@@ -155,7 +155,7 @@
 
   <view class="referral-card">
     <text class="referral-title">我的推荐码</text>
-    <view wx:if="{{referral}}"><text class="referral-code" selectable>{{referral.code}}</text><view class="referral-actions"><button bindtap="copyReferral">复制推荐码</button><button bindtap="showReferralQr">查看推荐二维码</button><button open-type="share">分享给好友</button></view></view>
+    <view wx:if="{{referral}}"><text class="referral-code" selectable>{{referral.code}}</text><view class="referral-qr"><image wx:if="{{referralQrPath && !referralQrError}}" src="{{referralQrPath}}" mode="aspectFit" bindtap="showReferralQr" binderror="referralQrFailed"/><text wx:if="{{referralQrLoading}}">二维码生成中…</text><button wx:if="{{referralQrError}}" bindtap="loadReferralQr">二维码加载失败，点击重试</button><text>扫码进入立即修，点击二维码可放大</text></view><view class="referral-actions"><button bindtap="copyReferral">复制推荐码</button><button bindtap="showReferralQr">查看推荐二维码</button><button open-type="share">分享给好友</button></view></view>
     <button wx:else bindtap="loadReferral">{{referralError ? '加载失败，点击重试' : '加载推荐码'}}</button>
     <text class="referral-title">填写推荐人的推荐码（选填）</text><input value="{{bindCode}}" bindinput="inputBindCode" placeholder="输入推荐码" maxlength="32"/><button bindtap="bindReferral">绑定推荐人</button>
   </view>

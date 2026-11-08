@@ -663,3 +663,5 @@
 .referral-actions {display:flex;flex-wrap:wrap;gap:12rpx;margin:16rpx 0;}
 .referral-card button {font-size:24rpx;margin:8rpx 0;}
 .referral-card input {padding:20rpx;background:#f5f8f7;}
+
+.referral-qr{display:flex;flex-direction:column;align-items:center;margin:24rpx 0;gap:16rpx;}.referral-qr image{width:360rpx;height:360rpx;}.referral-qr text{font-size:24rpx;color:#64776e;}

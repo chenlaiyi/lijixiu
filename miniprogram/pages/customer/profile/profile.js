@@ -117,16 +117,25 @@ Page({
     accountHint: accountHint('customer'),
   },
 
-  async loadReferral(){try{const referral=await api.get('/api/v1/referrals/me');this.setData({referral,referralError:false});}catch(e){this.setData({referralError:true});}},
+  async loadReferral(){try{const referral=await api.get('/api/v1/referrals/me');this.setData({referral,referralError:false});this.loadReferralQr();}catch(e){this.setData({referralError:true});}},
   copyReferral(){if(this.data.referral)wx.setClipboardData({data:this.data.referral.code});},
+  loadReferralQr(){
+    if(!this.data.referral || this.qrLoading)return;
+    this.qrLoading=true;this.setData({referralQrLoading:true,referralQrError:false});
+    wx.request({url:api.resolveURL(this.data.referral.qr_image_url),responseType:'arraybuffer',
+      success:res=>{
+        if(res.statusCode!==200){this.setData({referralQrError:true});return;}
+        const path=wx.env.USER_DATA_PATH+'/referral-'+this.data.referral.code+'.png';
+        wx.getFileSystemManager().writeFile({filePath:path,data:res.data,
+          success:()=>this.setData({referralQrPath:path,referralQrError:false}),
+          fail:()=>this.setData({referralQrError:true})});
+      },fail:()=>this.setData({referralQrError:true}),
+      complete:()=>{this.qrLoading=false;this.setData({referralQrLoading:false});}});
+  },
+  referralQrFailed(){this.setData({referralQrError:true,referralQrPath:''});},
   async showReferralQr(){
-    if(!this.data.referral)await this.loadReferral();
-    if(!this.data.referral)return;
-    wx.showLoading({title:'生成分享码'});
-    wx.downloadFile({url:api.resolveURL(this.data.referral.qr_image_url),success:res=>{
-      if(res.statusCode===200)wx.previewImage({urls:[res.tempFilePath],current:res.tempFilePath});
-      else wx.showToast({title:'二维码暂不可用，请稍后重试',icon:'none'});
-    },fail:()=>wx.showToast({title:'二维码下载失败，请检查网络后重试',icon:'none'}),complete:()=>wx.hideLoading()});
+    if(this.data.referralQrPath){wx.previewImage({urls:[this.data.referralQrPath],current:this.data.referralQrPath});return;}
+    this.loadReferralQr();
   },
   inputBindCode(e){this.setData({bindCode:e.detail.value});},
   async bindReferral(){const code=this.data.bindCode.trim();if(!code)return;try{const result=await api.post('/api/v1/referrals/bind',{code});this.setData({bindCode:''});wx.showToast({title:result.bound?'推荐关系已绑定':'无法绑定，请核对推荐码',icon:'none'});}catch(e){}},
