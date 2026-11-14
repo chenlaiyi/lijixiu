@@ -22,7 +22,7 @@ async def my_referral(user: User = Depends(get_current_user), db: AsyncSession =
     return {
         "code": code,
         "share_path": f"/pages/index/index?ref={code}",
-        "qr_image_url": f"/api/v1/referrals/{code}/qrcode.png",
+        "qr_image_url": f"/api/v1/referrals/{code}/qrcode.png?v=release-20261114",
         "reward_ratio_percent": 1.0,
     }
 
@@ -44,7 +44,7 @@ async def referral_qrcode(code: str, db: AsyncSession = Depends(get_db)):
         image = wechat_pay.get_mini_program_code(code, "pages/index/index")
     except (WeChatPayError, OSError) as exc:
         raise HTTPException(503, "推广二维码暂不可用") from exc
-    return Response(image, media_type="image/png", headers={"Cache-Control": "public, max-age=3600"})
+    return Response(image, media_type="image/png", headers={"Cache-Control": "no-store, max-age=0"})
 
 
 class BindReferralRequest(BaseModel):

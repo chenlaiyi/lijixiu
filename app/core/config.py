@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     # 2026-10-05:调试短信通道必须显式打开。生产保持 false,
     # 否则 /api/v1/auth/sms/request 会回显固定验证码,任何人可登录任意手机号账号。
     ALLOW_SMS_DEBUG_ENDPOINT: bool = False
-    WECHAT_MINIPROGRAM_ENV_VERSION: str = "trial"
+    WECHAT_MINIPROGRAM_ENV_VERSION: str = "release"
     PUBLIC_BASE_URL: str = "https://x.iddg.cn"
     PAYMENT_ALLOW_MOCK: bool = False
 
